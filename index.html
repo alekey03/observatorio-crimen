@@ -1,0 +1,483 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Observatorio del Crimen - COMOPPOL PNP</title>
+
+    <link rel="stylesheet" href="css/style.css?v=20260628-2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <link rel="stylesheet" href="css/public.css?v=1">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logos">
+                <img src="img/logo_odc.png" alt="Logo del Observatorio del Crimen">
+                <img src="img/logo_pnp.png" alt="Logo de la Policía Nacional del Perú">
+            </div>
+            <p class="brand-kicker">COMOPPOL - PNP</p>
+            <h2>Observatorio del Crimen</h2>
+            <span class="brand-unit">Centro de Comando Analitico</span>
+        </div>
+
+        <nav aria-label="Menu principal">
+            <p class="nav-label">Navegacion operativa</p>
+            <ul class="menu">
+                <li class="active" data-view="inicio"><i class="fas fa-house"></i><span>Inicio</span></li>
+                <li data-view="dashboard"><i class="fas fa-chart-column"></i><span>Dashboard</span></li>
+                <li data-view="mapa-delito"><i class="fas fa-map"></i><span>Mapa del delito</span></li>
+                <li data-view="mapa-calor"><i class="fas fa-fire-flame-curved"></i><span>Mapa de calor</span></li>
+                <li data-view="analisis-temporal"><i class="fas fa-clock-rotate-left"></i><span>Analisis temporal</span></li>
+                <li data-view="estadisticas"><i class="fas fa-chart-line"></i><span>Estadisticas</span></li>
+                <li data-view="alertas"><i class="fas fa-triangle-exclamation"></i><span>Alertas</span></li>
+                <li data-view="reportes"><i class="fas fa-file-lines"></i><span>Reportes</span></li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <span>Policia Nacional del Peru</span>
+            <strong>Disciplina, honor y servicio</strong>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="command-bar">
+            <div>
+                <span class="command-label">Centro de comando analitico</span>
+                <strong>Monitoreo territorial nacional</strong>
+            </div>
+            <div class="command-status">
+                <span class="status-dot ready"></span>
+                Sistema operativo
+            </div>
+        </header>
+
+        <section class="hero">
+            <div>
+                <p class="eyebrow">Sistema de información estratégica</p>
+                <h1>Panorama ejecutivo del delito</h1>
+                <p class="subtitle">Lectura nacional para priorizar recursos, anticipar concentraciones y respaldar decisiones policiales.</p><p class="public-data-notice"><i class="fas fa-shield-halved"></i> Version publica con datos agregados, anonimizada y sin ubicaciones exactas.</p>
+            </div>
+            <div class="hero-status">
+                <span class="status-dot"></span>
+                <span id="estadoDatos">Cargando datos...</span>
+            </div>
+        </section>
+
+        <section class="filters-shell" aria-label="Filtros del dashboard">
+            <div class="filters-heading">
+                <div>
+                    <i class="fas fa-sliders"></i>
+                    <span>Segmentacion operativa</span>
+                </div>
+                <button id="btnLimpiarFiltros" class="button-secondary" type="button" title="Limpiar todos los filtros">
+                    <i class="fas fa-filter-circle-xmark"></i>
+                    <span>Limpiar</span>
+                </button>
+            </div>
+            <div class="filters-panel">
+            <label>
+                <span>Año</span>
+                <select id="filtroAnio">
+                    <option value="">Todos los años</option>
+                </select>
+            </label>
+
+            <label>
+                <span>Mes</span>
+                <select id="filtroMes">
+                    <option value="">Todos los meses</option>
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+            </label>
+
+            <label>
+                <span>Departamento</span>
+                <select id="filtroDepartamento">
+                    <option value="">Todos los departamentos</option>
+                </select>
+            </label>
+
+            <label>
+                <span>Provincia</span>
+                <select id="filtroProvincia">
+                    <option value="">Todas las provincias</option>
+                </select>
+            </label>
+
+            <label>
+                <span>Distrito</span>
+                <select id="filtroDistrito">
+                    <option value="">Todos los distritos</option>
+                </select>
+            </label>
+
+            <label>
+                <span>Delito</span>
+                <select id="filtroDelito">
+                    <option value="">Todos los delitos</option>
+                </select>
+            </label>
+            </div>
+        </section>
+
+        <section class="cards" aria-label="Indicadores principales">
+            <article class="card">
+                <div class="card-icon"><i class="fas fa-file-signature"></i></div>
+                <div>
+                    <h3 id="totalDenuncias">0</h3>
+                    <p>Total denuncias</p>
+                </div>
+            </article>
+
+            <article class="card">
+                <div class="card-icon danger"><i class="fas fa-phone-volume"></i></div>
+                <div>
+                    <h3 id="totalExtorsiones">0</h3>
+                    <p>Extorsiones</p>
+                </div>
+            </article>
+
+            <article class="card">
+                <div class="card-icon alert"><i class="fas fa-skull-crossbones"></i></div>
+                <div>
+                    <h3 id="totalHomicidios">0</h3>
+                    <p>Homicidios</p>
+                </div>
+            </article>
+
+            <article class="card">
+                <div class="card-icon info"><i class="fas fa-mask"></i></div>
+                <div>
+                    <h3 id="totalRobos">0</h3>
+                    <p>Robos</p>
+                </div>
+            </article>
+
+            <article class="card executive-card">
+                <div class="card-icon success"><i class="fas fa-bullseye"></i></div>
+                <div>
+                    <h3 id="concentracionPrincipal">0%</h3>
+                    <p>Concentracion principal</p>
+                    <small id="territorioConcentrado">Sin territorio</small>
+                </div>
+            </article>
+
+            <article class="card executive-card">
+                <div class="card-icon critical"><i class="fas fa-shield-halved"></i></div>
+                <div>
+                    <h3 id="jurisdiccionesCriticas">0</h3>
+                    <p>Jurisdicciones criticas</p>
+                    <small>Prioridad operativa alta</small>
+                </div>
+            </article>
+        </section>
+
+        <section class="executive-grid view-section" data-section="executive" aria-label="Resumen ejecutivo operativo">
+            <article class="analytics-panel command-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Evaluacion territorial</p>
+                        <h2>Matriz de riesgo operativo</h2>
+                    </div>
+                    <span class="panel-badge">Actualizacion dinamica</span>
+                </div>
+                <div class="risk-table-wrap">
+                    <table class="risk-table">
+                        <thead>
+                            <tr>
+                                <th>Jurisdiccion</th>
+                                <th>Denuncias</th>
+                                <th>Participacion</th>
+                                <th>Prioridad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrizRiesgo"></tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="analytics-panel briefing-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Briefing</p>
+                        <h2>Lectura operativa</h2>
+                    </div>
+                    <i class="fas fa-tower-broadcast panel-symbol"></i>
+                </div>
+                <div id="actividadOperativa" class="briefing-list"></div>
+            </article>
+        </section>
+
+        <section class="map-section view-section" data-section="mapa-delito">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Mapa interactivo</p>
+                    <h2>Mapa del delito</h2>
+                </div>
+                <button id="btnPeru" type="button">
+                    <i class="fas fa-rotate-left"></i>
+                    <span>Volver al Perú</span>
+                </button>
+            </div>
+
+            <div class="map-layout">
+                <div id="mapa" aria-label="Mapa del delito en Perú"></div>
+                <aside class="map-summary">
+                    <h3 id="tituloResumen">Resumen nacional</h3>
+                    <p id="textoResumen">Selecciona filtros o haz clic en el mapa para explorar el territorio.</p>
+                    <div class="legend" aria-label="Leyenda de intensidad">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <small>Mayor intensidad indica mayor número de casos filtrados.</small>
+                </aside>
+            </div>
+        </section>
+
+        <section class="map-section heat-section view-section" data-section="mapa-calor">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Georreferenciacion</p>
+                    <h2>Mapa de calor</h2>
+                </div>
+                <button id="btnHeatPeru" type="button">
+                    <i class="fas fa-rotate-left"></i>
+                    <span>Volver al Peru</span>
+                </button>
+            </div>
+
+            <div class="map-layout">
+                <div id="mapaCalor" aria-label="Mapa de calor de denuncias georreferenciadas"></div>
+                <aside class="map-summary heat-summary">
+                    <h3>Concentracion geografica</h3>
+                    <p id="heatEstado">Abre esta pestaña para cargar los puntos georreferenciados.</p>
+                    <div class="heat-metrics">
+                        <div>
+                            <strong id="heatTotal">0</strong>
+                            <span>denuncias</span>
+                        </div>
+                        <div>
+                            <strong id="heatPuntos">0</strong>
+                            <span>puntos</span>
+                        </div>
+                        <div>
+                            <strong id="heatMax">0</strong>
+                            <span>max. por zona</span>
+                        </div>
+                    </div>
+                    <small>El calor usa denuncias unicas agrupadas por coordenadas cercanas.</small>
+                </aside>
+            </div>
+        </section>
+
+        <section class="map-section alerts-map-section view-section is-hidden" data-section="mapa-alertas">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Inteligencia territorial</p>
+                    <h2>Mapa de alertas</h2>
+                </div>
+                <button id="btnAlertasPeru" type="button">
+                    <i class="fas fa-rotate-left"></i>
+                    <span>Volver al Peru</span>
+                </button>
+            </div>
+
+            <div class="map-layout alert-map-layout">
+                <div id="mapaAlertas" aria-label="Mapa de alertas territoriales"></div>
+                <aside class="map-summary alert-priority-panel">
+                    <h3>Prioridad operativa</h3>
+                    <p id="alertaEstado">Abre esta pestaña para evaluar las jurisdicciones.</p>
+                    <p class="alert-ranking-note"><i class="fas fa-ranking-star"></i> Los numeros del 1 al 10 indican la posicion en el ranking, no la cantidad de denuncias.</p>
+                    <div class="alert-priority-list">
+                        <div class="alert-priority-item high">
+                            <span class="priority-dot"></span>
+                            <div><strong>Alta</strong><small>Intervencion prioritaria</small></div>
+                            <b id="alertasAlta">0</b>
+                        </div>
+                        <div class="alert-priority-item medium">
+                            <span class="priority-dot"></span>
+                            <div><strong>Media</strong><small>Seguimiento preventivo</small></div>
+                            <b id="alertasMedia">0</b>
+                        </div>
+                        <div class="alert-priority-item low">
+                            <span class="priority-dot"></span>
+                            <div><strong>Baja</strong><small>Monitoreo regular</small></div>
+                            <b id="alertasBaja">0</b>
+                        </div>
+                    </div>
+                    <div class="alert-focus">
+                        <span>Mayor concentracion</span>
+                        <strong id="alertaTerritorio">Sin datos</strong>
+                        <small id="alertaTotal">0 denuncias</small>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="temporal-dashboard view-section is-hidden" data-section="analisis-temporal" aria-label="Analisis temporal y patrones delictivos">
+            <div class="temporal-heading">
+                <div>
+                    <p class="eyebrow">Inteligencia estadistica</p>
+                    <h2>Analisis temporal y patrones delictivos</h2>
+                    <p>Comportamiento, concentracion y evolucion de denuncias.</p>
+                </div>
+                <div class="temporal-actions">
+                    <button id="btnExportarTemporal" class="button-secondary" type="button"><i class="fas fa-file-pdf"></i><span>Exportar PDF</span></button>
+                    <button id="btnExportarExcelTemporal" class="button-secondary" type="button"><i class="fas fa-file-excel"></i><span>Exportar Excel</span></button>
+                </div>
+            </div>
+
+            <div class="temporal-primary-grid">
+                <article class="analytics-panel temporal-trend-panel">
+                    <div class="panel-header">
+                        <div><p class="eyebrow">Evolucion</p><h2>Evolucion mensual comparada</h2></div>
+                        <span class="panel-badge">Ultimos 4 anos</span>
+                    </div>
+                    <div id="graficoTemporalComparado" class="line-chart"></div>
+                </article>
+                <article class="analytics-panel">
+                    <div class="panel-header"><div><p class="eyebrow">Modalidades</p><h2>Modalidades predominantes</h2></div></div>
+                    <div id="modalidadesTemporales" class="bar-list"></div>
+                </article>
+                <article class="analytics-panel hourly-panel">
+                    <div class="panel-header">
+                        <div><p class="eyebrow">Incidencia</p><h2>Dias y horas de mayor incidencia</h2></div>
+                        <span class="panel-badge">Patron del periodo</span>
+                    </div>
+                    <div id="incidenciaHoraria" class="hourly-chart"></div>
+                </article>
+            </div>
+
+            <div class="temporal-secondary-grid">
+                <article class="analytics-panel compact-panel">
+                    <div class="panel-header"><div><p class="eyebrow">Personas</p><h2>Situacion de la persona</h2></div></div>
+                    <div id="situacionPersona" class="donut-layout"></div>
+                </article>
+                <article class="analytics-panel compact-panel">
+                    <div class="panel-header"><div><p class="eyebrow">Demografia</p><h2>Distribucion por sexo</h2></div></div>
+                    <div id="distribucionSexo" class="donut-layout"></div>
+                </article>
+                <article class="analytics-panel compact-panel">
+                    <div class="panel-header"><div><p class="eyebrow">Evaluacion</p><h2>Matriz de riesgo territorial</h2></div></div>
+                    <div id="matrizTemporal" class="pressure-matrix"></div>
+                </article>
+                <article class="analytics-panel temporal-table-panel">
+                    <div class="panel-header"><div><p class="eyebrow">Priorizacion</p><h2>Distritos con mayor presion delictiva</h2></div><span class="panel-badge">Top 5</span></div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Distrito</th><th>Denuncias</th><th>Participacion</th><th>Prioridad</th></tr></thead>
+                            <tbody id="tablaTemporal"></tbody>
+                        </table>
+                    </div>
+                </article>
+            </div>
+
+            <article class="analytics-panel temporal-alerts-panel">
+                <div class="panel-header"><div><p class="eyebrow">Seguimiento</p><h2>Alertas recientes</h2></div><i class="fas fa-tower-broadcast panel-symbol"></i></div>
+                <div id="timelineTemporal" class="temporal-timeline"></div>
+            </article>
+        </section>
+
+        <section class="analytics-grid view-section" data-section="analytics" aria-label="Analítica del delito">
+            <article class="analytics-panel trend-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Comparativo</p>
+                        <h2>Comparativo anual</h2>
+                    </div>
+                    <span id="tendenciaEtiqueta" class="panel-badge">Años</span>
+                </div>
+                <div id="graficoTendencia" class="line-chart" aria-label="Gráfico comparativo anual"></div>
+            </article>
+
+            <article class="analytics-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Modalidades</p>
+                        <h2>Top delitos</h2>
+                    </div>
+                </div>
+                <div id="graficoModalidades" class="bar-list" aria-label="Ranking de modalidades delictivas"></div>
+            </article>
+
+            <article class="analytics-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Territorio</p>
+                        <h2>Ranking territorial</h2>
+                    </div>
+                </div>
+                <div id="rankingTerritorial" class="rank-list" aria-label="Ranking territorial"></div>
+            </article>
+
+            <article class="analytics-panel alerts-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Inteligencia</p>
+                        <h2>Alertas estratégicas</h2>
+                    </div>
+                </div>
+                <div id="alertasEstrategicas" class="alerts-list" aria-label="Alertas estratégicas"></div>
+            </article>
+        </section>
+
+        <section class="detail-grid view-section" data-section="detalle" aria-label="Detalle operativo">
+            <article class="analytics-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Hotspots</p>
+                        <h2>Zonas críticas</h2>
+                    </div>
+                </div>
+                <div id="zonasCriticas" class="hotspot-list" aria-label="Zonas críticas"></div>
+            </article>
+
+            <article class="analytics-panel table-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Consulta</p>
+                        <h2>Resumen filtrado</h2>
+                    </div>
+                    <span id="tablaEtiqueta" class="panel-badge">Top 10</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Territorio</th>
+                                <th>Modalidad</th>
+                                <th>Año</th>
+                                <th>Casos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaResumen"></tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="js/app.js?v=20260628-5"></script>
+</body>
+</html>
+
