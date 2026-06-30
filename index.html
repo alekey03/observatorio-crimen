@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Observatorio del Crimen - COMOPPOL PNP</title>
 
-    <link rel="stylesheet" href="css/style.css?v=20260628-2">
+    <link rel="stylesheet" href="css/style.css?v=20260630-3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="css/public.css?v=1">
@@ -304,7 +304,23 @@
                 <aside class="map-summary alert-priority-panel">
                     <h3>Prioridad operativa</h3>
                     <p id="alertaEstado">Abre esta pestaña para evaluar las jurisdicciones.</p>
-                    <p class="alert-ranking-note"><i class="fas fa-ranking-star"></i> Los numeros del 1 al 10 indican la posicion en el ranking, no la cantidad de denuncias.</p>
+                    <div class="alert-rank-guide" aria-label="Leyenda del ranking de denuncias">
+                        <div class="rank-guide-title">
+                            <i class="fas fa-ranking-star"></i>
+                            <div>
+                                <strong>Top 10 por denuncias</strong>
+                                <span>Posicion dentro del ranking</span>
+                            </div>
+                        </div>
+                        <div class="rank-guide-scale">
+                            <div class="rank-guide-end first"><b>1</b><span>Mayor<br>cantidad</span></div>
+                            <div class="rank-guide-track" aria-hidden="true">
+                                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                            </div>
+                            <div class="rank-guide-end last"><b>10</b><span>Menor dentro<br>del Top 10</span></div>
+                        </div>
+                        <small>El numero indica la posicion, no la cantidad de denuncias.</small>
+                    </div>
                     <div class="alert-priority-list">
                         <div class="alert-priority-item high">
                             <span class="priority-dot"></span>
