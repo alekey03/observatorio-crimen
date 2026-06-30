@@ -998,7 +998,7 @@ function cargarCsv(ruta){
 }
 
 function cargarMetadata(){
-    return fetch("data/api/metadata.json")
+    return fetch(`data/api/metadata.json?v=${Date.now()}`, { cache: "no-store" })
         .then((response) => response.ok ? response.json() : null)
         .catch(() => null);
 }
