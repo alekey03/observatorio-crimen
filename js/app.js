@@ -40,6 +40,21 @@ let mapaCalorCargado = false;
 let mapaAlertas = null;
 let capaMapaAlertas = null;
 let marcadoresMapaAlertas = null;
+let mapaPolicial = null;
+let capaRegionesPoliciales = null;
+let capaJurisdiccionesPoliciales = null;
+let marcadoresComisariasPoliciales = null;
+let geoRegionesPoliciales = null;
+let geoJurisdiccionesPoliciales = null;
+let geoComisariasPoliciales = null;
+let datosPolicialesResumen = [];
+let datosPolicialesModalidades = [];
+let modalidadesPolicialesCargadas = false;
+let cargaModalidadesPolicialesPromise = null;
+let datosPolicialesMensuales = [];
+let anioPolicialMensual = "";
+let policialCargado = false;
+let cargaPolicialPromise = null;
 let datosPersonasTemporal = [];
 let datosIncidenciaHoraria = [];
 let analiticaTemporalCargada = false;
@@ -90,6 +105,16 @@ const alertasMedia = document.getElementById("alertasMedia");
 const alertasBaja = document.getElementById("alertasBaja");
 const alertaTerritorio = document.getElementById("alertaTerritorio");
 const alertaTotal = document.getElementById("alertaTotal");
+const filtroRegionPolicial = document.getElementById("filtroRegionPolicial");
+const filtroComisariaPolicial = document.getElementById("filtroComisariaPolicial");
+const policialNivel = document.getElementById("policialNivel");
+const policialTitulo = document.getElementById("policialTitulo");
+const policialEstado = document.getElementById("policialEstado");
+const policialTotal = document.getElementById("policialTotal");
+const policialComisarias = document.getElementById("policialComisarias");
+const policialSinMapa = document.getElementById("policialSinMapa");
+const policialPeriodo = document.getElementById("policialPeriodo");
+const rankingComisarias = document.getElementById("rankingComisarias");
 const graficoTemporalComparado = document.getElementById("graficoTemporalComparado");
 const modalidadesTemporales = document.getElementById("modalidadesTemporales");
 const incidenciaHoraria = document.getElementById("incidenciaHoraria");
@@ -1619,6 +1644,398 @@ function cargarMapaAlertas(){
     renderMapaAlertas();
 }
 
+function escaparHtml(valor){
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function normalizarRegionPolicial(valor){
+    return normalizar(valor).replace(/^REGPOL\s*-?\s*/, "").trim();
+}
+
+function normalizarComisariaPolicial(valor){
+    let texto = normalizar(valor)
+        .replace(/["“”']\s*([A-E])\s*["“”']?\s*$/, " $1")
+        .replace(/^COMISARIA\s+DE\s+FAMILIA\s+/, "")
+        .replace(/^COMISARIA\s+PNP\s+/, "")
+        .replace(/^COMISARIA\s+/, "")
+        .replace(/^CPNP\s+/, "")
+        .replace(/[^A-Z0-9]+/g, " ")
+        .replace(/\s+[A-E]\s*$/, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const equivalencias = {
+        "CUZCO": "CUSCO",
+        "EL RIMAC": "RIMAC",
+        "DE PRO": "PRO",
+        "VEINTISEIS 26 DE OCTUBRE": "26 DE OCTUBRE"
+    };
+    return equivalencias[texto] || texto;
+}
+
+function normalizarFilaPolicial(fila){
+    return {
+        ...fila,
+        ANIO: String(fila.ANIO || "").trim(),
+        MES: String(fila.MES || "").trim(),
+        REGION: String(fila.REGION || "").trim(),
+        COMISARIA: String(fila.COMISARIA || "").trim(),
+        MODALIDAD: String(fila.MODALIDAD || "").trim(),
+        CASOS: numero(fila.CASOS)
+    };
+}
+
+function inicializarMapaPolicial(){
+    if(mapaPolicial) return;
+    mapaPolicial = L.map("mapaPolicial", {
+        zoomControl: true,
+        minZoom: 5
+    }).setView(vistaPeru.centro, vistaPeru.zoom);
+    mapaPolicial.setMaxBounds(limitesPeru);
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+        attribution: "&copy; CARTO"
+    }).addTo(mapaPolicial);
+}
+
+function limpiarCapasPoliciales(){
+    [capaRegionesPoliciales, capaJurisdiccionesPoliciales, marcadoresComisariasPoliciales]
+        .filter(Boolean)
+        .forEach((layer) => mapaPolicial.removeLayer(layer));
+    capaRegionesPoliciales = null;
+    capaJurisdiccionesPoliciales = null;
+    marcadoresComisariasPoliciales = null;
+}
+
+function cargarModalidadesPolicialesMensuales(anio){
+    if(!anio) return Promise.resolve([]);
+    if(anioPolicialMensual === anio && datosPolicialesMensuales.length){
+        return Promise.resolve(datosPolicialesMensuales);
+    }
+    return cargarJson(`data/api/policial/modalidades_mensuales/${encodeURIComponent(anio)}.json`)
+        .then((datos) => {
+            datosPolicialesMensuales = datos.map(normalizarFilaPolicial);
+            anioPolicialMensual = anio;
+            return datosPolicialesMensuales;
+        })
+        .catch((error) => {
+            console.error(error);
+            datosPolicialesMensuales = [];
+            anioPolicialMensual = "";
+            return [];
+        });
+}
+
+function cargarModalidadesPolicialesGenerales(){
+    if(modalidadesPolicialesCargadas) return Promise.resolve(datosPolicialesModalidades);
+    if(cargaModalidadesPolicialesPromise) return cargaModalidadesPolicialesPromise;
+
+    policialEstado.textContent = "Cargando modalidades por comisaria...";
+    cargaModalidadesPolicialesPromise = cargarJson("data/api/policial/modalidades.json")
+        .then((datos) => {
+            datosPolicialesModalidades = datos.map(normalizarFilaPolicial);
+            modalidadesPolicialesCargadas = true;
+            return datosPolicialesModalidades;
+        })
+        .finally(() => {
+            cargaModalidadesPolicialesPromise = null;
+        });
+    return cargaModalidadesPolicialesPromise;
+}
+
+function cargarDatosPoliciales(){
+    if(policialCargado) return Promise.resolve();
+    if(cargaPolicialPromise) return cargaPolicialPromise;
+
+    policialEstado.textContent = "Cargando cartografia y denuncias por comisaria...";
+    cargaPolicialPromise = Promise.all([
+        cargarJson("mapas/policial/regiones_policiales.geojson"),
+        cargarJson("mapas/policial/jurisdicciones_comisarias.geojson"),
+        cargarJson("mapas/policial/comisarias.geojson"),
+        cargarJson("data/api/policial/resumen.json")
+    ]).then(([regiones, jurisdicciones, comisarias, resumen]) => {
+        geoRegionesPoliciales = regiones;
+        geoJurisdiccionesPoliciales = jurisdicciones;
+        geoComisariasPoliciales = comisarias;
+        datosPolicialesResumen = resumen.map(normalizarFilaPolicial);
+        policialCargado = true;
+        llenarRegionesPoliciales();
+    }).finally(() => {
+        cargaPolicialPromise = null;
+    });
+    return cargaPolicialPromise;
+}
+
+function llenarRegionesPoliciales(){
+    const actual = filtroRegionPolicial.value;
+    const regiones = [...new Set(
+        geoRegionesPoliciales.features
+            .map((feature) => feature.properties.regionpol)
+            .filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b, "es"));
+    filtroRegionPolicial.innerHTML = "";
+    filtroRegionPolicial.appendChild(new Option("Todas las regiones", ""));
+    regiones.forEach((region) => filtroRegionPolicial.appendChild(new Option(region, region)));
+    filtroRegionPolicial.value = regiones.includes(actual) ? actual : "";
+    llenarComisariasPoliciales();
+}
+
+function llenarComisariasPoliciales(){
+    const region = normalizarRegionPolicial(filtroRegionPolicial.value);
+    const actual = filtroComisariaPolicial.value;
+    const comisarias = region && geoJurisdiccionesPoliciales
+        ? [...new Set(
+            geoJurisdiccionesPoliciales.features
+                .filter((feature) => normalizarRegionPolicial(feature.properties.regionpol) === region)
+                .map((feature) => feature.properties.comisaria)
+                .filter(Boolean)
+        )].sort((a, b) => a.localeCompare(b, "es"))
+        : [];
+    filtroComisariaPolicial.innerHTML = "";
+    filtroComisariaPolicial.appendChild(new Option("Todas las comisarias", ""));
+    comisarias.forEach((comisaria) => filtroComisariaPolicial.appendChild(new Option(comisaria, comisaria)));
+    filtroComisariaPolicial.disabled = !region;
+    filtroComisariaPolicial.value = comisarias.includes(actual) ? actual : "";
+}
+
+function fuentePolicialActual(){
+    if(!filtros.delito.value) return datosPolicialesResumen;
+    if(filtros.anio.value) return datosPolicialesMensuales;
+    return datosPolicialesModalidades;
+}
+
+function obtenerDatosPolicialesFiltrados(){
+    const anio = filtros.anio.value;
+    const mes = filtros.mes.value;
+    const delito = normalizar(filtros.delito.value);
+    const region = normalizarRegionPolicial(filtroRegionPolicial.value);
+    const comisaria = normalizarComisariaPolicial(filtroComisariaPolicial.value);
+
+    if(delito && mes && !anio) return [];
+    return fuentePolicialActual().filter((fila) => {
+        if(anio && fila.ANIO !== anio) return false;
+        if(mes && String(fila.MES || "") !== mes) return false;
+        if(delito && normalizar(fila.MODALIDAD) !== delito) return false;
+        if(region && normalizarRegionPolicial(fila.REGION) !== region) return false;
+        if(comisaria && normalizarComisariaPolicial(fila.COMISARIA) !== comisaria) return false;
+        return true;
+    });
+}
+
+function resumirDatosPoliciales(datos, obtenerClave){
+    return datos.reduce((resumen, fila) => {
+        const clave = obtenerClave(fila);
+        if(clave) resumen[clave] = (resumen[clave] || 0) + obtenerCasos(fila);
+        return resumen;
+    }, {});
+}
+
+function colorCargaPolicial(casos, maximo){
+    if(!casos || !maximo) return "#344453";
+    const proporcion = casos / maximo;
+    if(proporcion >= .72) return "#e65f5c";
+    if(proporcion >= .45) return "#f59e4c";
+    if(proporcion >= .2) return "#f1c84b";
+    return "#25c19f";
+}
+
+function seleccionarRegionPolicial(nombre, bounds = null){
+    filtroRegionPolicial.value = buscarValorSelect(filtroRegionPolicial, nombre);
+    filtroComisariaPolicial.value = "";
+    llenarComisariasPoliciales();
+    renderMapaPolicial(bounds);
+}
+
+function seleccionarComisariaPolicial(nombre, bounds = null){
+    filtroComisariaPolicial.value = buscarValorSelect(filtroComisariaPolicial, nombre);
+    renderMapaPolicial(bounds);
+}
+
+function periodoPolicialActivo(){
+    const partes = [];
+    if(filtros.mes.value) partes.push(meses[Number(filtros.mes.value) - 1]);
+    partes.push(filtros.anio.value || "Todos los años");
+    if(filtros.delito.value) partes.push(filtros.delito.value);
+    return partes.join(" · ");
+}
+
+function renderPanelPolicial(datos, capasPorComisaria){
+    const resumenComisarias = resumirDatosPoliciales(
+        datos,
+        (fila) => normalizarComisariaPolicial(fila.COMISARIA)
+    );
+    const catalogo = new Map();
+    geoJurisdiccionesPoliciales.features.forEach((feature) => {
+        const propiedades = feature.properties;
+        const clave = `${normalizarRegionPolicial(propiedades.regionpol)}|${normalizarComisariaPolicial(propiedades.comisaria)}`;
+        catalogo.set(clave, propiedades.comisaria);
+    });
+
+    const filas = Object.entries(resumenComisarias).map(([claveComisaria, casos]) => {
+        const filaFuente = datos.find((fila) => normalizarComisariaPolicial(fila.COMISARIA) === claveComisaria);
+        const claveMapa = `${normalizarRegionPolicial(filaFuente?.REGION)}|${claveComisaria}`;
+        return {
+            clave: claveComisaria,
+            nombre: catalogo.get(claveMapa) || filaFuente?.COMISARIA || claveComisaria,
+            casos,
+            mapeada: catalogo.has(claveMapa)
+        };
+    }).sort((a, b) => b.casos - a.casos);
+
+    const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
+    const sinMapa = filas.filter((fila) => !fila.mapeada).reduce((suma, fila) => suma + fila.casos, 0);
+    const seleccion = normalizarComisariaPolicial(filtroComisariaPolicial.value);
+    policialTotal.textContent = formatear(total);
+    policialComisarias.textContent = formatear(filas.length);
+    policialSinMapa.textContent = formatear(sinMapa);
+    policialPeriodo.textContent = periodoPolicialActivo();
+
+    rankingComisarias.innerHTML = filas.slice(0, 12).map((fila, indice) => `
+        <button class="police-ranking-row ${fila.clave === seleccion ? "active" : ""}" type="button"
+            data-comisaria="${escaparHtml(fila.nombre)}" ${fila.mapeada ? "" : "disabled"}
+            title="${fila.mapeada ? "Ubicar comisaria" : "Sin jurisdiccion cartografica equivalente"}">
+            <b>${indice + 1}</b>
+            <span>${escaparHtml(fila.nombre)}</span>
+            <strong>${formatear(fila.casos)}</strong>
+        </button>
+    `).join("") || '<div class="empty-state">Sin comisarias para los filtros seleccionados</div>';
+
+    rankingComisarias.querySelectorAll("button:not(:disabled)").forEach((button) => {
+        button.addEventListener("click", () => {
+            const nombre = button.dataset.comisaria;
+            const layer = capasPorComisaria[normalizarComisariaPolicial(nombre)];
+            seleccionarComisariaPolicial(nombre, layer ? layer.getBounds() : null);
+        });
+    });
+}
+
+function renderMapaPolicial(boundsEnfoque = null){
+    if(!mapaPolicial || !policialCargado) return;
+    limpiarCapasPoliciales();
+    const datos = obtenerDatosPolicialesFiltrados();
+    const region = normalizarRegionPolicial(filtroRegionPolicial.value);
+    const comisariaSeleccionada = normalizarComisariaPolicial(filtroComisariaPolicial.value);
+    const capasPorComisaria = {};
+
+    if(!region){
+        const resumenRegiones = resumirDatosPoliciales(datos, (fila) => normalizarRegionPolicial(fila.REGION));
+        const maximo = Math.max(...Object.values(resumenRegiones), 0);
+        capaRegionesPoliciales = L.geoJSON(geoRegionesPoliciales, {
+            style: (feature) => {
+                const casos = resumenRegiones[normalizarRegionPolicial(feature.properties.regionpol)] || 0;
+                const color = colorCargaPolicial(casos, maximo);
+                return { color, weight: 1.5, fillColor: color, fillOpacity: casos ? .4 : .04 };
+            },
+            onEachFeature: (feature, layer) => {
+                const nombre = feature.properties.regionpol;
+                const casos = resumenRegiones[normalizarRegionPolicial(nombre)] || 0;
+                layer.bindTooltip(`<strong>${escaparHtml(nombre)}</strong><br>${formatear(casos)} denuncias`);
+                layer.on({
+                    mouseover: (event) => event.target.setStyle({ weight: 3, fillOpacity: casos ? .62 : .08 }),
+                    mouseout: () => capaRegionesPoliciales.resetStyle(layer),
+                    click: () => seleccionarRegionPolicial(nombre, layer.getBounds())
+                });
+            }
+        }).addTo(mapaPolicial);
+        policialNivel.textContent = "Cobertura nacional";
+        policialTitulo.textContent = "Regiones policiales";
+        policialEstado.textContent = `${formatear(Object.keys(resumenRegiones).length)} regiones evaluadas con los filtros activos.`;
+        renderPanelPolicial(datos, capasPorComisaria);
+        mapaPolicial.fitBounds(capaRegionesPoliciales.getBounds(), { padding: [20, 20] });
+        setTimeout(() => mapaPolicial.invalidateSize(), 80);
+        return;
+    }
+
+    const resumenComisarias = resumirDatosPoliciales(datos, (fila) => normalizarComisariaPolicial(fila.COMISARIA));
+    const maximo = Math.max(...Object.values(resumenComisarias), 0);
+    const features = geoJurisdiccionesPoliciales.features.filter((feature) =>
+        normalizarRegionPolicial(feature.properties.regionpol) === region
+    );
+
+    capaJurisdiccionesPoliciales = L.geoJSON({ type: "FeatureCollection", features }, {
+        style: (feature) => {
+            const clave = normalizarComisariaPolicial(feature.properties.comisaria);
+            const casos = resumenComisarias[clave] || 0;
+            const color = colorCargaPolicial(casos, maximo);
+            const activa = comisariaSeleccionada && clave === comisariaSeleccionada;
+            return {
+                color: activa ? "#ffffff" : color,
+                weight: activa ? 3 : 1.3,
+                fillColor: color,
+                fillOpacity: casos ? (activa ? .68 : .4) : .025
+            };
+        },
+        onEachFeature: (feature, layer) => {
+            const nombre = feature.properties.comisaria;
+            const clave = normalizarComisariaPolicial(nombre);
+            const casos = resumenComisarias[clave] || 0;
+            capasPorComisaria[clave] = layer;
+            layer.bindTooltip(`<strong>${escaparHtml(nombre)}</strong><br>${formatear(casos)} denuncias`);
+            layer.on({
+                mouseover: (event) => event.target.setStyle({ weight: 3, fillOpacity: casos ? .66 : .08 }),
+                mouseout: () => capaJurisdiccionesPoliciales.resetStyle(layer),
+                click: () => seleccionarComisariaPolicial(nombre, layer.getBounds())
+            });
+        }
+    }).addTo(mapaPolicial);
+
+    const puntos = geoComisariasPoliciales.features.filter((feature) =>
+        normalizarRegionPolicial(feature.properties.regionpol) === region &&
+        (resumenComisarias[normalizarComisariaPolicial(feature.properties.comisaria)] || 0) > 0
+    );
+    marcadoresComisariasPoliciales = L.layerGroup();
+    puntos.forEach((feature) => {
+        const nombre = feature.properties.comisaria;
+        const casos = resumenComisarias[normalizarComisariaPolicial(nombre)] || 0;
+        const icon = L.divIcon({
+            className: "",
+            html: '<span class="police-station-marker"><i class="fas fa-building-shield"></i></span>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+        const marker = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], { icon });
+        marker.bindTooltip(`<strong>${escaparHtml(nombre)}</strong><br>${formatear(casos)} denuncias`);
+        marker.on("click", () => {
+            const layer = capasPorComisaria[normalizarComisariaPolicial(nombre)];
+            seleccionarComisariaPolicial(nombre, layer ? layer.getBounds() : null);
+        });
+        marcadoresComisariasPoliciales.addLayer(marker);
+    });
+    marcadoresComisariasPoliciales.addTo(mapaPolicial);
+
+    policialNivel.textContent = "Region policial";
+    policialTitulo.textContent = filtroRegionPolicial.value;
+    policialEstado.textContent = `${formatear(Object.keys(resumenComisarias).length)} comisarias evaluadas con los filtros activos.`;
+    renderPanelPolicial(datos, capasPorComisaria);
+
+    const activa = capasPorComisaria[comisariaSeleccionada];
+    const bounds = boundsEnfoque || (activa ? activa.getBounds() : capaJurisdiccionesPoliciales.getBounds());
+    mapaPolicial.flyToBounds(bounds, { padding: [24, 24], maxZoom: activa ? 13 : 10 });
+    setTimeout(() => mapaPolicial.invalidateSize(), 80);
+}
+
+async function cargarMapaPolicial(){
+    inicializarMapaPolicial();
+    try{
+        await cargarDatosPoliciales();
+        if(filtros.delito.value){
+            if(filtros.anio.value){
+                await cargarModalidadesPolicialesMensuales(filtros.anio.value);
+            }else{
+                await cargarModalidadesPolicialesGenerales();
+            }
+        }
+        renderMapaPolicial();
+    }catch(error){
+        policialEstado.textContent = "No se pudo cargar la informacion policial.";
+        console.error(error);
+    }
+}
+
 function activarVista(vista){
     vistaActual = vista;
     menuItems.forEach((item) => item.classList.toggle("active", item.dataset.view === vista));
@@ -1633,6 +2050,7 @@ function activarVista(vista){
         const visible =
             (nombre === "mapa-delito" && mostrarMapaDelito) ||
             (nombre === "mapa-calor" && vista === "mapa-calor") ||
+            (nombre === "regiones-policiales" && vista === "regiones-policiales") ||
             (nombre === "mapa-alertas" && vista === "alertas") ||
             (nombre === "analisis-temporal" && vista === "analisis-temporal") ||
             (nombre === "executive" && mostrarEjecutivo) ||
@@ -1644,6 +2062,8 @@ function activarVista(vista){
 
     if(vista === "mapa-calor"){
         cargarMapaCalor();
+    }else if(vista === "regiones-policiales"){
+        cargarMapaPolicial();
     }else if(vista === "alertas"){
         cargarMapaAlertas();
     }else if(vista === "analisis-temporal"){
@@ -1674,8 +2094,14 @@ function reiniciarVista(){
     filtros.provincia.value = "";
     filtros.distrito.value = "";
     filtros.delito.value = "";
+    filtroRegionPolicial.value = "";
+    filtroComisariaPolicial.value = "";
+    if(policialCargado) llenarComisariasPoliciales();
     actualizarDashboard(true);
     mapa.setView(vistaPeru.centro, vistaPeru.zoom);
+    if(vistaActual === "regiones-policiales" && policialCargado){
+        renderMapaPolicial();
+    }
 }
 
 Object.values(filtros).forEach((select) => {
@@ -1697,6 +2123,15 @@ Object.values(filtros).forEach((select) => {
             await cargarDatosMapaCalorTerritorio();
             renderMapaCalor();
             renderLimitesMapaCalorDesdeFiltros();
+        }else if(vistaActual === "regiones-policiales"){
+            if(filtros.delito.value){
+                if(filtros.anio.value){
+                    await cargarModalidadesPolicialesMensuales(filtros.anio.value);
+                }else{
+                    await cargarModalidadesPolicialesGenerales();
+                }
+            }
+            renderMapaPolicial();
         }else if(vistaActual === "alertas"){
             renderMapaAlertas();
         }else if(vistaActual === "analisis-temporal" && analiticaTemporalCargada){
@@ -1729,6 +2164,23 @@ document.getElementById("btnAlertasPeru").addEventListener("click", () => {
     renderMapaAlertas();
     mapaAlertas.setView(vistaPeru.centro, vistaPeru.zoom);
 });
+
+document.getElementById("btnPolicialPeru").addEventListener("click", () => {
+    if(!mapaPolicial) return;
+    filtroRegionPolicial.value = "";
+    filtroComisariaPolicial.value = "";
+    llenarComisariasPoliciales();
+    renderMapaPolicial();
+    mapaPolicial.setView(vistaPeru.centro, vistaPeru.zoom);
+});
+
+filtroRegionPolicial.addEventListener("change", () => {
+    filtroComisariaPolicial.value = "";
+    llenarComisariasPoliciales();
+    renderMapaPolicial();
+});
+
+filtroComisariaPolicial.addEventListener("change", () => renderMapaPolicial());
 
 document.getElementById("btnExportarTemporal").addEventListener("click", () => window.print());
 document.getElementById("btnExportarExcelTemporal").addEventListener("click", () => {

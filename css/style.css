@@ -352,6 +352,183 @@ button:hover{
     background: #0a1016;
 }
 
+#mapaPolicial{
+    width: 100%;
+    min-height: 660px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0a1016;
+}
+
+.police-map-layout{
+    grid-template-columns: minmax(0, 1fr) 330px;
+}
+
+.police-summary{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.police-summary-heading{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.police-summary-heading span,
+.police-ranking-heading span{
+    color: var(--gold);
+    font-size: .72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.police-summary-heading h3{
+    margin: 4px 0 10px;
+}
+
+.police-summary-heading > i{
+    color: var(--gold);
+    font-size: 1.2rem;
+}
+
+.police-selectors{
+    display: grid;
+    gap: 10px;
+    margin: 16px 0;
+}
+
+.police-selectors label{
+    display: grid;
+    gap: 6px;
+}
+
+.police-selectors label > span{
+    color: var(--muted);
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.police-selectors select{
+    width: 100%;
+    min-height: 40px;
+    padding: 0 10px;
+    color: var(--text);
+    background: #182028;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+}
+
+.police-metrics{
+    display: grid;
+    gap: 8px;
+}
+
+.police-metrics div{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 48px;
+    padding: 10px 12px;
+    background: #151e27;
+    border-left: 3px solid #25c19f;
+}
+
+.police-metrics div:last-child{
+    border-left-color: #e65f5c;
+}
+
+.police-metrics strong{
+    color: var(--gold);
+    font-size: 1.08rem;
+}
+
+.police-metrics span{
+    color: var(--muted);
+    font-size: .68rem;
+    text-align: right;
+    text-transform: uppercase;
+}
+
+.police-ranking-heading{
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 18px 0 9px;
+}
+
+.police-ranking-heading small{
+    font-size: .66rem;
+    text-align: right;
+}
+
+.police-ranking{
+    display: grid;
+    gap: 6px;
+    max-height: 286px;
+    overflow-y: auto;
+}
+
+.police-ranking-row{
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    min-height: 46px;
+    padding: 7px 9px;
+    color: var(--text);
+    background: #151e27;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    text-align: left;
+}
+
+.police-ranking-row:hover,
+.police-ranking-row.active{
+    transform: none;
+    filter: none;
+    border-color: var(--gold);
+    background: #1a2530;
+}
+
+.police-ranking-row b{
+    color: var(--gold);
+    font-size: .75rem;
+}
+
+.police-ranking-row span{
+    min-width: 0;
+    overflow: hidden;
+    font-size: .76rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.police-ranking-row strong{
+    font-size: .76rem;
+}
+
+.police-station-marker{
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    color: #0c151d;
+    background: var(--gold);
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 3px 10px rgba(0,0,0,.45);
+    font-size: 9px;
+}
+
 .alert-priority-panel{
     display: flex;
     flex-direction: column;
@@ -806,7 +983,8 @@ tbody tr:hover{
 
     #mapa,
     #mapaCalor,
-    #mapaAlertas{
+    #mapaAlertas,
+    #mapaPolicial{
         min-height: 560px;
     }
 
@@ -885,7 +1063,8 @@ tbody tr:hover{
 
     #mapa,
     #mapaCalor,
-    #mapaAlertas{
+    #mapaAlertas,
+    #mapaPolicial{
         min-height: 430px;
     }
 }

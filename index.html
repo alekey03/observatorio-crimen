@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Observatorio del Crimen - COMOPPOL PNP</title>
 
-    <link rel="stylesheet" href="css/style.css?v=20260630-3">
+    <link rel="stylesheet" href="css/style.css?v=20260630-4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="css/public.css?v=1">
@@ -28,6 +28,7 @@
                 <li class="active" data-view="inicio"><i class="fas fa-house"></i><span>Inicio</span></li>
                 <li data-view="dashboard"><i class="fas fa-chart-column"></i><span>Dashboard</span></li>
                 <li data-view="mapa-delito"><i class="fas fa-map"></i><span>Mapa del delito</span></li>
+                <li data-view="regiones-policiales"><i class="fas fa-building-shield"></i><span>Regiones policiales</span></li>
                 <li data-view="mapa-calor"><i class="fas fa-fire-flame-curved"></i><span>Mapa de calor</span></li>
                 <li data-view="analisis-temporal"><i class="fas fa-clock-rotate-left"></i><span>Analisis temporal</span></li>
                 <li data-view="estadisticas"><i class="fas fa-chart-line"></i><span>Estadisticas</span></li>
@@ -247,6 +248,60 @@
                         <span></span>
                     </div>
                     <small>Mayor intensidad indica mayor número de casos filtrados.</small>
+                </aside>
+            </div>
+        </section>
+
+        <section class="map-section police-section view-section is-hidden" data-section="regiones-policiales">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Organizacion territorial policial</p>
+                    <h2>Regiones policiales y comisarias</h2>
+                </div>
+                <button id="btnPolicialPeru" type="button">
+                    <i class="fas fa-rotate-left"></i>
+                    <span>Volver a regiones</span>
+                </button>
+            </div>
+
+            <div class="map-layout police-map-layout">
+                <div id="mapaPolicial" aria-label="Mapa de regiones policiales y jurisdicciones de comisarias"></div>
+                <aside class="map-summary police-summary">
+                    <div class="police-summary-heading">
+                        <div>
+                            <span id="policialNivel">Cobertura nacional</span>
+                            <h3 id="policialTitulo">Regiones policiales</h3>
+                        </div>
+                        <i class="fas fa-shield-halved"></i>
+                    </div>
+                    <p id="policialEstado">Abre esta pestaña para analizar la carga policial.</p>
+
+                    <div class="police-selectors">
+                        <label>
+                            <span>Region policial</span>
+                            <select id="filtroRegionPolicial">
+                                <option value="">Todas las regiones</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Comisaria</span>
+                            <select id="filtroComisariaPolicial" disabled>
+                                <option value="">Todas las comisarias</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="police-metrics">
+                        <div><strong id="policialTotal">0</strong><span>denuncias unicas</span></div>
+                        <div><strong id="policialComisarias">0</strong><span>comisarias con casos</span></div>
+                        <div><strong id="policialSinMapa">0</strong><span>denuncias sin cartografia</span></div>
+                    </div>
+
+                    <div class="police-ranking-heading">
+                        <span>Mayor carga por comisaria</span>
+                        <small id="policialPeriodo">Todos los periodos</small>
+                    </div>
+                    <div id="rankingComisarias" class="police-ranking"></div>
                 </aside>
             </div>
         </section>
@@ -493,7 +548,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="js/app.js?v=20260630-1"></script>
+    <script src="js/app.js?v=20260630-2"></script>
 </body>
 </html>
 
