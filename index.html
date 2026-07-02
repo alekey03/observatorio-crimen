@@ -28,7 +28,8 @@
                 <li class="active" data-view="inicio"><i class="fas fa-house"></i><span>Inicio</span></li>
                 <li data-view="dashboard"><i class="fas fa-chart-column"></i><span>Dashboard</span></li>
                 <li data-view="mapa-delito"><i class="fas fa-map"></i><span>Mapa del delito</span></li>
-                <li data-view="regiones-policiales"><i class="fas fa-building-shield"></i><span>Regiones policiales</span></li>
+                <li data-view="denuncias-comisaria"><i class="fas fa-building-shield"></i><span>Denuncias por comisaria</span></li>
+                <li data-view="hechos-jurisdiccion"><i class="fas fa-location-crosshairs"></i><span>Hechos por jurisdiccion</span></li>
                 <li data-view="mapa-calor"><i class="fas fa-fire-flame-curved"></i><span>Mapa de calor</span></li>
                 <li data-view="analisis-temporal"><i class="fas fa-clock-rotate-left"></i><span>Analisis temporal</span></li>
                 <li data-view="estadisticas"><i class="fas fa-chart-line"></i><span>Estadisticas</span></li>
@@ -255,8 +256,8 @@
         <section class="map-section police-section view-section is-hidden" data-section="regiones-policiales">
             <div class="section-header">
                 <div>
-                    <p class="eyebrow">Organizacion territorial policial</p>
-                    <h2>Regiones policiales y comisarias</h2>
+                    <p id="policialEyebrow" class="eyebrow">Registro territorial policial</p>
+                    <h2 id="policialHeading">Denuncias registradas por comisaria</h2>
                 </div>
                 <button id="btnPolicialPeru" type="button">
                     <i class="fas fa-rotate-left"></i>
@@ -265,12 +266,12 @@
             </div>
 
             <div class="map-layout police-map-layout">
-                <div id="mapaPolicial" aria-label="Mapa de regiones policiales y jurisdicciones de comisarias"></div>
+                <div id="mapaPolicial" aria-label="Mapa de organizaciones territoriales policiales y jurisdicciones de comisarias"></div>
                 <aside class="map-summary police-summary">
                     <div class="police-summary-heading">
                         <div>
                             <span id="policialNivel">Cobertura nacional</span>
-                            <h3 id="policialTitulo">Regiones policiales</h3>
+                            <h3 id="policialTitulo">Organizaciones territoriales</h3>
                         </div>
                         <i class="fas fa-shield-halved"></i>
                     </div>
@@ -278,9 +279,9 @@
 
                     <div class="police-selectors">
                         <label>
-                            <span>Region policial</span>
+                            <span>Organizacion territorial</span>
                             <select id="filtroRegionPolicial">
-                                <option value="">Todas las regiones</option>
+                                <option value="">Todas las organizaciones</option>
                             </select>
                         </label>
                         <label>
@@ -292,13 +293,13 @@
                     </div>
 
                     <div class="police-metrics">
-                        <div><strong id="policialTotal">0</strong><span>denuncias unicas</span></div>
-                        <div><strong id="policialComisarias">0</strong><span>comisarias con casos</span></div>
-                        <div><strong id="policialSinMapa">0</strong><span>denuncias sin cartografia</span></div>
+                        <div><strong id="policialTotal">0</strong><span id="policialTotalLabel">denuncias registradas</span></div>
+                        <div><strong id="policialComisarias">0</strong><span id="policialComisariasLabel">comisarias con registros</span></div>
+                        <div><strong id="policialSinMapa">0</strong><span id="policialSinMapaLabel">denuncias sin cartografia</span></div>
                     </div>
 
                     <div class="police-ranking-heading">
-                        <span>Mayor carga por comisaria</span>
+                        <span id="policialRankingLabel">Mayor carga por comisaria</span>
                         <small id="policialPeriodo">Todos los periodos</small>
                     </div>
                     <div id="rankingComisarias" class="police-ranking"></div>

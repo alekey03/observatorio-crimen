@@ -53,6 +53,15 @@ let modalidadesPolicialesCargadas = false;
 let cargaModalidadesPolicialesPromise = null;
 let datosPolicialesMensuales = [];
 let anioPolicialMensual = "";
+let datosJurisdiccionResumen = [];
+let datosJurisdiccionModalidades = [];
+let modalidadesJurisdiccionCargadas = false;
+let cargaModalidadesJurisdiccionPromise = null;
+let datosJurisdiccionMensuales = [];
+let anioJurisdiccionMensual = "";
+let jurisdiccionCargada = false;
+let cargaJurisdiccionPromise = null;
+let modoPolicial = "registro";
 let policialCargado = false;
 let cargaPolicialPromise = null;
 let datosPersonasTemporal = [];
@@ -115,6 +124,12 @@ const policialComisarias = document.getElementById("policialComisarias");
 const policialSinMapa = document.getElementById("policialSinMapa");
 const policialPeriodo = document.getElementById("policialPeriodo");
 const rankingComisarias = document.getElementById("rankingComisarias");
+const policialEyebrow = document.getElementById("policialEyebrow");
+const policialHeading = document.getElementById("policialHeading");
+const policialTotalLabel = document.getElementById("policialTotalLabel");
+const policialComisariasLabel = document.getElementById("policialComisariasLabel");
+const policialSinMapaLabel = document.getElementById("policialSinMapaLabel");
+const policialRankingLabel = document.getElementById("policialRankingLabel");
 const graficoTemporalComparado = document.getElementById("graficoTemporalComparado");
 const modalidadesTemporales = document.getElementById("modalidadesTemporales");
 const incidenciaHoraria = document.getElementById("incidenciaHoraria");
@@ -1747,6 +1762,79 @@ function cargarModalidadesPolicialesGenerales(){
     return cargaModalidadesPolicialesPromise;
 }
 
+function cargarDatosJurisdiccion(){
+    if(jurisdiccionCargada) return Promise.resolve(datosJurisdiccionResumen);
+    if(cargaJurisdiccionPromise) return cargaJurisdiccionPromise;
+    policialEstado.textContent = "Cargando hechos por jurisdiccion policial...";
+    cargaJurisdiccionPromise = cargarJson("data/api/jurisdiccion/resumen.json")
+        .then((datos) => {
+            datosJurisdiccionResumen = datos.map(normalizarFilaPolicial);
+            jurisdiccionCargada = true;
+            return datosJurisdiccionResumen;
+        })
+        .finally(() => {
+            cargaJurisdiccionPromise = null;
+        });
+    return cargaJurisdiccionPromise;
+}
+
+function cargarModalidadesJurisdiccionGenerales(){
+    if(modalidadesJurisdiccionCargadas) return Promise.resolve(datosJurisdiccionModalidades);
+    if(cargaModalidadesJurisdiccionPromise) return cargaModalidadesJurisdiccionPromise;
+    policialEstado.textContent = "Cargando modalidades por jurisdiccion...";
+    cargaModalidadesJurisdiccionPromise = cargarJson("data/api/jurisdiccion/modalidades.json")
+        .then((datos) => {
+            datosJurisdiccionModalidades = datos.map(normalizarFilaPolicial);
+            modalidadesJurisdiccionCargadas = true;
+            return datosJurisdiccionModalidades;
+        })
+        .finally(() => {
+            cargaModalidadesJurisdiccionPromise = null;
+        });
+    return cargaModalidadesJurisdiccionPromise;
+}
+
+function cargarModalidadesJurisdiccionMensuales(anio){
+    if(!anio) return Promise.resolve([]);
+    if(anioJurisdiccionMensual === anio && datosJurisdiccionMensuales.length){
+        return Promise.resolve(datosJurisdiccionMensuales);
+    }
+    return cargarJson(`data/api/jurisdiccion/modalidades_mensuales/${encodeURIComponent(anio)}.json`)
+        .then((datos) => {
+            datosJurisdiccionMensuales = datos.map(normalizarFilaPolicial);
+            anioJurisdiccionMensual = anio;
+            return datosJurisdiccionMensuales;
+        })
+        .catch((error) => {
+            console.error(error);
+            datosJurisdiccionMensuales = [];
+            anioJurisdiccionMensual = "";
+            return [];
+        });
+}
+
+function configurarModoPolicial(){
+    const esHecho = modoPolicial === "hecho";
+    policialEyebrow.textContent = esHecho ? "Georreferenciacion operativa" : "Registro territorial policial";
+    policialHeading.textContent = esHecho ? "Hechos ocurridos por jurisdiccion" : "Denuncias registradas por comisaria";
+    policialTotalLabel.textContent = esHecho ? "hechos georreferenciados" : "denuncias registradas";
+    policialComisariasLabel.textContent = esHecho ? "jurisdicciones con hechos" : "comisarias con registros";
+    policialSinMapaLabel.textContent = esHecho ? "hechos sin jurisdiccion" : "denuncias sin cartografia";
+    policialRankingLabel.textContent = esHecho ? "Mayor incidencia por jurisdiccion" : "Mayor carga por comisaria";
+}
+
+function cargarModalidadesModoPolicial(){
+    if(!filtros.delito.value) return Promise.resolve();
+    if(modoPolicial === "hecho"){
+        return filtros.anio.value
+            ? cargarModalidadesJurisdiccionMensuales(filtros.anio.value)
+            : cargarModalidadesJurisdiccionGenerales();
+    }
+    return filtros.anio.value
+        ? cargarModalidadesPolicialesMensuales(filtros.anio.value)
+        : cargarModalidadesPolicialesGenerales();
+}
+
 function cargarDatosPoliciales(){
     if(policialCargado) return Promise.resolve();
     if(cargaPolicialPromise) return cargaPolicialPromise;
@@ -1778,7 +1866,7 @@ function llenarRegionesPoliciales(){
             .filter(Boolean)
     )].sort((a, b) => a.localeCompare(b, "es"));
     filtroRegionPolicial.innerHTML = "";
-    filtroRegionPolicial.appendChild(new Option("Todas las regiones", ""));
+    filtroRegionPolicial.appendChild(new Option("Todas las organizaciones", ""));
     regiones.forEach((region) => filtroRegionPolicial.appendChild(new Option(region, region)));
     filtroRegionPolicial.value = regiones.includes(actual) ? actual : "";
     llenarComisariasPoliciales();
@@ -1803,6 +1891,11 @@ function llenarComisariasPoliciales(){
 }
 
 function fuentePolicialActual(){
+    if(modoPolicial === "hecho"){
+        if(!filtros.delito.value) return datosJurisdiccionResumen;
+        if(filtros.anio.value) return datosJurisdiccionMensuales;
+        return datosJurisdiccionModalidades;
+    }
     if(!filtros.delito.value) return datosPolicialesResumen;
     if(filtros.anio.value) return datosPolicialesMensuales;
     return datosPolicialesModalidades;
@@ -1868,6 +1961,11 @@ function renderPanelPolicial(datos, capasPorComisaria){
         datos,
         (fila) => normalizarComisariaPolicial(fila.COMISARIA)
     );
+    const fuentePorComisaria = new Map();
+    datos.forEach((fila) => {
+        const clave = normalizarComisariaPolicial(fila.COMISARIA);
+        if(clave && !fuentePorComisaria.has(clave)) fuentePorComisaria.set(clave, fila);
+    });
     const catalogo = new Map();
     geoJurisdiccionesPoliciales.features.forEach((feature) => {
         const propiedades = feature.properties;
@@ -1876,7 +1974,7 @@ function renderPanelPolicial(datos, capasPorComisaria){
     });
 
     const filas = Object.entries(resumenComisarias).map(([claveComisaria, casos]) => {
-        const filaFuente = datos.find((fila) => normalizarComisariaPolicial(fila.COMISARIA) === claveComisaria);
+        const filaFuente = fuentePorComisaria.get(claveComisaria);
         const claveMapa = `${normalizarRegionPolicial(filaFuente?.REGION)}|${claveComisaria}`;
         return {
             clave: claveComisaria,
@@ -1887,10 +1985,16 @@ function renderPanelPolicial(datos, capasPorComisaria){
     }).sort((a, b) => b.casos - a.casos);
 
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
-    const sinMapa = filas.filter((fila) => !fila.mapeada).reduce((suma, fila) => suma + fila.casos, 0);
+    const sinMapa = modoPolicial === "hecho"
+        ? datos
+            .filter((fila) => normalizarRegionPolicial(fila.REGION) === "SIN JURISDICCION")
+            .reduce((suma, fila) => suma + obtenerCasos(fila), 0)
+        : filas.filter((fila) => !fila.mapeada).reduce((suma, fila) => suma + fila.casos, 0);
     const seleccion = normalizarComisariaPolicial(filtroComisariaPolicial.value);
     policialTotal.textContent = formatear(total);
-    policialComisarias.textContent = formatear(filas.length);
+    policialComisarias.textContent = formatear(
+        modoPolicial === "hecho" ? filas.filter((fila) => fila.mapeada).length : filas.length
+    );
     policialSinMapa.textContent = formatear(sinMapa);
     policialPeriodo.textContent = periodoPolicialActivo();
 
@@ -1923,6 +2027,11 @@ function renderMapaPolicial(boundsEnfoque = null){
 
     if(!region){
         const resumenRegiones = resumirDatosPoliciales(datos, (fila) => normalizarRegionPolicial(fila.REGION));
+        const regionesCartografiadas = new Set(
+            geoRegionesPoliciales.features.map((feature) => normalizarRegionPolicial(feature.properties.regionpol))
+        );
+        const regionesEvaluadas = Object.entries(resumenRegiones)
+            .filter(([nombre, casos]) => casos > 0 && regionesCartografiadas.has(nombre)).length;
         const maximo = Math.max(...Object.values(resumenRegiones), 0);
         capaRegionesPoliciales = L.geoJSON(geoRegionesPoliciales, {
             style: (feature) => {
@@ -1933,7 +2042,7 @@ function renderMapaPolicial(boundsEnfoque = null){
             onEachFeature: (feature, layer) => {
                 const nombre = feature.properties.regionpol;
                 const casos = resumenRegiones[normalizarRegionPolicial(nombre)] || 0;
-                layer.bindTooltip(`<strong>${escaparHtml(nombre)}</strong><br>${formatear(casos)} denuncias`);
+                layer.bindTooltip(`<strong>${escaparHtml(nombre)}</strong><br>${formatear(casos)} ${modoPolicial === "hecho" ? "hechos" : "denuncias"}`);
                 layer.on({
                     mouseover: (event) => event.target.setStyle({ weight: 3, fillOpacity: casos ? .62 : .08 }),
                     mouseout: () => capaRegionesPoliciales.resetStyle(layer),
@@ -1942,8 +2051,8 @@ function renderMapaPolicial(boundsEnfoque = null){
             }
         }).addTo(mapaPolicial);
         policialNivel.textContent = "Cobertura nacional";
-        policialTitulo.textContent = "Regiones policiales";
-        policialEstado.textContent = `${formatear(Object.keys(resumenRegiones).length)} regiones evaluadas con los filtros activos.`;
+        policialTitulo.textContent = "Regiones y Frente Policial VRAEM";
+        policialEstado.textContent = `${formatear(regionesEvaluadas)} organizaciones territoriales evaluadas con los filtros activos.`;
         renderPanelPolicial(datos, capasPorComisaria);
         mapaPolicial.fitBounds(capaRegionesPoliciales.getBounds(), { padding: [20, 20] });
         setTimeout(() => mapaPolicial.invalidateSize(), 80);
@@ -1974,7 +2083,7 @@ function renderMapaPolicial(boundsEnfoque = null){
             const clave = normalizarComisariaPolicial(nombre);
             const casos = resumenComisarias[clave] || 0;
             capasPorComisaria[clave] = layer;
-            layer.bindTooltip(`<strong>${escaparHtml(nombre)}</strong><br>${formatear(casos)} denuncias`);
+            layer.bindTooltip(`<strong>${escaparHtml(nombre)}</strong><br>${formatear(casos)} ${modoPolicial === "hecho" ? "hechos" : "denuncias"}`);
             layer.on({
                 mouseover: (event) => event.target.setStyle({ weight: 3, fillOpacity: casos ? .66 : .08 }),
                 mouseout: () => capaJurisdiccionesPoliciales.resetStyle(layer),
@@ -1998,7 +2107,7 @@ function renderMapaPolicial(boundsEnfoque = null){
             iconAnchor: [10, 10]
         });
         const marker = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], { icon });
-        marker.bindTooltip(`<strong>${escaparHtml(nombre)}</strong><br>${formatear(casos)} denuncias`);
+        marker.bindTooltip(`<strong>${escaparHtml(nombre)}</strong><br>${formatear(casos)} ${modoPolicial === "hecho" ? "hechos" : "denuncias"}`);
         marker.on("click", () => {
             const layer = capasPorComisaria[normalizarComisariaPolicial(nombre)];
             seleccionarComisariaPolicial(nombre, layer ? layer.getBounds() : null);
@@ -2007,9 +2116,11 @@ function renderMapaPolicial(boundsEnfoque = null){
     });
     marcadoresComisariasPoliciales.addTo(mapaPolicial);
 
-    policialNivel.textContent = "Region policial";
+    policialNivel.textContent = filtroRegionPolicial.value === "FRENTE POLICIAL VRAEM"
+        ? "Frente policial"
+        : "Region policial";
     policialTitulo.textContent = filtroRegionPolicial.value;
-    policialEstado.textContent = `${formatear(Object.keys(resumenComisarias).length)} comisarias evaluadas con los filtros activos.`;
+    policialEstado.textContent = `${formatear(Object.keys(resumenComisarias).length)} ${modoPolicial === "hecho" ? "jurisdicciones" : "comisarias"} evaluadas con los filtros activos.`;
     renderPanelPolicial(datos, capasPorComisaria);
 
     const activa = capasPorComisaria[comisariaSeleccionada];
@@ -2022,13 +2133,8 @@ async function cargarMapaPolicial(){
     inicializarMapaPolicial();
     try{
         await cargarDatosPoliciales();
-        if(filtros.delito.value){
-            if(filtros.anio.value){
-                await cargarModalidadesPolicialesMensuales(filtros.anio.value);
-            }else{
-                await cargarModalidadesPolicialesGenerales();
-            }
-        }
+        if(modoPolicial === "hecho") await cargarDatosJurisdiccion();
+        await cargarModalidadesModoPolicial();
         renderMapaPolicial();
     }catch(error){
         policialEstado.textContent = "No se pudo cargar la informacion policial.";
@@ -2038,6 +2144,11 @@ async function cargarMapaPolicial(){
 
 function activarVista(vista){
     vistaActual = vista;
+    const vistaPolicial = ["denuncias-comisaria", "hechos-jurisdiccion"].includes(vista);
+    if(vistaPolicial){
+        modoPolicial = vista === "hechos-jurisdiccion" ? "hecho" : "registro";
+        configurarModoPolicial();
+    }
     menuItems.forEach((item) => item.classList.toggle("active", item.dataset.view === vista));
 
     const mostrarMapaDelito = ["inicio", "dashboard", "mapa-delito"].includes(vista);
@@ -2050,7 +2161,7 @@ function activarVista(vista){
         const visible =
             (nombre === "mapa-delito" && mostrarMapaDelito) ||
             (nombre === "mapa-calor" && vista === "mapa-calor") ||
-            (nombre === "regiones-policiales" && vista === "regiones-policiales") ||
+            (nombre === "regiones-policiales" && vistaPolicial) ||
             (nombre === "mapa-alertas" && vista === "alertas") ||
             (nombre === "analisis-temporal" && vista === "analisis-temporal") ||
             (nombre === "executive" && mostrarEjecutivo) ||
@@ -2062,7 +2173,7 @@ function activarVista(vista){
 
     if(vista === "mapa-calor"){
         cargarMapaCalor();
-    }else if(vista === "regiones-policiales"){
+    }else if(vistaPolicial){
         cargarMapaPolicial();
     }else if(vista === "alertas"){
         cargarMapaAlertas();
@@ -2099,7 +2210,7 @@ function reiniciarVista(){
     if(policialCargado) llenarComisariasPoliciales();
     actualizarDashboard(true);
     mapa.setView(vistaPeru.centro, vistaPeru.zoom);
-    if(vistaActual === "regiones-policiales" && policialCargado){
+    if(["denuncias-comisaria", "hechos-jurisdiccion"].includes(vistaActual) && policialCargado){
         renderMapaPolicial();
     }
 }
@@ -2123,14 +2234,8 @@ Object.values(filtros).forEach((select) => {
             await cargarDatosMapaCalorTerritorio();
             renderMapaCalor();
             renderLimitesMapaCalorDesdeFiltros();
-        }else if(vistaActual === "regiones-policiales"){
-            if(filtros.delito.value){
-                if(filtros.anio.value){
-                    await cargarModalidadesPolicialesMensuales(filtros.anio.value);
-                }else{
-                    await cargarModalidadesPolicialesGenerales();
-                }
-            }
+        }else if(["denuncias-comisaria", "hechos-jurisdiccion"].includes(vistaActual)){
+            await cargarModalidadesModoPolicial();
             renderMapaPolicial();
         }else if(vistaActual === "alertas"){
             renderMapaAlertas();
