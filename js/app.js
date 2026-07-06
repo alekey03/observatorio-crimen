@@ -494,7 +494,7 @@ function buscarValorSelect(select, valor){
 
 function actualizarIndicadores(){
     const datos = obtenerDatosFiltrados();
-    const datosModalidades = obtenerDatosFiltrados("delito", fuenteModalidadesActual());
+    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
     const extorsiones = totalPorCoincidencia(datosModalidades, "EXTORSION");
     const homicidios = totalPorCoincidencia(datosModalidades, "HOMICIDIO");
@@ -508,7 +508,7 @@ function actualizarIndicadores(){
 
 function renderResumenEjecutivo(){
     const datos = obtenerDatosFiltrados();
-    const datosModalidades = obtenerDatosFiltrados("delito", fuenteModalidadesActual());
+    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
     const campo = campoRankingTerritorial();
     const territorios = topAgrupado(datos, (fila) => fila[campo], 1000);
@@ -831,7 +831,7 @@ function renderTabla(){
 
 function actualizarAnalitica(){
     const datos = obtenerDatosFiltrados();
-    const datosModalidades = obtenerDatosFiltrados("delito", fuenteModalidadesActual());
+    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
     const modalidades = topAgrupado(datosModalidades, (fila) => fila.MODALIDAD, 8);
     const ranking = topAgrupado(datos, (fila) => fila[campoRankingTerritorial()], 8);
     const hotspots = topAgrupado(datos, (fila) => {
@@ -953,7 +953,7 @@ function renderMatrizTemporal(territorios, total){
 
 function renderAnaliticaTemporal(){
     const datos = obtenerDatosFiltrados();
-    const datosModalidades = obtenerDatosFiltrados("delito", fuenteModalidadesActual());
+    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
     const territorios = topAgrupado(datos, (fila) => fila[campoRankingTerritorial()], 30);
     const personas = filtrarPeriodoTemporal(datosPersonasTemporal);
