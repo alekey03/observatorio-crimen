@@ -2073,10 +2073,31 @@ function renderMapaPolicial(boundsEnfoque = null){
     }
 
     const resumenComisarias = resumirDatosPoliciales(datos, (fila) => normalizarComisariaPolicial(fila.COMISARIA));
+    const casosAgrupadosRegion = modoPolicial === "hecho"
+        ? (resumenComisarias["OTRAS JURISDICCIONES"] || 0)
+        : 0;
     const maximo = Math.max(...Object.values(resumenComisarias), 0);
     const features = geoJurisdiccionesPoliciales.features.filter((feature) =>
         normalizarRegionPolicial(feature.properties.regionpol) === region
     );
+
+    if(casosAgrupadosRegion){
+        const regionSeleccionada = geoRegionesPoliciales.features.filter((feature) =>
+            normalizarRegionPolicial(feature.properties.regionpol) === region
+        );
+        capaRegionesPoliciales = L.geoJSON(
+            { type: "FeatureCollection", features: regionSeleccionada },
+            {
+                interactive: false,
+                style: {
+                    color: "#f1c84b",
+                    weight: 2,
+                    fillColor: "#f1c84b",
+                    fillOpacity: .24
+                }
+            }
+        ).addTo(mapaPolicial);
+    }
 
     capaJurisdiccionesPoliciales = L.geoJSON({ type: "FeatureCollection", features }, {
         style: (feature) => {
