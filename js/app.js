@@ -1985,6 +1985,11 @@ function renderPanelPolicial(datos, capasPorComisaria){
     }).sort((a, b) => b.casos - a.casos);
 
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
+    const agrupadosPrivacidad = modoPolicial === "hecho"
+        ? datos
+            .filter((fila) => normalizarComisariaPolicial(fila.COMISARIA) === "OTRAS JURISDICCIONES")
+            .reduce((suma, fila) => suma + obtenerCasos(fila), 0)
+        : 0;
     const sinMapa = modoPolicial === "hecho"
         ? datos
             .filter((fila) => normalizarRegionPolicial(fila.REGION) === "SIN JURISDICCION")
@@ -1995,7 +2000,15 @@ function renderPanelPolicial(datos, capasPorComisaria){
     policialComisarias.textContent = formatear(
         modoPolicial === "hecho" ? filas.filter((fila) => fila.mapeada).length : filas.length
     );
-    policialSinMapa.textContent = formatear(sinMapa);
+    policialSinMapa.textContent = formatear(agrupadosPrivacidad || sinMapa);
+    if(modoPolicial === "hecho"){
+        policialComisariasLabel.textContent = agrupadosPrivacidad
+            ? "jurisdicciones visibles"
+            : "jurisdicciones con hechos";
+        policialSinMapaLabel.textContent = agrupadosPrivacidad
+            ? "hechos agrupados por privacidad"
+            : "hechos sin jurisdiccion";
+    }
     policialPeriodo.textContent = periodoPolicialActivo();
 
     rankingComisarias.innerHTML = filas.slice(0, 12).map((fila, indice) => `
@@ -2120,7 +2133,15 @@ function renderMapaPolicial(boundsEnfoque = null){
         ? "Frente policial"
         : "Region policial";
     policialTitulo.textContent = filtroRegionPolicial.value;
-    policialEstado.textContent = `${formatear(Object.keys(resumenComisarias).length)} ${modoPolicial === "hecho" ? "jurisdicciones" : "comisarias"} evaluadas con los filtros activos.`;
+    const claveAgrupada = modoPolicial === "hecho" ? "OTRAS JURISDICCIONES" : "OTRAS COMISARIAS";
+    const nombreUnidad = modoPolicial === "hecho" ? "jurisdicciones" : "comisarias";
+    const nombreRegistro = modoPolicial === "hecho" ? "hechos" : "denuncias";
+    const unidadesVisibles = Object.keys(resumenComisarias)
+        .filter((clave) => clave !== claveAgrupada && clave !== "SIN JURISDICCION").length;
+    const casosAgrupados = resumenComisarias[claveAgrupada] || 0;
+    policialEstado.textContent = casosAgrupados
+        ? `${formatear(unidadesVisibles)} ${nombreUnidad} visibles. ${formatear(casosAgrupados)} ${nombreRegistro} agrupados por privacidad.`
+        : `${formatear(unidadesVisibles)} ${nombreUnidad} evaluadas con los filtros activos.`;
     renderPanelPolicial(datos, capasPorComisaria);
 
     const activa = capasPorComisaria[comisariaSeleccionada];
