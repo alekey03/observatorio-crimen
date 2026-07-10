@@ -1693,11 +1693,35 @@ function normalizarComisariaPolicial(valor){
     return equivalencias[texto] || texto;
 }
 
+function normalizarCodigoPolicial(valor){
+    const codigo = String(valor ?? "").trim().replace(/\.0$/, "").replace(/^0+/, "");
+    return codigo || "";
+}
+
+function claveFilaPolicial(fila){
+    const region = normalizarRegionPolicial(fila?.REGION);
+    const codigo = normalizarCodigoPolicial(fila?.ID_COMISARIA ?? fila?.COD_CPNP);
+    if(region && codigo) return `${region}|${codigo}`;
+    const comisaria = normalizarComisariaPolicial(fila?.COMISARIA);
+    return region && comisaria ? `${region}|${comisaria}` : comisaria;
+}
+
+function claveFeaturePolicial(feature){
+    const propiedades = feature?.properties || {};
+    const region = normalizarRegionPolicial(propiedades.regionpol);
+    const codigo = normalizarCodigoPolicial(propiedades.cod_cpnp);
+    if(region && codigo) return `${region}|${codigo}`;
+    const comisaria = normalizarComisariaPolicial(propiedades.comisaria);
+    return region && comisaria ? `${region}|${comisaria}` : comisaria;
+}
+
 function normalizarFilaPolicial(fila){
     return {
         ...fila,
         ANIO: String(fila.ANIO || "").trim(),
         MES: String(fila.MES || "").trim(),
+        ID_COMISARIA: String(fila.ID_COMISARIA ?? fila.COD_CPNP ?? "").trim(),
+        COD_CPNP: String(fila.COD_CPNP ?? fila.ID_COMISARIA ?? "").trim(),
         REGION: String(fila.REGION || "").trim(),
         COMISARIA: String(fila.COMISARIA || "").trim(),
         MODALIDAD: String(fila.MODALIDAD || "").trim(),
@@ -1959,28 +1983,27 @@ function periodoPolicialActivo(){
 function renderPanelPolicial(datos, capasPorComisaria){
     const resumenComisarias = resumirDatosPoliciales(
         datos,
-        (fila) => normalizarComisariaPolicial(fila.COMISARIA)
+        (fila) => claveFilaPolicial(fila)
     );
     const fuentePorComisaria = new Map();
     datos.forEach((fila) => {
-        const clave = normalizarComisariaPolicial(fila.COMISARIA);
+        const clave = claveFilaPolicial(fila);
         if(clave && !fuentePorComisaria.has(clave)) fuentePorComisaria.set(clave, fila);
     });
     const catalogo = new Map();
     geoJurisdiccionesPoliciales.features.forEach((feature) => {
         const propiedades = feature.properties;
-        const clave = `${normalizarRegionPolicial(propiedades.regionpol)}|${normalizarComisariaPolicial(propiedades.comisaria)}`;
+        const clave = claveFeaturePolicial(feature);
         catalogo.set(clave, propiedades.comisaria);
     });
 
     const filas = Object.entries(resumenComisarias).map(([claveComisaria, casos]) => {
         const filaFuente = fuentePorComisaria.get(claveComisaria);
-        const claveMapa = `${normalizarRegionPolicial(filaFuente?.REGION)}|${claveComisaria}`;
         return {
             clave: claveComisaria,
-            nombre: catalogo.get(claveMapa) || filaFuente?.COMISARIA || claveComisaria,
+            nombre: catalogo.get(claveComisaria) || filaFuente?.COMISARIA || claveComisaria,
             casos,
-            mapeada: catalogo.has(claveMapa)
+            mapeada: catalogo.has(claveComisaria)
         };
     }).sort((a, b) => b.casos - a.casos);
 
@@ -2013,7 +2036,7 @@ function renderPanelPolicial(datos, capasPorComisaria){
 
     rankingComisarias.innerHTML = filas.slice(0, 12).map((fila, indice) => `
         <button class="police-ranking-row ${fila.clave === seleccion ? "active" : ""}" type="button"
-            data-comisaria="${escaparHtml(fila.nombre)}" ${fila.mapeada ? "" : "disabled"}
+            data-comisaria="${escaparHtml(fila.nombre)}" data-clave="${escaparHtml(fila.clave)}" ${fila.mapeada ? "" : "disabled"}
             title="${fila.mapeada ? "Ubicar comisaria" : "Sin jurisdiccion cartografica equivalente"}">
             <b>${indice + 1}</b>
             <span>${escaparHtml(fila.nombre)}</span>
@@ -2024,7 +2047,7 @@ function renderPanelPolicial(datos, capasPorComisaria){
     rankingComisarias.querySelectorAll("button:not(:disabled)").forEach((button) => {
         button.addEventListener("click", () => {
             const nombre = button.dataset.comisaria;
-            const layer = capasPorComisaria[normalizarComisariaPolicial(nombre)];
+            const layer = capasPorComisaria[button.dataset.clave] || capasPorComisaria[normalizarComisariaPolicial(nombre)];
             seleccionarComisariaPolicial(nombre, layer ? layer.getBounds() : null);
         });
     });
@@ -2076,9 +2099,9 @@ function renderMapaPolicial(boundsEnfoque = null){
         normalizarRegionPolicial(feature.properties.regionpol) === region
     );
     const clavesCartografiadasRegion = new Set(
-        features.map((feature) => normalizarComisariaPolicial(feature.properties.comisaria))
+        features.map((feature) => claveFeaturePolicial(feature))
     );
-    const resumenComisarias = resumirDatosPoliciales(datos, (fila) => normalizarComisariaPolicial(fila.COMISARIA));
+    const resumenComisarias = resumirDatosPoliciales(datos, (fila) => claveFilaPolicial(fila));
     const claveAgrupadaRegion = modoPolicial === "hecho" ? "OTRAS JURISDICCIONES" : "OTRAS COMISARIAS";
     const casosSinPoligonoRegion = Object.entries(resumenComisarias)
         .filter(([clave]) => clave && clave !== "SIN JURISDICCION" && !clavesCartografiadasRegion.has(clave))
@@ -2114,7 +2137,7 @@ function renderMapaPolicial(boundsEnfoque = null){
 
     capaJurisdiccionesPoliciales = L.geoJSON({ type: "FeatureCollection", features }, {
         style: (feature) => {
-            const clave = normalizarComisariaPolicial(feature.properties.comisaria);
+            const clave = claveFeaturePolicial(feature);
             const casos = resumenComisarias[clave] || 0;
             const color = colorCargaPolicial(casos, maximo);
             const activa = comisariaSeleccionada && clave === comisariaSeleccionada;
@@ -2127,9 +2150,10 @@ function renderMapaPolicial(boundsEnfoque = null){
         },
         onEachFeature: (feature, layer) => {
             const nombre = feature.properties.comisaria;
-            const clave = normalizarComisariaPolicial(nombre);
+            const clave = claveFeaturePolicial(feature);
             const casos = resumenComisarias[clave] || 0;
             capasPorComisaria[clave] = layer;
+            capasPorComisaria[normalizarComisariaPolicial(nombre)] = layer;
             layer.bindTooltip(`<strong>${escaparHtml(nombre)}</strong><br>${formatear(casos)} ${modoPolicial === "hecho" ? "hechos" : "denuncias"}`);
             layer.on({
                 mouseover: (event) => event.target.setStyle({ weight: 3, fillOpacity: casos ? .66 : .08 }),
@@ -2141,12 +2165,13 @@ function renderMapaPolicial(boundsEnfoque = null){
 
     const puntos = geoComisariasPoliciales.features.filter((feature) =>
         normalizarRegionPolicial(feature.properties.regionpol) === region &&
-        (resumenComisarias[normalizarComisariaPolicial(feature.properties.comisaria)] || 0) > 0
+        (resumenComisarias[claveFeaturePolicial(feature)] || 0) > 0
     );
     marcadoresComisariasPoliciales = L.layerGroup();
     puntos.forEach((feature) => {
         const nombre = feature.properties.comisaria;
-        const casos = resumenComisarias[normalizarComisariaPolicial(nombre)] || 0;
+        const clave = claveFeaturePolicial(feature);
+        const casos = resumenComisarias[clave] || 0;
         const icon = L.divIcon({
             className: "",
             html: '<span class="police-station-marker"><i class="fas fa-building-shield"></i></span>',
@@ -2156,7 +2181,7 @@ function renderMapaPolicial(boundsEnfoque = null){
         const marker = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], { icon });
         marker.bindTooltip(`<strong>${escaparHtml(nombre)}</strong><br>${formatear(casos)} ${modoPolicial === "hecho" ? "hechos" : "denuncias"}`);
         marker.on("click", () => {
-            const layer = capasPorComisaria[normalizarComisariaPolicial(nombre)];
+            const layer = capasPorComisaria[clave] || capasPorComisaria[normalizarComisariaPolicial(nombre)];
             seleccionarComisariaPolicial(nombre, layer ? layer.getBounds() : null);
         });
         marcadoresComisariasPoliciales.addLayer(marker);
