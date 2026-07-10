@@ -2072,14 +2072,21 @@ function renderMapaPolicial(boundsEnfoque = null){
         return;
     }
 
-    const resumenComisarias = resumirDatosPoliciales(datos, (fila) => normalizarComisariaPolicial(fila.COMISARIA));
-    const casosAgrupadosRegion = modoPolicial === "hecho"
-        ? (resumenComisarias["OTRAS JURISDICCIONES"] || 0)
-        : 0;
-    const maximo = Math.max(...Object.values(resumenComisarias), 0);
     const features = geoJurisdiccionesPoliciales.features.filter((feature) =>
         normalizarRegionPolicial(feature.properties.regionpol) === region
     );
+    const clavesCartografiadasRegion = new Set(
+        features.map((feature) => normalizarComisariaPolicial(feature.properties.comisaria))
+    );
+    const resumenComisarias = resumirDatosPoliciales(datos, (fila) => normalizarComisariaPolicial(fila.COMISARIA));
+    const claveAgrupadaRegion = modoPolicial === "hecho" ? "OTRAS JURISDICCIONES" : "OTRAS COMISARIAS";
+    const casosSinPoligonoRegion = Object.entries(resumenComisarias)
+        .filter(([clave]) => clave && clave !== "SIN JURISDICCION" && !clavesCartografiadasRegion.has(clave))
+        .reduce((suma, [, casos]) => suma + casos, 0);
+    const casosAgrupadosRegion = modoPolicial === "hecho"
+        ? (resumenComisarias["OTRAS JURISDICCIONES"] || 0)
+        : casosSinPoligonoRegion;
+    const maximo = Math.max(...Object.values(resumenComisarias), 0);
 
     if(casosAgrupadosRegion){
         const regionSeleccionada = geoRegionesPoliciales.features.filter((feature) =>
@@ -2088,12 +2095,18 @@ function renderMapaPolicial(boundsEnfoque = null){
         capaRegionesPoliciales = L.geoJSON(
             { type: "FeatureCollection", features: regionSeleccionada },
             {
-                interactive: false,
+                interactive: true,
                 style: {
                     color: "#f1c84b",
                     weight: 2,
                     fillColor: "#f1c84b",
                     fillOpacity: .24
+                },
+                onEachFeature: (feature, layer) => {
+                    layer.bindTooltip(
+                        `<strong>${escaparHtml(feature.properties.regionpol)}</strong><br>` +
+                        `${formatear(casosAgrupadosRegion)} ${modoPolicial === "hecho" ? "hechos" : "denuncias"} sin poligono propio`
+                    );
                 }
             }
         ).addTo(mapaPolicial);
@@ -2158,10 +2171,10 @@ function renderMapaPolicial(boundsEnfoque = null){
     const nombreUnidad = modoPolicial === "hecho" ? "jurisdicciones" : "comisarias";
     const nombreRegistro = modoPolicial === "hecho" ? "hechos" : "denuncias";
     const unidadesVisibles = Object.keys(resumenComisarias)
-        .filter((clave) => clave !== claveAgrupada && clave !== "SIN JURISDICCION").length;
-    const casosAgrupados = resumenComisarias[claveAgrupada] || 0;
+        .filter((clave) => clave !== claveAgrupada && clave !== "SIN JURISDICCION" && clavesCartografiadasRegion.has(clave)).length;
+    const casosAgrupados = casosAgrupadosRegion || (resumenComisarias[claveAgrupada] || 0);
     policialEstado.textContent = casosAgrupados
-        ? `${formatear(unidadesVisibles)} ${nombreUnidad} visibles. ${formatear(casosAgrupados)} ${nombreRegistro} agrupados por privacidad.`
+        ? `${formatear(unidadesVisibles)} ${nombreUnidad} visibles. ${formatear(casosAgrupados)} ${nombreRegistro} sin poligono propio.`
         : `${formatear(unidadesVisibles)} ${nombreUnidad} evaluadas con los filtros activos.`;
     renderPanelPolicial(datos, capasPorComisaria);
 
