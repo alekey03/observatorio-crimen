@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Observatorio del Crimen - COMOPPOL PNP</title>
 
-    <link rel="stylesheet" href="css/style.css?v=20260702-1">
+    <link rel="stylesheet" href="css/style.css?v=20260716-1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="css/public.css?v=1">
@@ -32,6 +32,7 @@
                 <li data-view="hechos-jurisdiccion"><i class="fas fa-location-crosshairs"></i><span>Hechos por jurisdiccion</span></li>
                 <li data-view="mapa-calor"><i class="fas fa-fire-flame-curved"></i><span>Mapa de calor</span></li>
                 <li data-view="analisis-temporal"><i class="fas fa-clock-rotate-left"></i><span>Analisis temporal</span></li>
+                <li data-view="analisis-predictivo"><i class="fas fa-arrow-trend-up"></i><span>Analisis predictivo</span></li>
                 <li data-view="estadisticas"><i class="fas fa-chart-line"></i><span>Estadisticas</span></li>
                 <li data-view="alertas"><i class="fas fa-triangle-exclamation"></i><span>Alertas</span></li>
                 <li data-view="reportes"><i class="fas fa-file-lines"></i><span>Reportes</span></li>
@@ -467,6 +468,97 @@
             </article>
         </section>
 
+        <section class="predictive-dashboard view-section is-hidden" data-section="analisis-predictivo" aria-label="Analisis predictivo del delito">
+            <div class="temporal-heading predictive-heading">
+                <div>
+                    <p class="eyebrow">Prospectiva delictiva</p>
+                    <h2>Analisis predictivo</h2>
+                    <p>Proyeccion de incidencia, tendencia esperada y patrones de riesgo para los proximos meses.</p>
+                </div>
+                <div class="predictive-controls">
+                    <label>
+                        <span>Horizonte</span>
+                        <select id="filtroHorizontePredictivo">
+                            <option value="3">3 meses</option>
+                            <option value="6" selected>6 meses</option>
+                            <option value="12">12 meses</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Escenario</span>
+                        <select id="filtroEscenarioPredictivo">
+                            <option value="probable" selected>Probable</option>
+                            <option value="conservador">Conservador</option>
+                            <option value="riesgo">Alto riesgo</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            <div class="predictive-layout">
+                <article class="analytics-panel predictive-main-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Proyeccion mensual</p>
+                            <h2>Tendencia historica y escenario futuro</h2>
+                        </div>
+                        <span id="predictivoPeriodo" class="panel-badge">Horizonte 6 meses</span>
+                    </div>
+                    <div id="graficoPredictivo" class="line-chart predictive-chart"></div>
+                </article>
+
+                <aside class="predictive-side">
+                    <article class="predictive-kpi risk">
+                        <i class="fas fa-shield-virus"></i>
+                        <span>Riesgo proyectado</span>
+                        <strong id="predictivoRiesgo">Sin datos</strong>
+                        <small id="predictivoRiesgoTexto">Ajuste los filtros para estimar el riesgo.</small>
+                    </article>
+                    <article class="predictive-kpi">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Variacion estimada</span>
+                        <strong id="predictivoVariacion">0%</strong>
+                        <small>Respecto al promedio reciente</small>
+                    </article>
+                    <article class="predictive-kpi">
+                        <i class="fas fa-calendar-days"></i>
+                        <span>Mes critico probable</span>
+                        <strong id="predictivoMesCritico">Sin datos</strong>
+                        <small>Mayor valor proyectado</small>
+                    </article>
+                    <article class="predictive-kpi confidence">
+                        <i class="fas fa-bullseye"></i>
+                        <span>Confianza estimada</span>
+                        <strong id="predictivoConfianza">0%</strong>
+                        <small>Segun volumen y estabilidad historica</small>
+                    </article>
+                </aside>
+            </div>
+
+            <div class="predictive-secondary-grid">
+                <article class="analytics-panel">
+                    <div class="panel-header">
+                        <div><p class="eyebrow">Patrones</p><h2>Matriz de riesgo por dia y hora</h2></div>
+                        <span class="panel-badge">Periodo filtrado</span>
+                    </div>
+                    <div id="predictivoMatrizHoraria" class="hourly-chart predictive-heat"></div>
+                </article>
+                <article class="analytics-panel">
+                    <div class="panel-header">
+                        <div><p class="eyebrow">Crecimiento esperado</p><h2>Jurisdicciones a vigilar</h2></div>
+                    </div>
+                    <div id="predictivoRanking" class="rank-list predictive-ranking"></div>
+                </article>
+                <article class="analytics-panel predictive-reading">
+                    <div class="panel-header">
+                        <div><p class="eyebrow">Lectura analitica</p><h2>Interpretacion operativa</h2></div>
+                        <i class="fas fa-brain panel-symbol"></i>
+                    </div>
+                    <div id="predictivoLectura" class="briefing-list"></div>
+                </article>
+            </div>
+        </section>
+
         <section class="analytics-grid view-section" data-section="analytics" aria-label="Analítica del delito">
             <article class="analytics-panel trend-panel">
                 <div class="panel-header">
@@ -549,7 +641,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="js/app.js?v=20260708-2"></script>
+    <script src="js/app.js?v=20260716-1"></script>
 </body>
 </html>
 

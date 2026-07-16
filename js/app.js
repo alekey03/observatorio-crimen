@@ -138,6 +138,18 @@ const distribucionSexo = document.getElementById("distribucionSexo");
 const matrizTemporal = document.getElementById("matrizTemporal");
 const tablaTemporal = document.getElementById("tablaTemporal");
 const timelineTemporal = document.getElementById("timelineTemporal");
+const filtroHorizontePredictivo = document.getElementById("filtroHorizontePredictivo");
+const filtroEscenarioPredictivo = document.getElementById("filtroEscenarioPredictivo");
+const graficoPredictivo = document.getElementById("graficoPredictivo");
+const predictivoPeriodo = document.getElementById("predictivoPeriodo");
+const predictivoRiesgo = document.getElementById("predictivoRiesgo");
+const predictivoRiesgoTexto = document.getElementById("predictivoRiesgoTexto");
+const predictivoVariacion = document.getElementById("predictivoVariacion");
+const predictivoMesCritico = document.getElementById("predictivoMesCritico");
+const predictivoConfianza = document.getElementById("predictivoConfianza");
+const predictivoMatrizHoraria = document.getElementById("predictivoMatrizHoraria");
+const predictivoRanking = document.getElementById("predictivoRanking");
+const predictivoLectura = document.getElementById("predictivoLectura");
 const menuItems = document.querySelectorAll(".menu li[data-view]");
 const viewSections = document.querySelectorAll(".view-section");
 
@@ -846,6 +858,7 @@ function actualizarAnalitica(){
     renderTabla();
     renderResumenEjecutivo();
     if(analiticaTemporalCargada) renderAnaliticaTemporal();
+    if(vistaActual === "analisis-predictivo") renderAnalisisPredictivo();
 }
 
 function filtrarPeriodoTemporal(datos){
@@ -996,6 +1009,303 @@ function cargarAnaliticaTemporal(){
         renderEstadoVacio(incidenciaHoraria, "No se pudieron cargar los patrones temporales");
         console.error(error);
     });
+}
+
+function fuentePredictivaActual(){
+    if(filtros.delito.value){
+        if(filtros.anio.value && anioSIDPOLMensual === filtros.anio.value && datosSIDPOLMensual.length){
+            return datosSIDPOLMensual;
+        }
+        return [];
+    }
+    return datosTerritorio;
+}
+
+function datosPredictivosFiltrados(){
+    const anio = filtros.anio.value;
+    const mesBase = Number(filtros.mes.value || 0);
+    const departamento = normalizar(filtros.departamento.value);
+    const provincia = normalizar(filtros.provincia.value);
+    const distrito = normalizar(filtros.distrito.value);
+    const delito = normalizar(filtros.delito.value);
+
+    return fuentePredictivaActual().filter((fila) => {
+        const mes = Number(fila.MES);
+        if(!mes || mes < 1 || mes > 12) return false;
+        if(anio && String(fila.ANIO || "") !== anio) return false;
+        if(anio && mesBase && mes > mesBase) return false;
+        if(departamento && normalizar(fila.DPTO_HECHO) !== departamento) return false;
+        if(provincia && normalizar(fila.PROV_HECHO) !== provincia) return false;
+        if(distrito && normalizar(fila.DIST_HECHO) !== distrito) return false;
+        if(delito && normalizar(fila.MODALIDAD) !== delito) return false;
+        return true;
+    });
+}
+
+function construirSerieMensualPredictiva(datos){
+    const acumulado = new Map();
+    datos.forEach((fila) => {
+        const anio = Number(fila.ANIO);
+        const mes = Number(fila.MES);
+        if(!anio || !mes) return;
+        const clave = `${anio}-${String(mes).padStart(2, "0")}`;
+        acumulado.set(clave, (acumulado.get(clave) || 0) + obtenerCasos(fila));
+    });
+    return [...acumulado.entries()]
+        .map(([clave, casos]) => {
+            const [anio, mes] = clave.split("-").map(Number);
+            return { anio, mes, clave, casos, tipo: "historico" };
+        })
+        .sort((a, b) => (a.anio - b.anio) || (a.mes - b.mes));
+}
+
+function sumarMes(anio, mes, incremento){
+    const fecha = new Date(anio, mes - 1 + incremento, 1);
+    return { anio: fecha.getFullYear(), mes: fecha.getMonth() + 1 };
+}
+
+function promedio(valores){
+    return valores.length ? valores.reduce((suma, valor) => suma + valor, 0) / valores.length : 0;
+}
+
+function construirProyeccion(serie, horizonte, escenario){
+    const valores = serie.map((fila) => fila.casos);
+    const ultimos = valores.slice(-3);
+    const previos = valores.slice(-6, -3);
+    const promedioReciente = promedio(ultimos);
+    const promedioPrevio = promedio(previos.length ? previos : valores.slice(0, -3));
+    const tendenciaMensual = (promedioReciente - promedioPrevio) / Math.max(ultimos.length, 1);
+    const promedioGlobal = promedio(valores) || 1;
+    const factorEscenario = { conservador: .72, probable: 1, riesgo: 1.28 }[escenario] || 1;
+    const variabilidad = Math.sqrt(promedio(valores.map((valor) => Math.pow(valor - promedioGlobal, 2)))) / promedioGlobal;
+    const ultimo = serie[serie.length - 1];
+
+    return Array.from({ length: horizonte }, (_, index) => {
+        const fecha = sumarMes(ultimo.anio, ultimo.mes, index + 1);
+        const historicoMismoMes = serie.filter((fila) => fila.mes === fecha.mes).map((fila) => fila.casos);
+        const estacionalidad = Math.min(1.25, Math.max(.75, promedio(historicoMismoMes) / promedioGlobal || 1));
+        const base = Math.max(0, promedioReciente + tendenciaMensual * (index + 1) * factorEscenario);
+        const casos = Math.max(0, Math.round(base * estacionalidad));
+        const margen = Math.max(casos * (.12 + Math.min(variabilidad, .45) * .35), promedioGlobal * .05);
+        return {
+            anio: fecha.anio,
+            mes: fecha.mes,
+            clave: `${fecha.anio}-${String(fecha.mes).padStart(2, "0")}`,
+            casos,
+            inferior: Math.max(0, Math.round(casos - margen)),
+            superior: Math.round(casos + margen),
+            tipo: "proyeccion"
+        };
+    });
+}
+
+function renderGraficoPredictivo(serie, proyeccion){
+    const historicoVisible = serie.slice(-12);
+    const puntos = [...historicoVisible, ...proyeccion];
+    const maximo = Math.max(...puntos.map((fila) => fila.superior || fila.casos), 1);
+    const width = 940;
+    const height = 340;
+    const padding = { top: 32, right: 28, bottom: 58, left: 68 };
+    const innerWidth = width - padding.left - padding.right;
+    const innerHeight = height - padding.top - padding.bottom;
+    const escalaX = (index) => padding.left + (innerWidth / Math.max(puntos.length - 1, 1)) * index;
+    const escalaY = (valor) => padding.top + innerHeight - ((valor / maximo) * innerHeight);
+
+    const puntosSvg = puntos.map((fila, index) => ({ ...fila, x: escalaX(index), y: escalaY(fila.casos) }));
+    const historicoSvg = puntosSvg.filter((fila) => fila.tipo === "historico");
+    const proyeccionSvg = puntosSvg.filter((fila) => fila.tipo === "proyeccion");
+    const inicioProyeccion = historicoSvg[historicoSvg.length - 1];
+    const lineaHistorica = historicoSvg.map((punto, index) => `${index ? "L" : "M"} ${punto.x} ${punto.y}`).join(" ");
+    const lineaProyeccion = [inicioProyeccion, ...proyeccionSvg].filter(Boolean)
+        .map((punto, index) => `${index ? "L" : "M"} ${punto.x} ${punto.y}`).join(" ");
+    const bandaSuperior = proyeccionSvg.map((punto) => `${punto.x},${escalaY(punto.superior)}`).join(" ");
+    const bandaInferior = [...proyeccionSvg].reverse().map((punto) => `${punto.x},${escalaY(punto.inferior)}`).join(" ");
+    const critico = proyeccionSvg.reduce((mayor, fila) => fila.casos > (mayor?.casos || -1) ? fila : mayor, null);
+
+    graficoPredictivo.innerHTML = `
+        <div class="chart-legend">
+            <span class="active"><i style="background:#43b581"></i>Historico</span>
+            <span><i style="background:#f1c84b"></i>Proyeccion</span>
+            <span><i style="background:#4b91e8"></i>Banda de confianza</span>
+            <span><i style="background:#e65f5c"></i>Mes critico probable</span>
+        </div>
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Proyeccion predictiva mensual">
+            <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + innerHeight}" stroke="#33404d"></line>
+            <line x1="${padding.left}" y1="${padding.top + innerHeight}" x2="${padding.left + innerWidth}" y2="${padding.top + innerHeight}" stroke="#33404d"></line>
+            <line x1="${padding.left}" y1="${padding.top + innerHeight / 2}" x2="${padding.left + innerWidth}" y2="${padding.top + innerHeight / 2}" stroke="#33404d" stroke-dasharray="5 7" opacity=".7"></line>
+            ${inicioProyeccion ? `<line class="forecast-split" x1="${inicioProyeccion.x}" y1="${padding.top - 4}" x2="${inicioProyeccion.x}" y2="${padding.top + innerHeight}"></line>` : ""}
+            ${proyeccionSvg.length ? `<polygon class="forecast-band" points="${bandaSuperior} ${bandaInferior}"></polygon>` : ""}
+            <path d="${lineaHistorica}" fill="none" stroke="#43b581" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path class="forecast-line" d="${lineaProyeccion}" fill="none" stroke="#f1c84b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+            ${puntosSvg.map((punto) => `
+                <circle cx="${punto.x}" cy="${punto.y}" r="${punto === critico ? 6 : 4.5}" class="${punto === critico ? "forecast-point-critical" : ""}" fill="${punto.tipo === "historico" ? "#43b581" : "#f1c84b"}">
+                    <title>${meses[punto.mes - 1]} ${punto.anio}: ${formatear(punto.casos)} denuncias</title>
+                </circle>
+            `).join("")}
+            ${puntosSvg.map((punto, index) => index % 2 === 0 || punto.tipo === "proyeccion" ? `
+                <text class="chart-axis" x="${punto.x}" y="${height - 23}" text-anchor="middle">${meses[punto.mes - 1]} ${String(punto.anio).slice(-2)}</text>
+            ` : "").join("")}
+            <text class="chart-axis" x="14" y="${padding.top + 4}">${formatear(maximo)}</text>
+            <text class="chart-axis" x="22" y="${padding.top + innerHeight}">0</text>
+        </svg>
+    `;
+}
+
+function renderMatrizPredictiva(){
+    if(!datosIncidenciaHoraria.length){
+        renderEstadoVacio(predictivoMatrizHoraria, "Sin patrones horarios disponibles");
+        return;
+    }
+    const datos = filtrarPeriodoTemporal(datosIncidenciaHoraria);
+    const valores = Array.from({ length: 7 }, () => Array(6).fill(0));
+    datos.forEach((fila) => {
+        const dia = numero(fila.DIA_SEMANA);
+        const hora = numero(fila.HORA);
+        if(dia >= 0 && dia < 7 && hora >= 0 && hora < 24) valores[dia][Math.floor(hora / 4)] += obtenerCasos(fila);
+    });
+    const maximo = Math.max(...valores.flat(), 1);
+    const dias = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
+    const tramos = ["00-04", "04-08", "08-12", "12-16", "16-20", "20-24"];
+    predictivoMatrizHoraria.innerHTML = `
+        <div class="hourly-grid predictive-hourly-grid">
+            <span></span>${tramos.map((tramo) => `<span class="hour-label">${tramo}</span>`).join("")}
+            ${valores.map((horas, dia) => `
+                <strong>${dias[dia]}</strong>
+                ${horas.map((valor, index) => {
+                    const nivel = valor ? Math.max(1, Math.ceil((valor / maximo) * 5)) : 0;
+                    return `<span class="hour-cell level-${nivel}" title="${dias[dia]} ${tramos[index]}: ${formatear(valor)} denuncias"></span>`;
+                }).join("")}
+            `).join("")}
+        </div>
+        <div class="hourly-scale"><span>Baja</span><i></i><i></i><i></i><i></i><i></i><span>Alta</span></div>
+    `;
+}
+
+function renderRankingPredictivo(){
+    const datos = datosPredictivosFiltrados();
+    const campo = campoRankingTerritorial();
+    const series = new Map();
+    datos.forEach((fila) => {
+        const nombre = fila[campo] || "SIN TERRITORIO";
+        const claveMes = `${fila.ANIO}-${String(fila.MES).padStart(2, "0")}`;
+        if(!series.has(nombre)) series.set(nombre, new Map());
+        const mesesTerritorio = series.get(nombre);
+        mesesTerritorio.set(claveMes, (mesesTerritorio.get(claveMes) || 0) + obtenerCasos(fila));
+    });
+
+    const filas = [...series.entries()].map(([nombre, mesesTerritorio]) => {
+        const valores = [...mesesTerritorio.entries()].sort().map(([, valor]) => valor);
+        const reciente = promedio(valores.slice(-3));
+        const previo = promedio(valores.slice(-6, -3));
+        const variacion = previo > 0 ? ((reciente - previo) / previo) * 100 : reciente > 0 ? 100 : 0;
+        return { nombre, casos: reciente, variacion };
+    }).filter((fila) => fila.casos > 0).sort((a, b) => b.variacion - a.variacion).slice(0, 6);
+
+    if(!filas.length){
+        renderEstadoVacio(predictivoRanking, "Sin jurisdicciones para proyectar");
+        return;
+    }
+
+    predictivoRanking.innerHTML = filas.map((fila, index) => {
+        const nivel = fila.variacion >= 20 ? "Alta" : fila.variacion >= 8 ? "Media" : "Baja";
+        return `
+            <div class="rank-row">
+                <div class="rank-meta">
+                    <span>${index + 1}. ${fila.nombre}</span>
+                    <strong>${fila.variacion >= 0 ? "+" : ""}${fila.variacion.toFixed(1)}%</strong>
+                </div>
+                <div class="rank-track"><div class="rank-fill" style="width:${Math.min(Math.abs(fila.variacion), 100)}%"></div></div>
+                <small>Nivel de riesgo: ${nivel}</small>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderLecturaPredictiva(serie, proyeccion, variacion, riesgo){
+    const topMes = proyeccion.reduce((mayor, fila) => fila.casos > (mayor?.casos || -1) ? fila : mayor, null);
+    const territorio = [filtros.departamento.value, filtros.provincia.value, filtros.distrito.value].filter(Boolean).join(" / ") || "Peru";
+    const delito = filtros.delito.value || "todos los delitos";
+    const direccion = variacion >= 8 ? "al alza" : variacion <= -8 ? "a la baja" : "estable";
+    predictivoLectura.innerHTML = `
+        <div class="briefing-item">
+            <span>01</span>
+            <div><strong>Tendencia ${direccion}</strong><p>Para ${delito} en ${territorio}, el escenario muestra una variacion estimada de ${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}%.</p></div>
+        </div>
+        <div class="briefing-item">
+            <span>02</span>
+            <div><strong>Mes de atencion</strong><p>${topMes ? `${meses[topMes.mes - 1]} ${topMes.anio}` : "Sin mes critico"} concentra el mayor valor proyectado dentro del horizonte seleccionado.</p></div>
+        </div>
+        <div class="briefing-item">
+            <span>03</span>
+            <div><strong>Recomendacion operativa</strong><p>${riesgo === "ALTO" ? "Priorizar vigilancia preventiva y seguimiento semanal." : riesgo === "MEDIO" ? "Mantener monitoreo focalizado y revisar variaciones por distrito." : "Continuar monitoreo regular con alertas tempranas."}</p></div>
+        </div>
+    `;
+}
+
+function renderAnalisisPredictivo(){
+    const horizonte = Number(filtroHorizontePredictivo?.value || 6);
+    const escenario = filtroEscenarioPredictivo?.value || "probable";
+    const datos = datosPredictivosFiltrados();
+    const serie = construirSerieMensualPredictiva(datos);
+
+    predictivoPeriodo.textContent = `Horizonte ${horizonte} meses`;
+    if(filtros.delito.value && !filtros.anio.value){
+        renderEstadoVacio(graficoPredictivo, "Seleccione un año para proyectar una modalidad especifica");
+        ["predictivoRiesgo", "predictivoVariacion", "predictivoMesCritico", "predictivoConfianza"].forEach((id) => {
+            const elemento = document.getElementById(id);
+            if(elemento) elemento.textContent = id === "predictivoRiesgo" ? "Sin datos" : "0%";
+        });
+        renderEstadoVacio(predictivoRanking, "Seleccione un año para analizar crecimiento por modalidad");
+        renderMatrizPredictiva();
+        predictivoLectura.innerHTML = `<div class="empty-state">Para delitos especificos, primero seleccione un año. Asi se usa el detalle mensual real.</div>`;
+        return;
+    }
+
+    if(serie.length < 4){
+        renderEstadoVacio(graficoPredictivo, "Se necesitan al menos 4 meses historicos para proyectar");
+        predictivoRiesgo.textContent = "Sin datos";
+        predictivoRiesgoTexto.textContent = "No hay suficiente historial mensual para estimar.";
+        predictivoVariacion.textContent = "0%";
+        predictivoMesCritico.textContent = "Sin datos";
+        predictivoConfianza.textContent = "0%";
+        renderEstadoVacio(predictivoRanking, "Sin historial suficiente");
+        renderMatrizPredictiva();
+        predictivoLectura.innerHTML = `<div class="empty-state">No hay suficiente informacion mensual para una lectura predictiva.</div>`;
+        return;
+    }
+
+    const proyeccion = construirProyeccion(serie, horizonte, escenario);
+    const promedioReciente = promedio(serie.slice(-3).map((fila) => fila.casos));
+    const promedioProyectado = promedio(proyeccion.map((fila) => fila.casos));
+    const variacion = promedioReciente > 0 ? ((promedioProyectado - promedioReciente) / promedioReciente) * 100 : 0;
+    const confianza = Math.min(88, Math.max(52, 48 + serie.length * 3 - Math.abs(variacion) * .35));
+    const riesgo = variacion >= 18 ? "ALTO" : variacion >= 6 ? "MEDIO" : "BAJO";
+    const topMes = proyeccion.reduce((mayor, fila) => fila.casos > (mayor?.casos || -1) ? fila : mayor, null);
+
+    renderGraficoPredictivo(serie, proyeccion);
+    predictivoRiesgo.textContent = riesgo;
+    predictivoRiesgoTexto.textContent = riesgo === "ALTO" ? "Incremento probable en el horizonte." : riesgo === "MEDIO" ? "Seguimiento preventivo recomendado." : "Comportamiento proyectado controlado.";
+    predictivoVariacion.textContent = `${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}%`;
+    predictivoMesCritico.textContent = topMes ? `${meses[topMes.mes - 1]} ${topMes.anio}` : "Sin datos";
+    predictivoConfianza.textContent = `${confianza.toFixed(0)}%`;
+    renderMatrizPredictiva();
+    renderRankingPredictivo();
+    renderLecturaPredictiva(serie, proyeccion, variacion, riesgo);
+}
+
+async function cargarAnalisisPredictivo(){
+    if(filtros.delito.value && filtros.anio.value){
+        await cargarModalidadesMensuales(filtros.anio.value);
+    }
+    if(!datosIncidenciaHoraria.length){
+        try{
+            const horarios = await cargarJson("data/api/incidencia_horaria.json");
+            datosIncidenciaHoraria = horarios.map(normalizarFilaDatos);
+        }catch(error){
+            console.warn("No se pudieron cargar patrones horarios predictivos", error);
+        }
+    }
+    renderAnalisisPredictivo();
 }
 
 function actualizarTextoResumen(){
@@ -2244,6 +2554,7 @@ function activarVista(vista){
             (nombre === "regiones-policiales" && vistaPolicial) ||
             (nombre === "mapa-alertas" && vista === "alertas") ||
             (nombre === "analisis-temporal" && vista === "analisis-temporal") ||
+            (nombre === "analisis-predictivo" && vista === "analisis-predictivo") ||
             (nombre === "executive" && mostrarEjecutivo) ||
             (nombre === "analytics" && mostrarAnalytics) ||
             (nombre === "detalle" && mostrarDetalle);
@@ -2259,6 +2570,8 @@ function activarVista(vista){
         cargarMapaAlertas();
     }else if(vista === "analisis-temporal"){
         cargarAnaliticaTemporal();
+    }else if(vista === "analisis-predictivo"){
+        cargarAnalisisPredictivo();
     }else{
         setTimeout(() => mapa.invalidateSize(), 80);
     }
@@ -2321,6 +2634,8 @@ Object.values(filtros).forEach((select) => {
             renderMapaAlertas();
         }else if(vistaActual === "analisis-temporal" && analiticaTemporalCargada){
             renderAnaliticaTemporal();
+        }else if(vistaActual === "analisis-predictivo"){
+            await cargarAnalisisPredictivo();
         }
     });
 });
@@ -2366,6 +2681,12 @@ filtroRegionPolicial.addEventListener("change", () => {
 });
 
 filtroComisariaPolicial.addEventListener("change", () => renderMapaPolicial());
+
+[filtroHorizontePredictivo, filtroEscenarioPredictivo].filter(Boolean).forEach((select) => {
+    select.addEventListener("change", () => {
+        if(vistaActual === "analisis-predictivo") renderAnalisisPredictivo();
+    });
+});
 
 document.getElementById("btnExportarTemporal").addEventListener("click", () => window.print());
 document.getElementById("btnExportarExcelTemporal").addEventListener("click", () => {
