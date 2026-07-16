@@ -2220,6 +2220,26 @@ select{
     stroke-width: 2;
 }
 
+.forecast-value-label{
+    fill: #ffffff;
+    font-size: .78rem;
+    font-weight: 900;
+    paint-order: stroke;
+    stroke: rgba(8, 13, 18, .95);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+}
+
+.forecast-month-label,
+.forecast-axis-label{
+    fill: #ffffff;
+    font-size: .78rem;
+    font-weight: 800;
+    paint-order: stroke;
+    stroke: rgba(8, 13, 18, .9);
+    stroke-width: 2px;
+}
+
 @media (max-width: 1180px){
     .predictive-layout,
     .predictive-secondary-grid{

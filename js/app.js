@@ -1104,8 +1104,8 @@ function renderGraficoPredictivo(serie, proyeccion){
     const puntos = [...historicoVisible, ...proyeccion];
     const maximo = Math.max(...puntos.map((fila) => fila.superior || fila.casos), 1);
     const width = 940;
-    const height = 340;
-    const padding = { top: 32, right: 28, bottom: 58, left: 68 };
+    const height = 360;
+    const padding = { top: 46, right: 34, bottom: 70, left: 74 };
     const innerWidth = width - padding.left - padding.right;
     const innerHeight = height - padding.top - padding.bottom;
     const escalaX = (index) => padding.left + (innerWidth / Math.max(puntos.length - 1, 1)) * index;
@@ -1142,11 +1142,14 @@ function renderGraficoPredictivo(serie, proyeccion){
                     <title>${meses[punto.mes - 1]} ${punto.anio}: ${formatear(punto.casos)} denuncias</title>
                 </circle>
             `).join("")}
+            ${puntosSvg.map((punto) => `
+                <text class="forecast-value-label" x="${punto.x}" y="${Math.max(18, punto.y - 12)}" text-anchor="middle">${formatear(punto.casos)}</text>
+            `).join("")}
             ${puntosSvg.map((punto, index) => index % 2 === 0 || punto.tipo === "proyeccion" ? `
-                <text class="chart-axis" x="${punto.x}" y="${height - 23}" text-anchor="middle">${meses[punto.mes - 1]} ${String(punto.anio).slice(-2)}</text>
+                <text class="chart-axis forecast-month-label" x="${punto.x}" y="${height - 30}" text-anchor="middle">${meses[punto.mes - 1]} ${String(punto.anio).slice(-2)}</text>
             ` : "").join("")}
-            <text class="chart-axis" x="14" y="${padding.top + 4}">${formatear(maximo)}</text>
-            <text class="chart-axis" x="22" y="${padding.top + innerHeight}">0</text>
+            <text class="chart-axis forecast-axis-label" x="14" y="${padding.top + 4}">${formatear(maximo)}</text>
+            <text class="chart-axis forecast-axis-label" x="24" y="${padding.top + innerHeight}">0</text>
         </svg>
     `;
 }
