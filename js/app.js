@@ -2575,46 +2575,116 @@ function pintarKpiProduccion(indicador, valor, variacion){
     variacion.className = indicador.variacion >= 0 ? "positive" : "negative";
 }
 
+function obtenerIndicadoresProduccion(nombres){
+    return nombres.map((nombre) => buscarIndicadorProduccion(nombre)).filter(Boolean);
+}
+
 function renderBarrasProduccion(){
     if(!produccionBarras) return;
-    const indicadoresProduccion = (datosProduccionPolicial?.indicadores || [])
-        .filter((fila) => Number(fila.valor_2025) || Number(fila.valor_2026))
-        .slice(0, 18);
+    const grupos = [
+        {
+            titulo: "Actividad operativa",
+            icono: "fa-clipboard-check",
+            descripcion: "Volumen de acciones ejecutadas y capacidad de control.",
+            indicadores: obtenerIndicadoresProduccion([
+                "Operativos",
+                "Organizaciones criminales desarticuladas",
+                "Bandas criminales desarticuladas",
+                "Papeletas impuestas IRNT",
+            ]),
+        },
+        {
+            titulo: "Capturas e intervenciones",
+            icono: "fa-user-shield",
+            descripcion: "Personas intervenidas, detenidas o capturadas.",
+            indicadores: obtenerIndicadoresProduccion([
+                "Detenidos nacionales",
+                "Detenidos extranjeros",
+                "Intervenciones por ley de migraciones",
+                "Captura de requisitoriados",
+            ]),
+        },
+        {
+            titulo: "Incautaciones criticas",
+            icono: "fa-boxes-stacked",
+            descripcion: "Bienes, armas, explosivos y equipos retirados de circulacion.",
+            indicadores: obtenerIndicadoresProduccion([
+                "Armas de fuego incautadas",
+                "Vehiculos recuperados",
+                "Material explosivo incautado",
+                "Celulares incautados",
+                "Tarjetas SIM incautadas",
+            ]),
+        },
+        {
+            titulo: "Drogas y economia ilegal",
+            icono: "fa-scale-balanced",
+            descripcion: "Droga incautada y afectacion economica al delito.",
+            indicadores: obtenerIndicadoresProduccion([
+                "PBC - ketes",
+                "CC - king size",
+                "Marihuana - pacos",
+                "PBC kilos",
+                "CC kilos",
+                "Marihuana kilos",
+                "Contrabando valorizado",
+                "Dinero incautado",
+            ]),
+        },
+    ].filter((grupo) => grupo.indicadores.length);
+
+    const indicadoresProduccion = grupos.flatMap((grupo) => grupo.indicadores);
 
     if(!indicadoresProduccion.length){
         renderEstadoVacio(produccionBarras, "Sin indicadores de produccion policial");
         return;
     }
 
-    const maximo = Math.max(...indicadoresProduccion.map((fila) => Math.max(Number(fila.valor_2025) || 0, Number(fila.valor_2026) || 0)), 1);
-    produccionBarras.innerHTML = indicadoresProduccion.map((fila) => {
-        const ancho2025 = Math.max((Number(fila.valor_2025) / maximo) * 100, 2);
-        const ancho2026 = Math.max((Number(fila.valor_2026) / maximo) * 100, 2);
-        const variacion = Number(fila.variacion) || 0;
-        const clase = variacion >= 0 ? "up" : "down";
+    produccionBarras.innerHTML = grupos.map((grupo) => {
+        const maximoGrupo = Math.max(...grupo.indicadores.map((fila) => Math.max(Number(fila.valor_2025) || 0, Number(fila.valor_2026) || 0)), 1);
+        const balance = grupo.indicadores.reduce((total, fila) => total + (Number(fila.variacion) >= 0 ? 1 : -1), 0);
+        const filas = grupo.indicadores.map((fila) => {
+            const ancho2025 = Math.max((Number(fila.valor_2025) / maximoGrupo) * 100, 3);
+            const ancho2026 = Math.max((Number(fila.valor_2026) / maximoGrupo) * 100, 3);
+            const variacion = Number(fila.variacion) || 0;
+            const clase = variacion >= 0 ? "up" : "down";
+            return `
+                <div class="production-bar-row ${clase}">
+                    <div class="production-bar-title">
+                        <strong>${fila.indicador}</strong>
+                        <span>${fila.valor_2026_txt}</span>
+                    </div>
+                    <div class="production-bar-compare">
+                        <div class="production-bar-line">
+                            <span>2025</span>
+                            <div class="production-track"><i class="bar-2025" style="width:${ancho2025}%"></i></div>
+                            <b>${fila.valor_2025_txt}</b>
+                        </div>
+                        <div class="production-bar-line">
+                            <span>2026</span>
+                            <div class="production-track"><i class="bar-2026" style="width:${ancho2026}%"></i></div>
+                            <b>${fila.valor_2026_txt}</b>
+                        </div>
+                    </div>
+                    <div class="production-delta ${clase}">
+                        <strong>${fila.variacion_txt}</strong>
+                        <small>${(Number(fila.variacion_pct) || 0) >= 0 ? "+" : ""}${(Number(fila.variacion_pct) || 0).toFixed(1)}%</small>
+                    </div>
+                </div>
+            `;
+        }).join("");
         return `
-            <div class="production-bar-row ${clase}">
-                <div class="production-bar-title">
-                    <strong>${fila.indicador}</strong>
-                    <span>${fila.valor_2026_txt}</span>
-                </div>
-                <div class="production-bar-compare">
-                    <div class="production-bar-line">
-                        <span>2025</span>
-                        <div class="production-track"><i class="bar-2025" style="width:${ancho2025}%"></i></div>
-                        <b>${fila.valor_2025_txt}</b>
+            <article class="production-group">
+                <div class="production-group-head">
+                    <i class="fas ${grupo.icono}"></i>
+                    <div>
+                        <h3>${grupo.titulo}</h3>
+                        <p>${grupo.descripcion}</p>
                     </div>
-                    <div class="production-bar-line">
-                        <span>2026</span>
-                        <div class="production-track"><i class="bar-2026" style="width:${ancho2026}%"></i></div>
-                        <b>${fila.valor_2026_txt}</b>
-                    </div>
+                    <span class="${balance >= 0 ? "up" : "down"}">${balance >= 0 ? "Balance favorable" : "Requiere seguimiento"}</span>
                 </div>
-                <div class="production-delta ${clase}">
-                    <strong>${fila.variacion_txt}</strong>
-                    <small>${(Number(fila.variacion_pct) || 0) >= 0 ? "+" : ""}${(Number(fila.variacion_pct) || 0).toFixed(1)}%</small>
-                </div>
-            </div>
+                <div class="production-group-bars">${filas}</div>
+            </article>
         `;
     }).join("");
 }
@@ -2646,12 +2716,13 @@ function renderLecturaProduccion(){
     const operativos = buscarIndicadorProduccion("Operativos");
     const principalAvance = (datosProduccionPolicial?.avances || [])[0];
     const principalBrecha = (datosProduccionPolicial?.brechas || [])[0];
+    const estabilidad = indicadores.length ? Math.round((avances / indicadores.length) * 100) : 0;
 
     produccionLectura.innerHTML = `
         <div class="production-reading-card">
-            <span>Indicadores evaluados</span>
-            <strong>${formatear(indicadores.length)}</strong>
-            <small>${avances} en avance y ${brechas} en descenso frente a 2025.</small>
+            <span>Pulso operativo</span>
+            <strong>${estabilidad}%</strong>
+            <small>${avances} indicadores en avance y ${brechas} en descenso frente a 2025.</small>
         </div>
         <div class="production-reading-note">
             <i class="fas fa-circle-info"></i>
