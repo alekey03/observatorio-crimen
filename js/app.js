@@ -67,6 +67,8 @@ let cargaPolicialPromise = null;
 let datosPersonasTemporal = [];
 let datosIncidenciaHoraria = [];
 let analiticaTemporalCargada = false;
+let datosProduccionPolicial = null;
+let produccionPolicialCargada = false;
 
 const filtros = {
     anio: document.getElementById("filtroAnio"),
@@ -150,6 +152,21 @@ const predictivoConfianza = document.getElementById("predictivoConfianza");
 const predictivoMatrizHoraria = document.getElementById("predictivoMatrizHoraria");
 const predictivoRanking = document.getElementById("predictivoRanking");
 const predictivoLectura = document.getElementById("predictivoLectura");
+const produccionPeriodo = document.getElementById("produccionPeriodo");
+const produccionReporte = document.getElementById("produccionReporte");
+const prodOperativos = document.getElementById("prodOperativos");
+const prodOperativosVar = document.getElementById("prodOperativosVar");
+const prodDinero = document.getElementById("prodDinero");
+const prodDineroVar = document.getElementById("prodDineroVar");
+const prodBandas = document.getElementById("prodBandas");
+const prodBandasVar = document.getElementById("prodBandasVar");
+const prodRequisitoriados = document.getElementById("prodRequisitoriados");
+const prodRequisitoriadosVar = document.getElementById("prodRequisitoriadosVar");
+const produccionBarras = document.getElementById("produccionBarras");
+const produccionLectura = document.getElementById("produccionLectura");
+const produccionAvances = document.getElementById("produccionAvances");
+const produccionBrechas = document.getElementById("produccionBrechas");
+const produccionTabla = document.getElementById("produccionTabla");
 const menuItems = document.querySelectorAll(".menu li[data-view]");
 const viewSections = document.querySelectorAll(".view-section");
 
@@ -2539,6 +2556,182 @@ async function cargarMapaPolicial(){
     }
 }
 
+function buscarIndicadorProduccion(nombre){
+    if(!datosProduccionPolicial || !Array.isArray(datosProduccionPolicial.indicadores)) return null;
+    const clave = normalizar(nombre);
+    return datosProduccionPolicial.indicadores.find((fila) => normalizar(fila.indicador) === clave);
+}
+
+function pintarKpiProduccion(indicador, valor, variacion){
+    if(!valor || !variacion) return;
+    if(!indicador){
+        valor.textContent = "0";
+        variacion.textContent = "Sin informacion";
+        variacion.className = "";
+        return;
+    }
+    valor.textContent = indicador.valor_2026_txt || formatear(indicador.valor_2026);
+    variacion.textContent = `${indicador.variacion_txt || formatear(indicador.variacion)} vs 2025`;
+    variacion.className = indicador.variacion >= 0 ? "positive" : "negative";
+}
+
+function renderBarrasProduccion(){
+    if(!produccionBarras) return;
+    const indicadoresProduccion = (datosProduccionPolicial?.indicadores || [])
+        .filter((fila) => Number(fila.valor_2025) || Number(fila.valor_2026))
+        .slice(0, 18);
+
+    if(!indicadoresProduccion.length){
+        renderEstadoVacio(produccionBarras, "Sin indicadores de produccion policial");
+        return;
+    }
+
+    const maximo = Math.max(...indicadoresProduccion.map((fila) => Math.max(Number(fila.valor_2025) || 0, Number(fila.valor_2026) || 0)), 1);
+    produccionBarras.innerHTML = indicadoresProduccion.map((fila) => {
+        const ancho2025 = Math.max((Number(fila.valor_2025) / maximo) * 100, 2);
+        const ancho2026 = Math.max((Number(fila.valor_2026) / maximo) * 100, 2);
+        const variacion = Number(fila.variacion) || 0;
+        const clase = variacion >= 0 ? "up" : "down";
+        return `
+            <div class="production-bar-row ${clase}">
+                <div class="production-bar-title">
+                    <strong>${fila.indicador}</strong>
+                    <span>${fila.valor_2026_txt}</span>
+                </div>
+                <div class="production-bar-compare">
+                    <div class="production-bar-line">
+                        <span>2025</span>
+                        <div class="production-track"><i class="bar-2025" style="width:${ancho2025}%"></i></div>
+                        <b>${fila.valor_2025_txt}</b>
+                    </div>
+                    <div class="production-bar-line">
+                        <span>2026</span>
+                        <div class="production-track"><i class="bar-2026" style="width:${ancho2026}%"></i></div>
+                        <b>${fila.valor_2026_txt}</b>
+                    </div>
+                </div>
+                <div class="production-delta ${clase}">
+                    <strong>${fila.variacion_txt}</strong>
+                    <small>${(Number(fila.variacion_pct) || 0) >= 0 ? "+" : ""}${(Number(fila.variacion_pct) || 0).toFixed(1)}%</small>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderRankingProduccion(contenedor, filas, vacio){
+    if(!contenedor) return;
+    if(!filas || !filas.length){
+        renderEstadoVacio(contenedor, vacio);
+        return;
+    }
+    contenedor.innerHTML = filas.slice(0, 5).map((fila, index) => {
+        const clase = Number(fila.variacion) >= 0 ? "up" : "down";
+        return `
+            <div class="production-rank-row ${clase}">
+                <span>${index + 1}</span>
+                <strong>${fila.indicador}</strong>
+                <b>${fila.variacion_txt}</b>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderLecturaProduccion(){
+    if(!produccionLectura) return;
+    const indicadores = datosProduccionPolicial?.indicadores || [];
+    const avances = indicadores.filter((fila) => Number(fila.variacion) > 0).length;
+    const brechas = indicadores.filter((fila) => Number(fila.variacion) < 0).length;
+    const dinero = buscarIndicadorProduccion("Dinero incautado");
+    const operativos = buscarIndicadorProduccion("Operativos");
+    const principalAvance = (datosProduccionPolicial?.avances || [])[0];
+    const principalBrecha = (datosProduccionPolicial?.brechas || [])[0];
+
+    produccionLectura.innerHTML = `
+        <div class="production-reading-card">
+            <span>Indicadores evaluados</span>
+            <strong>${formatear(indicadores.length)}</strong>
+            <small>${avances} en avance y ${brechas} en descenso frente a 2025.</small>
+        </div>
+        <div class="production-reading-note">
+            <i class="fas fa-circle-info"></i>
+            <p>Esta pestaña mide <b>produccion policial</b>, no incidencia delictiva. El corte proviene del PDF diario y resume actividad operativa acumulada nacional.</p>
+        </div>
+        <div class="production-reading-note compact">
+            <i class="fas fa-arrow-trend-up"></i>
+            <p>Mayor avance: <b>${principalAvance ? principalAvance.indicador : "Sin dato"}</b>${principalAvance ? ` (${principalAvance.variacion_txt})` : ""}.</p>
+        </div>
+        <div class="production-reading-note compact danger">
+            <i class="fas fa-triangle-exclamation"></i>
+            <p>Mayor brecha: <b>${principalBrecha ? principalBrecha.indicador : "Sin dato"}</b>${principalBrecha ? ` (${principalBrecha.variacion_txt})` : ""}.</p>
+        </div>
+        <div class="production-reading-note compact">
+            <i class="fas fa-chart-column"></i>
+            <p>Operativos: <b>${operativos ? operativos.valor_2026_txt : "Sin dato"}</b>. Dinero incautado: <b>${dinero ? dinero.valor_2026_txt : "Sin dato"}</b>.</p>
+        </div>
+    `;
+}
+
+function renderTablaProduccion(){
+    if(!produccionTabla) return;
+    const filas = datosProduccionPolicial?.indicadores || [];
+    if(!filas.length){
+        produccionTabla.innerHTML = `<tr><td colspan="5">Sin indicadores disponibles</td></tr>`;
+        return;
+    }
+    produccionTabla.innerHTML = filas.map((fila) => {
+        const variacion = Number(fila.variacion) || 0;
+        const clase = variacion >= 0 ? "positive" : "negative";
+        const porcentaje = Number(fila.variacion_pct) || 0;
+        return `
+            <tr>
+                <td>${fila.indicador}</td>
+                <td>${fila.valor_2025_txt}</td>
+                <td>${fila.valor_2026_txt}</td>
+                <td class="${clase}">${fila.variacion_txt}</td>
+                <td class="${clase}">${porcentaje >= 0 ? "+" : ""}${porcentaje.toFixed(1)}%</td>
+            </tr>
+        `;
+    }).join("");
+}
+
+function renderProduccionPolicial(){
+    if(!datosProduccionPolicial){
+        [produccionBarras, produccionAvances, produccionBrechas].forEach((contenedor) => {
+            if(contenedor) renderEstadoVacio(contenedor, "No se pudo cargar produccion policial");
+        });
+        return;
+    }
+
+    if(produccionPeriodo) produccionPeriodo.textContent = datosProduccionPolicial.periodo || "Periodo no identificado";
+    if(produccionReporte) produccionReporte.textContent = `Reporte: ${datosProduccionPolicial.reporte || "Sin fecha"}`;
+
+    pintarKpiProduccion(buscarIndicadorProduccion("Operativos"), prodOperativos, prodOperativosVar);
+    pintarKpiProduccion(buscarIndicadorProduccion("Dinero incautado"), prodDinero, prodDineroVar);
+    pintarKpiProduccion(buscarIndicadorProduccion("Bandas criminales desarticuladas"), prodBandas, prodBandasVar);
+    pintarKpiProduccion(buscarIndicadorProduccion("Captura de requisitoriados"), prodRequisitoriados, prodRequisitoriadosVar);
+
+    renderBarrasProduccion();
+    renderRankingProduccion(produccionAvances, datosProduccionPolicial.avances, "Sin avances frente al periodo anterior");
+    renderRankingProduccion(produccionBrechas, datosProduccionPolicial.brechas, "Sin brechas frente al periodo anterior");
+    renderLecturaProduccion();
+    renderTablaProduccion();
+}
+
+async function cargarProduccionPolicial(){
+    try{
+        if(!produccionPolicialCargada){
+            datosProduccionPolicial = await cargarJson(`data/api/produccion_policial.json?v=${Date.now()}`);
+            produccionPolicialCargada = true;
+        }
+        renderProduccionPolicial();
+    }catch(error){
+        console.error(error);
+        datosProduccionPolicial = null;
+        renderProduccionPolicial();
+    }
+}
+
 function activarVista(vista){
     vistaActual = vista;
     const vistaPolicial = ["denuncias-comisaria", "hechos-jurisdiccion"].includes(vista);
@@ -2562,6 +2755,7 @@ function activarVista(vista){
             (nombre === "mapa-alertas" && vista === "alertas") ||
             (nombre === "analisis-temporal" && vista === "analisis-temporal") ||
             (nombre === "analisis-predictivo" && vista === "analisis-predictivo") ||
+            (nombre === "produccion-policial" && vista === "produccion-policial") ||
             (nombre === "executive" && mostrarEjecutivo) ||
             (nombre === "analytics" && mostrarAnalytics) ||
             (nombre === "detalle" && mostrarDetalle);
@@ -2579,6 +2773,8 @@ function activarVista(vista){
         cargarAnaliticaTemporal();
     }else if(vista === "analisis-predictivo"){
         cargarAnalisisPredictivo();
+    }else if(vista === "produccion-policial"){
+        cargarProduccionPolicial();
     }else{
         setTimeout(() => mapa.invalidateSize(), 80);
     }
