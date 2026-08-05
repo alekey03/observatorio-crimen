@@ -169,6 +169,7 @@ const produccionBrechas = document.getElementById("produccionBrechas");
 const produccionTabla = document.getElementById("produccionTabla");
 const menuItems = document.querySelectorAll(".menu li[data-view]");
 const viewSections = document.querySelectorAll(".view-section");
+const sidpolContextSections = document.querySelectorAll(".sidpol-context");
 
 const colores = ["#fee08b", "#fdae61", "#fc8d59", "#d7301f", "#8b0000"];
 const formatoNumero = new Intl.NumberFormat("es-PE");
@@ -2830,6 +2831,8 @@ async function cargarProduccionPolicial(){
 function activarVista(vista){
     vistaActual = vista;
     const vistaPolicial = ["denuncias-comisaria", "hechos-jurisdiccion"].includes(vista);
+    const ocultarContextoSidpol = vista === "produccion-policial";
+    sidpolContextSections.forEach((section) => section.classList.toggle("is-hidden", ocultarContextoSidpol));
     if(vistaPolicial){
         modoPolicial = vista === "hechos-jurisdiccion" ? "hecho" : "registro";
         configurarModoPolicial();

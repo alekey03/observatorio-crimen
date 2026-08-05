@@ -632,6 +632,10 @@ button:hover{
     display: none;
 }
 
+.sidpol-context.is-hidden{
+    display: none;
+}
+
 .heat-metrics{
     display: grid;
     gap: 10px;
