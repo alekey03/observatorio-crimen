@@ -2579,6 +2579,26 @@ function obtenerIndicadoresProduccion(nombres){
     return nombres.map((nombre) => buscarIndicadorProduccion(nombre)).filter(Boolean);
 }
 
+function iconoIndicadorProduccion(indicador){
+    const clave = normalizar(indicador);
+    if(clave.includes("OPERATIVOS")) return "fa-clipboard-check";
+    if(clave.includes("ORGANIZACIONES")) return "fa-sitemap";
+    if(clave.includes("BANDAS")) return "fa-people-robbery";
+    if(clave.includes("DETENIDOS")) return "fa-handcuffs";
+    if(clave.includes("MIGRACIONES")) return "fa-passport";
+    if(clave.includes("REQUISITORIADOS")) return "fa-user-shield";
+    if(clave.includes("ARMAS")) return "fa-gun";
+    if(clave.includes("VEHICULOS")) return "fa-car-rear";
+    if(clave.includes("PBC") || clave.includes("CC ") || clave.includes("MARIHUANA")) return "fa-prescription-bottle-medical";
+    if(clave.includes("CONTRABANDO")) return "fa-box-open";
+    if(clave.includes("PAPELETAS")) return "fa-receipt";
+    if(clave.includes("DINERO")) return "fa-sack-dollar";
+    if(clave.includes("EXPLOSIVO")) return "fa-bomb";
+    if(clave.includes("CELULARES")) return "fa-mobile-screen";
+    if(clave.includes("SIM")) return "fa-sim-card";
+    return "fa-chart-simple";
+}
+
 function renderBarrasProduccion(){
     if(!produccionBarras) return;
     const grupos = [
@@ -2648,8 +2668,12 @@ function renderBarrasProduccion(){
             const ancho2026 = Math.max((Number(fila.valor_2026) / maximoGrupo) * 100, 3);
             const variacion = Number(fila.variacion) || 0;
             const clase = variacion >= 0 ? "up" : "down";
+            const icono = iconoIndicadorProduccion(fila.indicador);
             return `
                 <div class="production-bar-row ${clase}">
+                    <div class="production-indicator-icon">
+                        <i class="fas ${icono}"></i>
+                    </div>
                     <div class="production-bar-title">
                         <strong>${fila.indicador}</strong>
                         <span>${fila.valor_2026_txt}</span>
