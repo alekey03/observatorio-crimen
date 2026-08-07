@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Observatorio del Crimen - COMOPPOL PNP</title>
 
-    <link rel="stylesheet" href="css/style.css?v=20260805-4">
+    <link rel="stylesheet" href="css/style.css?v=20260807-1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="css/public.css?v=1">
@@ -561,116 +561,107 @@
         </section>
 
         <section class="production-dashboard view-section is-hidden" data-section="produccion-policial" aria-label="Produccion policial">
-            <div class="production-hero">
-                <div>
-                    <p class="eyebrow">Produccion policial</p>
-                    <h2>Balance operativo nacional</h2>
-                    <p>Comparativo acumulado de indicadores policiales: operativos, capturas, incautaciones y acciones de control.</p>
+            <div class="production-command-hero">
+                <div class="production-agency">
+                    <img src="img/logo_pnp.png" alt="Policia Nacional del Peru">
+                    <div>
+                        <h2>Policia Nacional del Peru</h2>
+                        <p>Comando de Operaciones Policiales</p>
+                        <span>Division Central de Operaciones Policiales</span>
+                    </div>
+                </div>
+                <div class="production-title-block">
+                    <p>Comparativo de la produccion policial</p>
+                    <h1>A nivel nacional</h1>
+                    <span id="produccionPeriodo">Periodo no cargado</span>
                 </div>
                 <div class="production-stamp">
-                    <span id="produccionPeriodo">Periodo no cargado</span>
-                    <strong id="produccionReporte">Reporte no disponible</strong>
+                    <span>Fecha de reporte</span>
+                    <strong id="produccionReporte">No disponible</strong>
+                    <small>CENOPPOL-DEPTIC</small>
                 </div>
             </div>
 
-            <div class="production-kpis">
-                <article class="production-kpi primary">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span>Operativos 2026</span>
-                    <strong id="prodOperativos">0</strong>
-                    <small id="prodOperativosVar">Variacion no disponible</small>
+            <div class="production-scoreboard">
+                <article class="production-score-card neutral">
+                    <i class="fas fa-table-list"></i>
+                    <span>Total indicadores</span>
+                    <strong id="prodTotalIndicadores">0</strong>
                 </article>
-                <article class="production-kpi success">
-                    <i class="fas fa-sack-dollar"></i>
-                    <span>Dinero incautado</span>
-                    <strong id="prodDinero">0</strong>
-                    <small id="prodDineroVar">Variacion no disponible</small>
+                <article class="production-score-card good">
+                    <i class="fas fa-arrow-trend-up"></i>
+                    <span>Indicadores que mejoraron</span>
+                    <strong id="prodIndicadoresMejoran">0</strong>
                 </article>
-                <article class="production-kpi">
-                    <i class="fas fa-people-robbery"></i>
-                    <span>Bandas desarticuladas</span>
-                    <strong id="prodBandas">0</strong>
-                    <small id="prodBandasVar">Variacion no disponible</small>
+                <article class="production-score-card bad">
+                    <i class="fas fa-arrow-trend-down"></i>
+                    <span>Indicadores que disminuyeron</span>
+                    <strong id="prodIndicadoresDisminuyen">0</strong>
                 </article>
-                <article class="production-kpi warning">
-                    <i class="fas fa-user-shield"></i>
-                    <span>Requisitoriados capturados</span>
-                    <strong id="prodRequisitoriados">0</strong>
-                    <small id="prodRequisitoriadosVar">Variacion no disponible</small>
+                <article class="production-score-card percent">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>% indicadores que mejoraron</span>
+                    <strong id="prodPctMejoran">0%</strong>
+                </article>
+                <article class="production-score-card semaphore">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <span>Semaforo general</span>
+                    <strong id="prodSemaforo">Evaluando</strong>
+                    <small id="prodSemaforoDetalle">Segun balance comparativo</small>
                 </article>
             </div>
 
-            <div class="production-layout">
-                <article class="analytics-panel production-bars-panel">
+            <div class="production-command-grid">
+                <article class="production-board production-bars-panel">
                     <div class="panel-header">
                         <div>
                             <p class="eyebrow">Comparativo 2025 - 2026</p>
-                            <h2>Indicadores de produccion policial</h2>
+                            <h2>Comparativo general de indicadores</h2>
                         </div>
-                        <span class="panel-badge">Barras comparativas</span>
                     </div>
                     <div class="production-legend">
                         <span><i class="year-2025"></i>2025</span>
                         <span><i class="year-2026"></i>2026</span>
-                        <span><i class="delta-up"></i>Avance</span>
-                        <span><i class="delta-down"></i>Descenso</span>
+                        <span>Variacion absoluta</span>
                     </div>
                     <div id="produccionBarras" class="production-bars"></div>
                 </article>
 
-                <aside class="production-side">
-                    <article class="analytics-panel production-reading">
+                <aside class="production-rank-column">
+                    <article class="production-board production-rank-board good">
                         <div class="panel-header">
                             <div>
-                                <p class="eyebrow">Lectura ejecutiva</p>
-                                <h2>Interpretacion operativa</h2>
+                                <p class="eyebrow">Top 5</p>
+                                <h2>Mayores incrementos</h2>
                             </div>
-                            <i class="fas fa-tower-broadcast panel-symbol"></i>
-                        </div>
-                        <div id="produccionLectura" class="production-reading-body"></div>
-                    </article>
-                    <article class="analytics-panel">
-                        <div class="panel-header">
-                            <div>
-                                <p class="eyebrow">Mayor avance</p>
-                                <h2>Indicadores con mejora</h2>
-                            </div>
+                            <i class="fas fa-arrow-trend-up panel-symbol"></i>
                         </div>
                         <div id="produccionAvances" class="production-rank"></div>
                     </article>
-                    <article class="analytics-panel">
+                    <article class="production-board production-rank-board bad">
                         <div class="panel-header">
                             <div>
-                                <p class="eyebrow">Seguimiento</p>
-                                <h2>Brechas a monitorear</h2>
+                                <p class="eyebrow">Top 5</p>
+                                <h2>Mayores disminuciones</h2>
                             </div>
+                            <i class="fas fa-arrow-trend-down panel-symbol"></i>
                         </div>
                         <div id="produccionBrechas" class="production-rank"></div>
                     </article>
                 </aside>
             </div>
 
-            <article class="analytics-panel production-table-panel">
+            <div id="produccionMosaico" class="production-tile-grid" aria-label="Mosaico de indicadores de produccion"></div>
+
+            <article class="production-board production-reading">
                 <div class="panel-header">
                     <div>
-                        <p class="eyebrow">Detalle del PDF</p>
-                        <h2>Tabla consolidada de indicadores</h2>
+                        <p class="eyebrow">Lectura ejecutiva</p>
+                        <h2>Interpretacion operativa</h2>
                     </div>
+                    <i class="fas fa-tower-broadcast panel-symbol"></i>
                 </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Indicador</th>
-                                <th>2025</th>
-                                <th>2026</th>
-                                <th>Variacion</th>
-                                <th>%</th>
-                            </tr>
-                        </thead>
-                        <tbody id="produccionTabla"></tbody>
-                    </table>
-                </div>
+                <div id="produccionLectura" class="production-reading-body"></div>
             </article>
         </section>
 
@@ -756,7 +747,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="js/app.js?v=20260805-4"></script>
+    <script src="js/app.js?v=20260807-1"></script>
 </body>
 </html>
 

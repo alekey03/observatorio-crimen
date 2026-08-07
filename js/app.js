@@ -167,6 +167,13 @@ const produccionLectura = document.getElementById("produccionLectura");
 const produccionAvances = document.getElementById("produccionAvances");
 const produccionBrechas = document.getElementById("produccionBrechas");
 const produccionTabla = document.getElementById("produccionTabla");
+const produccionMosaico = document.getElementById("produccionMosaico");
+const prodTotalIndicadores = document.getElementById("prodTotalIndicadores");
+const prodIndicadoresMejoran = document.getElementById("prodIndicadoresMejoran");
+const prodIndicadoresDisminuyen = document.getElementById("prodIndicadoresDisminuyen");
+const prodPctMejoran = document.getElementById("prodPctMejoran");
+const prodSemaforo = document.getElementById("prodSemaforo");
+const prodSemaforoDetalle = document.getElementById("prodSemaforoDetalle");
 const menuItems = document.querySelectorAll(".menu li[data-view]");
 const viewSections = document.querySelectorAll(".view-section");
 const sidpolContextSections = document.querySelectorAll(".sidpol-context");
@@ -2602,114 +2609,43 @@ function iconoIndicadorProduccion(indicador){
 
 function renderBarrasProduccion(){
     if(!produccionBarras) return;
-    const grupos = [
-        {
-            titulo: "Actividad operativa",
-            icono: "fa-clipboard-check",
-            descripcion: "Volumen de acciones ejecutadas y capacidad de control.",
-            indicadores: obtenerIndicadoresProduccion([
-                "Operativos",
-                "Organizaciones criminales desarticuladas",
-                "Bandas criminales desarticuladas",
-                "Papeletas impuestas IRNT",
-            ]),
-        },
-        {
-            titulo: "Capturas e intervenciones",
-            icono: "fa-user-shield",
-            descripcion: "Personas intervenidas, detenidas o capturadas.",
-            indicadores: obtenerIndicadoresProduccion([
-                "Detenidos nacionales",
-                "Detenidos extranjeros",
-                "Intervenciones por ley de migraciones",
-                "Captura de requisitoriados",
-            ]),
-        },
-        {
-            titulo: "Incautaciones criticas",
-            icono: "fa-boxes-stacked",
-            descripcion: "Bienes, armas, explosivos y equipos retirados de circulacion.",
-            indicadores: obtenerIndicadoresProduccion([
-                "Armas de fuego incautadas",
-                "Vehiculos recuperados",
-                "Material explosivo incautado",
-                "Celulares incautados",
-                "Tarjetas SIM incautadas",
-            ]),
-        },
-        {
-            titulo: "Drogas y economia ilegal",
-            icono: "fa-scale-balanced",
-            descripcion: "Droga incautada y afectacion economica al delito.",
-            indicadores: obtenerIndicadoresProduccion([
-                "PBC - ketes",
-                "CC - king size",
-                "Marihuana - pacos",
-                "PBC kilos",
-                "CC kilos",
-                "Marihuana kilos",
-                "Contrabando valorizado",
-                "Dinero incautado",
-            ]),
-        },
-    ].filter((grupo) => grupo.indicadores.length);
-
-    const indicadoresProduccion = grupos.flatMap((grupo) => grupo.indicadores);
-
-    if(!indicadoresProduccion.length){
+    const indicadores = datosProduccionPolicial?.indicadores || [];
+    if(!indicadores.length){
         renderEstadoVacio(produccionBarras, "Sin indicadores de produccion policial");
         return;
     }
-
-    produccionBarras.innerHTML = grupos.map((grupo) => {
-        const maximoGrupo = Math.max(...grupo.indicadores.map((fila) => Math.max(Number(fila.valor_2025) || 0, Number(fila.valor_2026) || 0)), 1);
-        const balance = grupo.indicadores.reduce((total, fila) => total + (Number(fila.variacion) >= 0 ? 1 : -1), 0);
-        const filas = grupo.indicadores.map((fila) => {
-            const ancho2025 = Math.max((Number(fila.valor_2025) / maximoGrupo) * 100, 3);
-            const ancho2026 = Math.max((Number(fila.valor_2026) / maximoGrupo) * 100, 3);
-            const variacion = Number(fila.variacion) || 0;
-            const clase = variacion >= 0 ? "up" : "down";
-            const icono = iconoIndicadorProduccion(fila.indicador);
-            return `
-                <div class="production-bar-row ${clase}">
-                    <div class="production-indicator-icon">
-                        <i class="fas ${icono}"></i>
-                    </div>
-                    <div class="production-bar-title">
-                        <strong>${fila.indicador}</strong>
-                        <span>${fila.valor_2026_txt}</span>
-                    </div>
-                    <div class="production-bar-compare">
-                        <div class="production-bar-line">
-                            <span>2025</span>
-                            <div class="production-track"><i class="bar-2025" style="width:${ancho2025}%"></i></div>
-                            <b>${fila.valor_2025_txt}</b>
-                        </div>
-                        <div class="production-bar-line">
-                            <span>2026</span>
-                            <div class="production-track"><i class="bar-2026" style="width:${ancho2026}%"></i></div>
-                            <b>${fila.valor_2026_txt}</b>
-                        </div>
-                    </div>
-                    <div class="production-delta ${clase}">
-                        <strong>${fila.variacion_txt}</strong>
-                        <small>${(Number(fila.variacion_pct) || 0) >= 0 ? "+" : ""}${(Number(fila.variacion_pct) || 0).toFixed(1)}%</small>
-                    </div>
-                </div>
-            `;
-        }).join("");
+    const principales = indicadores.slice(0, 10);
+    const maximo = Math.max(...principales.map((fila) => Math.max(Number(fila.valor_2025) || 0, Number(fila.valor_2026) || 0)), 1);
+    produccionBarras.innerHTML = principales.map((fila) => {
+        const ancho2025 = Math.max((Number(fila.valor_2025) / maximo) * 100, 2);
+        const ancho2026 = Math.max((Number(fila.valor_2026) / maximo) * 100, 2);
+        const variacion = Number(fila.variacion) || 0;
+        const clase = variacion >= 0 ? "up" : "down";
+        const icono = iconoIndicadorProduccion(fila.indicador);
         return `
-            <article class="production-group">
-                <div class="production-group-head">
-                    <i class="fas ${grupo.icono}"></i>
-                    <div>
-                        <h3>${grupo.titulo}</h3>
-                        <p>${grupo.descripcion}</p>
-                    </div>
-                    <span class="${balance >= 0 ? "up" : "down"}">${balance >= 0 ? "Balance favorable" : "Requiere seguimiento"}</span>
+            <div class="production-bar-row ${clase}">
+                <div class="production-indicator-icon"><i class="fas ${icono}"></i></div>
+                <div class="production-bar-title">
+                    <strong>${escaparHtml(fila.indicador)}</strong>
+                    <span>${fila.valor_2026_txt}</span>
                 </div>
-                <div class="production-group-bars">${filas}</div>
-            </article>
+                <div class="production-bar-compare">
+                    <div class="production-bar-line">
+                        <span>2025</span>
+                        <div class="production-track"><i class="bar-2025" style="width:${ancho2025}%"></i></div>
+                        <b>${fila.valor_2025_txt}</b>
+                    </div>
+                    <div class="production-bar-line">
+                        <span>2026</span>
+                        <div class="production-track"><i class="bar-2026" style="width:${ancho2026}%"></i></div>
+                        <b>${fila.valor_2026_txt}</b>
+                    </div>
+                </div>
+                <div class="production-delta ${clase}">
+                    <strong>${fila.variacion_txt}</strong>
+                    <small>${(Number(fila.variacion_pct) || 0) >= 0 ? "+" : ""}${(Number(fila.variacion_pct) || 0).toFixed(1)}%</small>
+                </div>
+            </div>
         `;
     }).join("");
 }
@@ -2722,12 +2658,57 @@ function renderRankingProduccion(contenedor, filas, vacio){
     }
     contenedor.innerHTML = filas.slice(0, 5).map((fila, index) => {
         const clase = Number(fila.variacion) >= 0 ? "up" : "down";
+        const icono = iconoIndicadorProduccion(fila.indicador);
         return `
             <div class="production-rank-row ${clase}">
                 <span>${index + 1}</span>
-                <strong>${fila.indicador}</strong>
+                <i class="fas ${icono}"></i>
+                <strong>${escaparHtml(fila.indicador)}</strong>
                 <b>${fila.variacion_txt}</b>
             </div>
+        `;
+    }).join("");
+}
+
+function renderResumenProduccion(){
+    const indicadores = datosProduccionPolicial?.indicadores || [];
+    const avances = indicadores.filter((fila) => Number(fila.variacion) > 0).length;
+    const brechas = indicadores.filter((fila) => Number(fila.variacion) < 0).length;
+    const porcentaje = indicadores.length ? Math.round((avances / indicadores.length) * 100) : 0;
+    const estado = porcentaje >= 50 ? "Atencion controlada" : "Atencion";
+    const detalle = porcentaje >= 50 ? "Balance favorable del periodo" : "Requiere acciones estrategicas";
+
+    if(prodTotalIndicadores) prodTotalIndicadores.textContent = formatear(indicadores.length);
+    if(prodIndicadoresMejoran) prodIndicadoresMejoran.textContent = formatear(avances);
+    if(prodIndicadoresDisminuyen) prodIndicadoresDisminuyen.textContent = formatear(brechas);
+    if(prodPctMejoran) prodPctMejoran.textContent = `${porcentaje}%`;
+    if(prodSemaforo) prodSemaforo.textContent = estado;
+    if(prodSemaforoDetalle) prodSemaforoDetalle.textContent = detalle;
+}
+
+function renderMosaicoProduccion(){
+    if(!produccionMosaico) return;
+    const indicadores = datosProduccionPolicial?.indicadores || [];
+    if(!indicadores.length){
+        renderEstadoVacio(produccionMosaico, "Sin indicadores disponibles");
+        return;
+    }
+    produccionMosaico.innerHTML = indicadores.map((fila) => {
+        const variacion = Number(fila.variacion) || 0;
+        const clase = variacion >= 0 ? "up" : "down";
+        const icono = iconoIndicadorProduccion(fila.indicador);
+        return `
+            <article class="production-mini-card ${clase}">
+                <i class="fas ${icono}"></i>
+                <div>
+                    <h3>${escaparHtml(fila.indicador)}</h3>
+                    <div class="production-mini-years">
+                        <span>2025 <b>${fila.valor_2025_txt}</b></span>
+                        <span>2026 <b>${fila.valor_2026_txt}</b></span>
+                    </div>
+                    <strong>${fila.variacion_txt}</strong>
+                </div>
+            </article>
         `;
     }).join("");
 }
@@ -2800,16 +2781,18 @@ function renderProduccionPolicial(){
     }
 
     if(produccionPeriodo) produccionPeriodo.textContent = datosProduccionPolicial.periodo || "Periodo no identificado";
-    if(produccionReporte) produccionReporte.textContent = `Reporte: ${datosProduccionPolicial.reporte || "Sin fecha"}`;
+    if(produccionReporte) produccionReporte.textContent = datosProduccionPolicial.reporte || "Sin fecha";
 
     pintarKpiProduccion(buscarIndicadorProduccion("Operativos"), prodOperativos, prodOperativosVar);
     pintarKpiProduccion(buscarIndicadorProduccion("Dinero incautado"), prodDinero, prodDineroVar);
     pintarKpiProduccion(buscarIndicadorProduccion("Bandas criminales desarticuladas"), prodBandas, prodBandasVar);
     pintarKpiProduccion(buscarIndicadorProduccion("Captura de requisitoriados"), prodRequisitoriados, prodRequisitoriadosVar);
 
+    renderResumenProduccion();
     renderBarrasProduccion();
     renderRankingProduccion(produccionAvances, datosProduccionPolicial.avances, "Sin avances frente al periodo anterior");
     renderRankingProduccion(produccionBrechas, datosProduccionPolicial.brechas, "Sin brechas frente al periodo anterior");
+    renderMosaicoProduccion();
     renderLecturaProduccion();
     renderTablaProduccion();
 }
