@@ -3182,6 +3182,14 @@ select{
     color: #ff4242;
 }
 
+.rank-context{
+    display: block;
+    margin-top: 4px;
+    color: #cfe3f4;
+    font-size: .76rem;
+    font-weight: 700;
+}
+
 .production-rank-row{
     grid-template-columns: 24px 34px minmax(0, 1fr) auto;
     border-radius: 6px;
