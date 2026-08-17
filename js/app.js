@@ -154,6 +154,7 @@ const predictivoRanking = document.getElementById("predictivoRanking");
 const predictivoLectura = document.getElementById("predictivoLectura");
 const produccionPeriodo = document.getElementById("produccionPeriodo");
 const produccionReporte = document.getElementById("produccionReporte");
+const produccionReporteTop = document.getElementById("produccionReporteTop");
 const prodOperativos = document.getElementById("prodOperativos");
 const prodOperativosVar = document.getElementById("prodOperativosVar");
 const prodDinero = document.getElementById("prodDinero");
@@ -2675,8 +2676,8 @@ function renderResumenProduccion(){
     const avances = indicadores.filter((fila) => Number(fila.variacion) > 0).length;
     const brechas = indicadores.filter((fila) => Number(fila.variacion) < 0).length;
     const porcentaje = indicadores.length ? Math.round((avances / indicadores.length) * 100) : 0;
-    const estado = porcentaje >= 50 ? "Atencion controlada" : "Atencion";
-    const detalle = porcentaje >= 50 ? "Balance favorable del periodo" : "Requiere acciones estrategicas";
+    const estado = porcentaje >= 60 ? "Estable" : porcentaje >= 45 ? "Vigilancia" : "Atencion";
+    const detalle = porcentaje >= 60 ? "Balance favorable del periodo" : porcentaje >= 45 ? "Seguimiento ejecutivo" : "Requiere acciones estrategicas";
 
     if(prodTotalIndicadores) prodTotalIndicadores.textContent = formatear(indicadores.length);
     if(prodIndicadoresMejoran) prodIndicadoresMejoran.textContent = formatear(avances);
@@ -2782,6 +2783,7 @@ function renderProduccionPolicial(){
 
     if(produccionPeriodo) produccionPeriodo.textContent = datosProduccionPolicial.periodo || "Periodo no identificado";
     if(produccionReporte) produccionReporte.textContent = datosProduccionPolicial.reporte || "Sin fecha";
+    if(produccionReporteTop) produccionReporteTop.textContent = datosProduccionPolicial.reporte || "Sin fecha";
 
     pintarKpiProduccion(buscarIndicadorProduccion("Operativos"), prodOperativos, prodOperativosVar);
     pintarKpiProduccion(buscarIndicadorProduccion("Dinero incautado"), prodDinero, prodDineroVar);

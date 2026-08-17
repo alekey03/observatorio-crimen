@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Observatorio del Crimen - COMOPPOL PNP</title>
 
-    <link rel="stylesheet" href="css/style.css?v=20260817-1">
+    <link rel="stylesheet" href="css/style.css?v=20260817-2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="css/public.css?v=1">
@@ -559,6 +559,17 @@
         </section>
 
         <section class="production-dashboard view-section is-hidden" data-section="produccion-policial" aria-label="Produccion policial">
+            <div class="production-topbar">
+                <div>
+                    <span>Produccion policial</span>
+                    <strong>Tablero ejecutivo nacional</strong>
+                </div>
+                <div class="production-top-actions">
+                    <span><i class="fas fa-calendar-days"></i> Reporte del dia: <b id="produccionReporteTop">No disponible</b></span>
+                    <button type="button" class="button-secondary"><i class="fas fa-file-pdf"></i><span>PDF diario</span></button>
+                </div>
+            </div>
+
             <div class="production-command-hero">
                 <div class="production-agency">
                     <img src="img/logo_pnp.png" alt="Policia Nacional del Peru">
@@ -745,7 +756,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="js/app.js?v=20260817-1"></script>
+    <script src="js/app.js?v=20260817-2"></script>
 </body>
 </html>
 
