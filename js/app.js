@@ -175,6 +175,7 @@ const prodIndicadoresDisminuyen = document.getElementById("prodIndicadoresDismin
 const prodPctMejoran = document.getElementById("prodPctMejoran");
 const prodSemaforo = document.getElementById("prodSemaforo");
 const prodSemaforoDetalle = document.getElementById("prodSemaforoDetalle");
+const btnToggleSidebar = document.getElementById("btnToggleSidebar");
 const menuItems = document.querySelectorAll(".menu li[data-view]");
 const viewSections = document.querySelectorAll(".view-section");
 const sidpolContextSections = document.querySelectorAll(".sidpol-context");
@@ -190,6 +191,29 @@ function normalizar(valor){
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toUpperCase();
+}
+
+function ajustarElementosTrasSidebar(){
+    setTimeout(() => {
+        mapa.invalidateSize();
+        if(mapaCalor) mapaCalor.invalidateSize();
+        if(mapaAlertas) mapaAlertas.invalidateSize();
+        if(mapaPolicial) mapaPolicial.invalidateSize();
+        if(vistaActual === "analisis-predictivo") renderAnalisisPredictivo();
+        if(vistaActual === "analisis-temporal") cargarAnaliticaTemporal();
+        if(vistaActual === "produccion-policial") renderProduccionPolicial();
+    }, 240);
+}
+
+function aplicarEstadoSidebar(colapsado){
+    document.body.classList.toggle("sidebar-collapsed", colapsado);
+    if(btnToggleSidebar){
+        btnToggleSidebar.setAttribute("aria-pressed", String(colapsado));
+        btnToggleSidebar.setAttribute("title", colapsado ? "Mostrar menu lateral" : "Ocultar menu lateral");
+        btnToggleSidebar.setAttribute("aria-label", colapsado ? "Mostrar menu lateral" : "Ocultar menu lateral");
+    }
+    localStorage.setItem("sidebarColapsado", colapsado ? "1" : "0");
+    ajustarElementosTrasSidebar();
 }
 
 function numero(valor){
@@ -2989,8 +3013,17 @@ document.getElementById("btnExportarExcelTemporal").addEventListener("click", ()
 });
 
 menuItems.forEach((item) => {
+    const label = item.querySelector("span")?.textContent?.trim() || item.dataset.view;
+    item.dataset.label = label;
     item.addEventListener("click", () => activarVista(item.dataset.view));
 });
+
+if(btnToggleSidebar){
+    aplicarEstadoSidebar(localStorage.getItem("sidebarColapsado") === "1");
+    btnToggleSidebar.addEventListener("click", () => {
+        aplicarEstadoSidebar(!document.body.classList.contains("sidebar-collapsed"));
+    });
+}
 
 Promise.all([
     fetch("mapas/peru_departamental_simple.geojson").then((response) => response.json()),

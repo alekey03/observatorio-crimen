@@ -1493,6 +1493,7 @@ body{
     background: #0b1015;
     border-right: 1px solid #26333d;
     box-shadow: none;
+    transition: width .22s ease, padding .22s ease;
 }
 
 .brand{
@@ -1590,6 +1591,7 @@ body{
 .main-content{
     margin-left: 264px;
     padding: 0 24px 28px;
+    transition: margin-left .22s ease, padding .22s ease;
 }
 
 .command-bar{
@@ -1602,6 +1604,26 @@ body{
     padding: 0 24px;
     background: #0e141a;
     border-bottom: 1px solid #26333d;
+}
+
+.sidebar-toggle{
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    color: var(--gold);
+    background: #121c25;
+    border: 1px solid #33414d;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.sidebar-toggle:hover{
+    background: #182633;
+    border-color: rgba(241, 200, 75, .72);
+    transform: translateY(-1px);
 }
 
 .command-bar > div:first-child{
@@ -1619,6 +1641,85 @@ body{
 
 .command-bar strong{
     font-size: 0.9rem;
+}
+
+body.sidebar-collapsed .sidebar{
+    width: 78px;
+    padding: 16px 10px;
+    overflow: hidden;
+}
+
+body.sidebar-collapsed .main-content{
+    margin-left: 78px;
+}
+
+body.sidebar-collapsed .brand{
+    padding: 4px 0 14px;
+}
+
+body.sidebar-collapsed .brand-logos{
+    justify-content: center;
+    margin-bottom: 0;
+}
+
+body.sidebar-collapsed .brand-logos img:first-child{
+    width: 46px;
+    height: 46px;
+}
+
+body.sidebar-collapsed .brand-logos img:last-child,
+body.sidebar-collapsed .brand-kicker,
+body.sidebar-collapsed .brand h2,
+body.sidebar-collapsed .brand-unit,
+body.sidebar-collapsed .nav-label,
+body.sidebar-collapsed .menu span,
+body.sidebar-collapsed .sidebar-footer{
+    display: none;
+}
+
+body.sidebar-collapsed .menu{
+    margin-top: 18px;
+}
+
+body.sidebar-collapsed .menu li{
+    justify-content: center;
+    min-height: 48px;
+    padding: 0;
+}
+
+body.sidebar-collapsed .menu i{
+    width: auto;
+    font-size: 1.05rem;
+}
+
+body.sidebar-collapsed .menu li:hover{
+    transform: none;
+}
+
+body.sidebar-collapsed .menu li::after{
+    content: attr(data-label);
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    z-index: 40;
+    transform: translateY(-50%);
+    max-width: 190px;
+    padding: 8px 10px;
+    border: 1px solid #33414d;
+    border-radius: 6px;
+    color: #ffffff;
+    background: #101820;
+    box-shadow: 0 12px 26px rgba(0,0,0,.28);
+    font-size: .78rem;
+    font-weight: 800;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s ease;
+}
+
+body.sidebar-collapsed .menu li:hover::after{
+    opacity: 1;
 }
 
 .command-status{
