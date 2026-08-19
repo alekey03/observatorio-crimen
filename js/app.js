@@ -1144,8 +1144,10 @@ function renderLecturaDashboard(total, modalidades, territorios, variacion){
 function renderDashboardEstrategico(){
     if(!dashboardEstrategico.total) return;
     const datos = obtenerDatosFiltrados();
-    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
-    const datosSerie = obtenerDatosFiltrados("mes", fuenteModalidadesActual());
+    const fuenteModalidades = fuenteModalidadesActual();
+    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidades.length ? fuenteModalidades : datosSIDPOL);
+    const fuenteSerie = fuenteModalidades.length ? fuenteModalidades : (datosSIDPOL.length ? datosSIDPOL : datosTerritorio);
+    const datosSerie = obtenerDatosFiltrados("mes", fuenteSerie);
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
     const extorsion = totalPorCoincidencia(datosModalidades, "EXTORSION");
     const homicidio = totalPorCoincidencia(datosModalidades, "HOMICIDIO");
