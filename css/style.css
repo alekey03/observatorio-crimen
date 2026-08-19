@@ -1469,6 +1469,39 @@ tbody tr:hover{
     gap: 8px;
 }
 
+.compare-dashboard{
+    margin-top: 16px;
+}
+
+.compare-report{
+    display: grid;
+    gap: 16px;
+}
+
+.compare-report-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 20px 22px;
+    background:
+        linear-gradient(135deg, rgba(9, 25, 36, 0.98), rgba(10, 17, 24, 0.98)),
+        #101820;
+    border: 1px solid rgba(241, 200, 75, 0.42);
+    border-left: 5px solid var(--gold);
+    border-radius: 8px;
+}
+
+.compare-report-header h2{
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    line-height: 1;
+}
+
+.compare-report-header p:last-child{
+    margin-top: 8px;
+    color: var(--muted);
+}
+
 .year-compare-panel{
     border-color: rgba(241, 200, 75, 0.34);
     background:
@@ -1574,6 +1607,62 @@ tbody tr:hover{
     height: auto;
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 14px;
+}
+
+.compare-output-grid{
+    display: grid;
+    grid-template-columns: minmax(360px, 0.92fr) minmax(420px, 1.08fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.compare-table-card{
+    overflow-x: auto;
+    background: #f8fbf7;
+    border: 1px solid #d7e4d2;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.compare-table-card table{
+    width: 100%;
+    min-width: 520px;
+    border-collapse: collapse;
+    color: #06121c;
+    font-size: 0.86rem;
+}
+
+.compare-table-card th{
+    background: #b8e6aa;
+    color: #000;
+    font-weight: 900;
+}
+
+.compare-table-card th,
+.compare-table-card td{
+    padding: 8px 10px;
+    border: 1px solid #1f2b23;
+    text-align: center;
+}
+
+.compare-table-card td:first-child{
+    background: #c7efba;
+    font-weight: 900;
+}
+
+.compare-table-card .total-row td{
+    background: #b8e6aa;
+    font-weight: 900;
+}
+
+.compare-table-card .up{
+    color: #f03224;
+    font-weight: 900;
+}
+
+.compare-table-card .down{
+    color: #2c7be5;
+    font-weight: 900;
 }
 
 .temporal-primary-grid{
@@ -1872,6 +1961,10 @@ tbody tr:hover{
         grid-template-columns: 1fr;
     }
 
+    .compare-output-grid{
+        grid-template-columns: 1fr;
+    }
+
     .year-compare-toolbar,
     .year-compare-summary{
         grid-template-columns: 1fr;
@@ -1884,6 +1977,11 @@ tbody tr:hover{
 
 @media (max-width: 820px){
     .temporal-heading{
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .compare-report-header{
         align-items: flex-start;
         flex-direction: column;
     }
