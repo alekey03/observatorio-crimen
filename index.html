@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Observatorio del Crimen - COMOPPOL PNP</title>
 
-    <link rel="stylesheet" href="css/style.css?v=20260819-6">
+    <link rel="stylesheet" href="css/style.css?v=20260819-7">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="css/public.css?v=1">
@@ -536,6 +536,27 @@
                 </div>
             </div>
 
+            <article class="analytics-panel year-compare-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Comparador rapido</p>
+                        <h2>Delito por dos anos</h2>
+                        <p>Seleccione un delito y compare dos periodos anuales con el ambito territorial activo.</p>
+                    </div>
+                    <div class="year-compare-actions">
+                        <button id="btnDescargarComparadorCsv" class="button-secondary" type="button"><i class="fas fa-file-csv"></i><span>CSV</span></button>
+                        <button id="btnDescargarComparadorPng" class="button-secondary" type="button"><i class="fas fa-image"></i><span>Imagen</span></button>
+                    </div>
+                </div>
+                <div class="year-compare-toolbar">
+                    <label><span>Ano base</span><select id="comparadorAnioBase"></select></label>
+                    <label><span>Ano comparado</span><select id="comparadorAnioComparado"></select></label>
+                    <label class="wide"><span>Delito</span><select id="comparadorDelito"></select></label>
+                </div>
+                <div id="comparadorResumen" class="year-compare-summary"></div>
+                <div id="comparadorGrafico" class="year-compare-chart"></div>
+            </article>
+
             <div class="temporal-primary-grid">
                 <article class="analytics-panel temporal-trend-panel">
                     <div class="panel-header">
@@ -878,7 +899,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="js/app.js?v=20260819-6"></script>
+    <script src="js/app.js?v=20260819-7"></script>
 </body>
 </html>
 

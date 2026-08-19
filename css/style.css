@@ -1469,6 +1469,109 @@ tbody tr:hover{
     gap: 8px;
 }
 
+.year-compare-panel{
+    border-color: rgba(241, 200, 75, 0.34);
+    background:
+        radial-gradient(circle at 12% 20%, rgba(61, 139, 253, 0.12), transparent 28%),
+        radial-gradient(circle at 88% 8%, rgba(241, 200, 75, 0.12), transparent 30%),
+        rgba(15, 23, 31, 0.96);
+}
+
+.year-compare-panel .panel-header p:last-child{
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 0.84rem;
+}
+
+.year-compare-actions{
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.year-compare-toolbar{
+    display: grid;
+    grid-template-columns: minmax(150px, 0.55fr) minmax(150px, 0.55fr) minmax(280px, 1.25fr);
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.year-compare-toolbar label{
+    display: grid;
+    gap: 7px;
+}
+
+.year-compare-toolbar span{
+    color: #b9c9d8;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.year-compare-summary{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.year-compare-card{
+    padding: 14px 16px;
+    background: #111b24;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
+.year-compare-card span,
+.year-compare-card small{
+    display: block;
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.year-compare-card strong{
+    display: block;
+    margin: 4px 0;
+    color: #fff;
+    font-size: clamp(1.55rem, 3vw, 2.35rem);
+    line-height: 1;
+}
+
+.year-compare-card.featured{
+    background: linear-gradient(135deg, rgba(18, 35, 49, 0.98), rgba(8, 17, 23, 0.98));
+}
+
+.year-compare-card.featured.up{
+    border-color: rgba(36, 212, 150, 0.54);
+    box-shadow: inset 4px 0 0 #24d496;
+}
+
+.year-compare-card.featured.down{
+    border-color: rgba(255, 87, 87, 0.54);
+    box-shadow: inset 4px 0 0 #ff5757;
+}
+
+.year-compare-card.featured.up strong{
+    color: #24d496;
+}
+
+.year-compare-card.featured.down strong{
+    color: #ff5757;
+}
+
+.year-compare-chart{
+    min-height: 220px;
+}
+
+.year-compare-chart svg{
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+}
+
 .temporal-primary-grid{
     display: grid;
     grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.8fr);
@@ -1765,6 +1868,11 @@ tbody tr:hover{
         grid-template-columns: 1fr;
     }
 
+    .year-compare-toolbar,
+    .year-compare-summary{
+        grid-template-columns: 1fr;
+    }
+
     .temporal-trend-panel{
         grid-row: auto;
     }
@@ -1790,8 +1898,13 @@ tbody tr:hover{
         width: 100%;
     }
 
-    .temporal-actions button{
+    .temporal-actions button,
+    .year-compare-actions button{
         flex: 1;
+    }
+
+    .year-compare-actions{
+        width: 100%;
     }
 
     .donut-layout{
