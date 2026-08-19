@@ -946,11 +946,15 @@ function serieMensualDashboard(datos){
         });
 }
 
+function tieneSerieMensualDashboard(datos){
+    return datos.some((fila) => Number(fila.ANIO) && Number(fila.MES) && obtenerCasos(fila));
+}
+
 function renderPulsoDashboard(serie){
     if(!dashboardEstrategico.pulso) return;
     const visible = serie.slice(-10);
     if(!visible.length){
-        renderEstadoVacio(dashboardEstrategico.pulso, "Sin datos mensuales para el dashboard");
+        renderEstadoVacio(dashboardEstrategico.pulso, "Sin serie mensual para los filtros seleccionados");
         return;
     }
 
@@ -1133,8 +1137,13 @@ function renderDashboardEstrategico(){
     const datos = obtenerDatosFiltrados();
     const fuenteModalidades = fuenteModalidadesActual();
     const datosModalidades = obtenerDatosFiltrados("", fuenteModalidades.length ? fuenteModalidades : datosSIDPOL);
-    const fuenteSerie = fuenteModalidades.length ? fuenteModalidades : (datosSIDPOL.length ? datosSIDPOL : datosTerritorio);
-    const datosSerie = obtenerDatosFiltrados("mes", fuenteSerie);
+    const fuenteSerieModalidad = fuenteModalidades.length ? fuenteModalidades : datosSIDPOL;
+    let datosSerie = filtros.delito.value && fuenteSerieModalidad.length
+        ? obtenerDatosFiltrados("mes", fuenteSerieModalidad)
+        : [];
+    if(!tieneSerieMensualDashboard(datosSerie)){
+        datosSerie = obtenerDatosFiltrados(["mes", "delito"], datosTerritorio);
+    }
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
     const extorsion = totalPorCoincidencia(datosModalidades, "EXTORSION");
     const homicidio = totalPorCoincidencia(datosModalidades, "HOMICIDIO");
