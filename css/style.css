@@ -1618,10 +1618,11 @@ tbody tr:hover{
 
 .compare-table-card{
     overflow-x: auto;
-    background: #f8fbf7;
-    border: 1px solid #d7e4d2;
+    background: linear-gradient(145deg, #edf4fb, #f9fbfe);
+    border: 1px solid #9eb4c8;
     border-radius: 8px;
     padding: 10px;
+    box-shadow: 0 14px 34px rgba(2, 11, 20, 0.18);
 }
 
 .compare-table-card table{
@@ -1633,36 +1634,46 @@ tbody tr:hover{
 }
 
 .compare-table-card th{
-    background: #b8e6aa;
-    color: #000;
+    background: #17324a;
+    color: #ffffff;
     font-weight: 900;
 }
 
 .compare-table-card th,
 .compare-table-card td{
     padding: 8px 10px;
-    border: 1px solid #1f2b23;
+    border: 1px solid #b6c6d6;
     text-align: center;
+    background: #fbfdff;
 }
 
 .compare-table-card td:first-child{
-    background: #c7efba;
+    background: #dceaf6;
+    color: #102031;
     font-weight: 900;
 }
 
 .compare-table-card .total-row td{
-    background: #b8e6aa;
+    background: #f1c84b;
+    color: #06121c;
     font-weight: 900;
 }
 
 .compare-table-card .up{
-    color: #f03224;
+    color: #b42318;
     font-weight: 900;
 }
 
 .compare-table-card .down{
-    color: #2c7be5;
+    color: #1d4ed8;
     font-weight: 900;
+}
+
+.compare-table-card .monthly-note{
+    background: #eef5fb;
+    color: #334b63;
+    font-weight: 800;
+    line-height: 1.45;
 }
 
 .temporal-primary-grid{

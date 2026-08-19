@@ -1425,6 +1425,7 @@ function renderComparadorBianual(){
     const chartBaseY = 330;
     const lineStartY = chartBaseY - baseBarHeight - 24;
     const lineEndY = chartBaseY - comparadoBarHeight - 24;
+    const tieneDetalleMensual = [...baseMeses, ...comparadoMeses].some((fila) => fila.casos > 0);
 
     ultimaComparacionBianual = { base, comparado, delito: comparadorDelito.value, diferencia, variacion, periodo };
 
@@ -1438,7 +1439,7 @@ function renderComparadorBianual(){
                 <th>%</th>
             </tr>
         `;
-        const filasMes = baseMeses.map((fila, index) => {
+        const filasMes = tieneDetalleMensual ? baseMeses.map((fila, index) => {
             const mesIndex = periodo.inicio - 1 + index;
             const valorComparado = comparado.meses[mesIndex].casos;
             const difMes = valorComparado - fila.casos;
@@ -1452,7 +1453,11 @@ function renderComparadorBianual(){
                     <td class="${difMes >= 0 ? "up" : "down"}">${pctMes >= 0 ? "+" : ""}${pctMes.toFixed(0)}%</td>
                 </tr>
             `;
-        }).join("");
+        }).join("") : `
+            <tr>
+                <td class="monthly-note" colspan="5">Sin detalle mensual disponible en la fuente agregada. Se muestra el total del periodo seleccionado.</td>
+            </tr>
+        `;
         comparadorTablaBody.innerHTML = `
             ${filasMes}
             <tr class="total-row">
@@ -1486,26 +1491,26 @@ function renderComparadorBianual(){
     comparadorGrafico.innerHTML = `
         <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Comparativo anual de ${comparadorDelito.value}">
             <style>
-                .year-chart-title{fill:#233142;font:800 24px Arial,sans-serif}
-                .year-chart-subtitle,.year-chart-axis{fill:#b9c9d8;font:700 12px Arial,sans-serif}
-                .year-chart-label,.year-chart-value{fill:#233142;font:800 16px Arial,sans-serif}
+                .year-chart-title{fill:#17324a;font:800 24px Arial,sans-serif}
+                .year-chart-subtitle,.year-chart-axis{fill:#60768a;font:700 12px Arial,sans-serif}
+                .year-chart-label,.year-chart-value{fill:#17324a;font:800 16px Arial,sans-serif}
                 .year-chart-diff{font:800 22px Arial,sans-serif}
-                .year-chart-diff.positive{fill:#f04b35}
-                .year-chart-diff.negative{fill:#2c7be5}
+                .year-chart-diff.positive{fill:#b42318}
+                .year-chart-diff.negative{fill:#1d4ed8}
             </style>
-            <rect width="${width}" height="${height}" rx="10" fill="#ffffff"></rect>
-            <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="10" fill="none" stroke="#d8dfe7"></rect>
+            <rect width="${width}" height="${height}" rx="10" fill="#f8fbff"></rect>
+            <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="10" fill="none" stroke="#b7c6d6"></rect>
             <text x="${width / 2}" y="44" text-anchor="middle" class="year-chart-title">${comparadorDelito.value}</text>
             <text x="${width / 2}" y="68" text-anchor="middle" class="year-chart-subtitle">${periodo.texto} | ${contextoComparadorBianual()}</text>
-            <line x1="90" y1="${chartBaseY}" x2="670" y2="${chartBaseY}" stroke="#d8dfe7"></line>
-            <line x1="90" y1="110" x2="90" y2="${chartBaseY}" stroke="#d8dfe7"></line>
-            <line x1="90" y1="260" x2="670" y2="260" stroke="#eef1f4"></line>
-            <line x1="90" y1="190" x2="670" y2="190" stroke="#eef1f4"></line>
-            <rect x="${baseX}" y="${chartBaseY - baseBarHeight}" width="95" height="${baseBarHeight}" fill="#5b9bd5"></rect>
-            <rect x="${comparadoX}" y="${chartBaseY - comparadoBarHeight}" width="95" height="${comparadoBarHeight}" fill="#ed7d31"></rect>
+            <line x1="90" y1="${chartBaseY}" x2="670" y2="${chartBaseY}" stroke="#c6d3df"></line>
+            <line x1="90" y1="110" x2="90" y2="${chartBaseY}" stroke="#c6d3df"></line>
+            <line x1="90" y1="260" x2="670" y2="260" stroke="#e5edf5"></line>
+            <line x1="90" y1="190" x2="670" y2="190" stroke="#e5edf5"></line>
+            <rect x="${baseX}" y="${chartBaseY - baseBarHeight}" width="95" height="${baseBarHeight}" rx="3" fill="#2563eb"></rect>
+            <rect x="${comparadoX}" y="${chartBaseY - comparadoBarHeight}" width="95" height="${comparadoBarHeight}" rx="3" fill="#f1c84b"></rect>
             <text x="${baseX + 47}" y="${chartBaseY - baseBarHeight - 10}" text-anchor="middle" class="year-chart-value">${formatear(base.total)}</text>
             <text x="${comparadoX + 47}" y="${chartBaseY - comparadoBarHeight - 10}" text-anchor="middle" class="year-chart-value">${formatear(comparado.total)}</text>
-            <line x1="${baseX + 47}" y1="${lineStartY}" x2="${comparadoX + 47}" y2="${lineEndY}" stroke="#f04b35" stroke-width="2" stroke-dasharray="8 8"></line>
+            <line x1="${baseX + 47}" y1="${lineStartY}" x2="${comparadoX + 47}" y2="${lineEndY}" stroke="#ef4444" stroke-width="2" stroke-dasharray="8 8"></line>
             <text x="${width / 2}" y="${Math.min(lineStartY, lineEndY) - 14}" text-anchor="middle" class="year-chart-diff ${diferencia >= 0 ? "positive" : "negative"}">${diferencia >= 0 ? "+" : ""}${formatear(diferencia)}</text>
             <text x="${baseX + 47}" y="365" text-anchor="middle" class="year-chart-label">${base.anio}</text>
             <text x="${comparadoX + 47}" y="365" text-anchor="middle" class="year-chart-label">${comparado.anio}</text>
@@ -1623,13 +1628,16 @@ function descargarComparadorPdf(){
                 .card span{display:block;color:#526679;font-size:12px;font-weight:800;text-transform:uppercase}
                 .card strong{display:block;margin:5px 0;color:#07131d;font-size:28px}
                 .card small{color:#526679;font-weight:700}
-                table{width:100%;border-collapse:collapse;font-size:12px}
-                th{background:#b7e4a8;color:#000}
-                th,td{border:1px solid #222;padding:6px 8px;text-align:center}
-                td:first-child{background:#c9eebb;font-weight:800}
-                .total-row td{background:#b7e4a8;font-weight:900}
-                .up{color:#e53935;font-weight:900}
-                .down{color:#2c7be5;font-weight:900}
+                .compare-table-card{background:#edf4fb;border:1px solid #9eb4c8;border-radius:8px;padding:10px}
+                table{width:100%;border-collapse:collapse;font-size:12px;color:#102031}
+                th{background:#17324a;color:#fff}
+                th,td{border:1px solid #b6c6d6;padding:6px 8px;text-align:center}
+                td{background:#fbfdff}
+                td:first-child{background:#dceaf6;font-weight:800}
+                .total-row td{background:#f1c84b;color:#06121c;font-weight:900}
+                .up{color:#b42318;font-weight:900}
+                .down{color:#1d4ed8;font-weight:900}
+                .monthly-note{background:#eef5fb;color:#334b63;font-weight:800}
                 .chart svg{width:100%;height:auto}
                 .note{padding:10px 12px;background:#eef4f8;border-left:4px solid #f1c84b;color:#263949;font-size:12px}
             </style>
