@@ -225,6 +225,59 @@ function normalizar(valor){
         .toUpperCase();
 }
 
+const delitosPrioritarios = [
+    {
+        etiqueta: "EXTORSION",
+        modalidades: ["EXTORSION", "EXTORSION AGRAVADA"]
+    },
+    {
+        etiqueta: "SECUESTRO",
+        modalidades: ["SECUESTRO", "SECUESTRO AGRAVADO"]
+    },
+    {
+        etiqueta: "ROBO",
+        modalidades: ["ROBO", "ROBO AGRAVADO"]
+    },
+    {
+        etiqueta: "HURTO",
+        modalidades: ["HURTO", "HURTO AGRAVADO"]
+    },
+    {
+        etiqueta: "ASALTO Y ROBO DE VEHICULOS",
+        modalidades: ["ASALTO Y ROBO DE VEHICULOS"]
+    }
+];
+
+function grupoDelitoPrioritario(valor){
+    const valorNormalizado = normalizar(valor);
+    return delitosPrioritarios.find((grupo) => normalizar(grupo.etiqueta) === valorNormalizado);
+}
+
+function modalidadEnGrupoPrioritario(modalidad){
+    const modalidadNormalizada = normalizar(modalidad);
+    return delitosPrioritarios.some((grupo) =>
+        grupo.modalidades.some((item) => normalizar(item) === modalidadNormalizada)
+    );
+}
+
+function modalidadCoincideDelito(modalidad, delitoSeleccionado){
+    if(!delitoSeleccionado) return true;
+    const grupo = grupoDelitoPrioritario(delitoSeleccionado);
+    const modalidadNormalizada = normalizar(modalidad);
+    if(grupo){
+        return grupo.modalidades.some((item) => normalizar(item) === modalidadNormalizada);
+    }
+    return modalidadNormalizada === normalizar(delitoSeleccionado);
+}
+
+function valorDelitoActualizado(valorActual){
+    const grupo = delitosPrioritarios.find((item) =>
+        normalizar(item.etiqueta) === normalizar(valorActual) ||
+        item.modalidades.some((modalidad) => normalizar(modalidad) === normalizar(valorActual))
+    );
+    return grupo ? grupo.etiqueta : valorActual;
+}
+
 function ajustarElementosTrasSidebar(){
     setTimeout(() => {
         mapa.invalidateSize();
@@ -290,7 +343,7 @@ function obtenerDatosFiltrados(ignorar = "", fuente = null){
     const departamento = normalizar(filtros.departamento.value);
     const provincia = normalizar(filtros.provincia.value);
     const distrito = normalizar(filtros.distrito.value);
-    const delito = normalizar(filtros.delito.value);
+    const delito = filtros.delito.value;
 
     return origen.filter((fila) => {
         if(!ignorados.has("anio") && anio && fila.ANIO !== anio) return false;
@@ -298,7 +351,7 @@ function obtenerDatosFiltrados(ignorar = "", fuente = null){
         if(!ignorados.has("departamento") && departamento && normalizar(fila.DPTO_HECHO) !== departamento) return false;
         if(!ignorados.has("provincia") && provincia && normalizar(fila.PROV_HECHO) !== provincia) return false;
         if(!ignorados.has("distrito") && distrito && normalizar(fila.DIST_HECHO) !== distrito) return false;
-        if(!ignorados.has("delito") && delito && normalizar(fila.MODALIDAD) !== delito) return false;
+        if(!ignorados.has("delito") && delito && !modalidadCoincideDelito(fila.MODALIDAD, delito)) return false;
         return true;
     });
 }
@@ -323,6 +376,33 @@ function llenarSelect(select, opciones, etiqueta, valorActual = ""){
         const opcionReal = opciones.find((opcion) => normalizar(opcion) === normalizar(valorActual));
         select.value = opcionReal;
     }
+}
+
+function llenarSelectDelitos(select, opciones, etiqueta, valorActual = ""){
+    const valorNormalizado = normalizar(valorDelitoActualizado(valorActual));
+    const opcionesOtros = opciones.filter((opcion) => !modalidadEnGrupoPrioritario(opcion));
+
+    select.innerHTML = "";
+    select.appendChild(new Option(etiqueta, ""));
+
+    const grupoPrioritarios = document.createElement("optgroup");
+    grupoPrioritarios.label = "Delitos prioritarios";
+    delitosPrioritarios.forEach((grupo) => {
+        grupoPrioritarios.appendChild(new Option(grupo.etiqueta, grupo.etiqueta));
+    });
+    select.appendChild(grupoPrioritarios);
+
+    if(opcionesOtros.length){
+        const grupoOtros = document.createElement("optgroup");
+        grupoOtros.label = "Otros delitos";
+        opcionesOtros.forEach((opcion) => {
+            grupoOtros.appendChild(new Option(opcion, opcion));
+        });
+        select.appendChild(grupoOtros);
+    }
+
+    const opcionSeleccionada = [...select.options].find((opcion) => normalizar(opcion.value) === valorNormalizado);
+    if(opcionSeleccionada) select.value = opcionSeleccionada.value;
 }
 
 function actualizarOpciones(){
@@ -358,7 +438,7 @@ function actualizarOpciones(){
         llenarSelect(filtros.distrito, [], "Seleccione una provincia");
     }
 
-    llenarSelect(
+    llenarSelectDelitos(
         filtros.delito,
         opcionesUnicas(datosParaDelitos, "MODALIDAD"),
         filtros.mes.value && !filtros.anio.value
@@ -1349,10 +1429,9 @@ function inicializarComparadorBianual(){
 }
 
 function ultimoMesComparador(anio, delito){
-    const delitoNormalizado = normalizar(delito);
     return datosSIDPOL.reduce((maximo, fila) => {
         if(String(fila.ANIO || "") !== String(anio || "")) return maximo;
-        if(delitoNormalizado && normalizar(fila.MODALIDAD) !== delitoNormalizado) return maximo;
+        if(delito && !modalidadCoincideDelito(fila.MODALIDAD, delito)) return maximo;
         const mes = Number(fila.MES);
         return mes >= 1 && mes <= 12 ? Math.max(maximo, mes) : maximo;
     }, 0);
@@ -1369,12 +1448,11 @@ function datosComparadorPorAnio(anio, delito){
     const departamento = normalizar(filtros.departamento.value);
     const provincia = normalizar(filtros.provincia.value);
     const distrito = normalizar(filtros.distrito.value);
-    const delitoNormalizado = normalizar(delito);
     const periodo = periodoComparadorBianual();
     const filas = datosSIDPOL.filter((fila) => {
         const mes = Number(fila.MES);
         if(String(fila.ANIO || "") !== String(anio || "")) return false;
-        if(delitoNormalizado && normalizar(fila.MODALIDAD) !== delitoNormalizado) return false;
+        if(delito && !modalidadCoincideDelito(fila.MODALIDAD, delito)) return false;
         if(mes && (mes < periodo.inicio || mes > periodo.fin)) return false;
         if(departamento && normalizar(fila.DPTO_HECHO) !== departamento) return false;
         if(provincia && normalizar(fila.PROV_HECHO) !== provincia) return false;
@@ -1711,7 +1789,7 @@ function datosPredictivosFiltrados(){
     const departamento = normalizar(filtros.departamento.value);
     const provincia = normalizar(filtros.provincia.value);
     const distrito = normalizar(filtros.distrito.value);
-    const delito = normalizar(filtros.delito.value);
+    const delito = filtros.delito.value;
 
     return fuentePredictivaActual().filter((fila) => {
         const mes = Number(fila.MES);
@@ -1721,7 +1799,7 @@ function datosPredictivosFiltrados(){
         if(departamento && normalizar(fila.DPTO_HECHO) !== departamento) return false;
         if(provincia && normalizar(fila.PROV_HECHO) !== provincia) return false;
         if(distrito && normalizar(fila.DIST_HECHO) !== distrito) return false;
-        if(delito && normalizar(fila.MODALIDAD) !== delito) return false;
+        if(delito && !modalidadCoincideDelito(fila.MODALIDAD, delito)) return false;
         return true;
     });
 }
@@ -2328,7 +2406,7 @@ function obtenerDatosMapaCalorFiltrados(){
     const departamento = normalizar(filtros.departamento.value);
     const provincia = normalizar(filtros.provincia.value);
     const distrito = normalizar(filtros.distrito.value);
-    const delito = normalizar(filtros.delito.value);
+    const delito = filtros.delito.value;
 
     return datosMapaCalor.filter((fila) => {
         if(anio && fila.ANIO !== anio) return false;
@@ -2336,7 +2414,7 @@ function obtenerDatosMapaCalorFiltrados(){
         if(departamento && normalizar(fila.DPTO_HECHO) !== departamento) return false;
         if(provincia && normalizar(fila.PROV_HECHO) !== provincia) return false;
         if(distrito && normalizar(fila.DIST_HECHO) !== distrito) return false;
-        if(delito && normalizar(fila.MODALIDAD) !== delito) return false;
+        if(delito && !modalidadCoincideDelito(fila.MODALIDAD, delito)) return false;
         const latitud = numero(fila.xx);
         const longitud = numero(fila.yy);
         return latitud >= -18.5 && latitud <= 0 &&
@@ -2929,7 +3007,7 @@ function fuentePolicialActual(){
 function obtenerDatosPolicialesFiltrados(){
     const anio = filtros.anio.value;
     const mes = filtros.mes.value;
-    const delito = normalizar(filtros.delito.value);
+    const delito = filtros.delito.value;
     const region = normalizarRegionPolicial(filtroRegionPolicial.value);
     const comisaria = normalizarComisariaPolicial(filtroComisariaPolicial.value);
 
@@ -2937,7 +3015,7 @@ function obtenerDatosPolicialesFiltrados(){
     return fuentePolicialActual().filter((fila) => {
         if(anio && fila.ANIO !== anio) return false;
         if(mes && String(fila.MES || "") !== mes) return false;
-        if(delito && normalizar(fila.MODALIDAD) !== delito) return false;
+        if(delito && !modalidadCoincideDelito(fila.MODALIDAD, delito)) return false;
         if(region && normalizarRegionPolicial(fila.REGION) !== region) return false;
         if(comisaria && normalizarComisariaPolicial(fila.COMISARIA) !== comisaria) return false;
         return true;
