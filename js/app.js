@@ -81,6 +81,15 @@ const filtros = {
     delito: document.getElementById("filtroDelito")
 };
 
+const filtrosDashboard = {
+    anio: document.getElementById("dashboardFiltroAnio"),
+    mes: document.getElementById("dashboardFiltroMes"),
+    departamento: document.getElementById("dashboardFiltroDepartamento"),
+    provincia: document.getElementById("dashboardFiltroProvincia"),
+    distrito: document.getElementById("dashboardFiltroDistrito"),
+    delito: document.getElementById("dashboardFiltroDelito")
+};
+
 const indicadores = {
     total: document.getElementById("totalDenuncias"),
     extorsiones: document.getElementById("totalExtorsiones"),
@@ -405,6 +414,16 @@ function llenarSelectDelitos(select, opciones, etiqueta, valorActual = ""){
     if(opcionSeleccionada) select.value = opcionSeleccionada.value;
 }
 
+function sincronizarFiltrosDashboard(){
+    Object.entries(filtrosDashboard).forEach(([clave, selectDashboard]) => {
+        const selectPrincipal = filtros[clave];
+        if(!selectDashboard || !selectPrincipal) return;
+        selectDashboard.innerHTML = selectPrincipal.innerHTML;
+        selectDashboard.value = selectPrincipal.value;
+        selectDashboard.disabled = selectPrincipal.disabled;
+    });
+}
+
 function actualizarOpciones(){
     const anioActual = filtros.anio.value;
     const departamentoActual = filtros.departamento.value;
@@ -452,6 +471,7 @@ function actualizarOpciones(){
     filtros.provincia.disabled = !filtros.departamento.value;
     filtros.distrito.disabled = !filtros.provincia.value;
     filtros.delito.disabled = Boolean(filtros.mes.value) && !mensualListo;
+    sincronizarFiltrosDashboard();
 }
 
 function resumirPor(campo){
@@ -3665,6 +3685,14 @@ Object.values(filtros).forEach((select) => {
         }else if(vistaActual === "analisis-predictivo"){
             await cargarAnalisisPredictivo();
         }
+    });
+});
+
+Object.entries(filtrosDashboard).forEach(([clave, selectDashboard]) => {
+    if(!selectDashboard || !filtros[clave]) return;
+    selectDashboard.addEventListener("change", () => {
+        filtros[clave].value = selectDashboard.value;
+        filtros[clave].dispatchEvent(new Event("change", { bubbles: true }));
     });
 });
 
