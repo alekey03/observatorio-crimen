@@ -144,9 +144,12 @@ const tablaTemporal = document.getElementById("tablaTemporal");
 const timelineTemporal = document.getElementById("timelineTemporal");
 const comparadorAnioBase = document.getElementById("comparadorAnioBase");
 const comparadorAnioComparado = document.getElementById("comparadorAnioComparado");
+const comparadorMesInicio = document.getElementById("comparadorMesInicio");
+const comparadorMesFin = document.getElementById("comparadorMesFin");
 const comparadorDelito = document.getElementById("comparadorDelito");
 const comparadorResumen = document.getElementById("comparadorResumen");
 const comparadorGrafico = document.getElementById("comparadorGrafico");
+const btnDescargarComparadorPdf = document.getElementById("btnDescargarComparadorPdf");
 const btnDescargarComparadorCsv = document.getElementById("btnDescargarComparadorCsv");
 const btnDescargarComparadorPng = document.getElementById("btnDescargarComparadorPng");
 const filtroHorizontePredictivo = document.getElementById("filtroHorizontePredictivo");
@@ -1311,11 +1314,18 @@ function renderMatrizTemporal(territorios, total){
 function llenarSelectComparador(select, opciones, valorPreferido){
     if(!select) return;
     select.innerHTML = "";
-    opciones.forEach((opcion) => select.appendChild(new Option(opcion, opcion)));
-    if(valorPreferido && opciones.includes(valorPreferido)){
+    const valores = opciones.map((opcion) => typeof opcion === "object" ? String(opcion.value) : String(opcion));
+    opciones.forEach((opcion) => {
+        if(typeof opcion === "object"){
+            select.appendChild(new Option(opcion.label, opcion.value));
+        }else{
+            select.appendChild(new Option(opcion, opcion));
+        }
+    });
+    if(valorPreferido && valores.includes(String(valorPreferido))){
         select.value = valorPreferido;
     }else if(opciones.length){
-        select.value = opciones[0];
+        select.value = valores[0];
     }
 }
 
@@ -1326,11 +1336,31 @@ function inicializarComparadorBianual(){
     const anioMasReciente = anios[0] || "";
     const anioPrevio = anios[1] || anioMasReciente;
     const delitoExtorsion = delitos.find((delito) => normalizar(delito) === "EXTORSION") || delitos.find((delito) => normalizar(delito).includes("EXTORSION")) || delitos[0] || "";
+    const ultimoMes = ultimoMesComparador(anioMasReciente, delitoExtorsion);
 
     llenarSelectComparador(comparadorAnioBase, anios, anioPrevio);
     llenarSelectComparador(comparadorAnioComparado, anios, anioMasReciente);
+    llenarSelectComparador(comparadorMesInicio, meses.map((mes, index) => ({ label: mes, value: String(index + 1) })), "1");
+    llenarSelectComparador(comparadorMesFin, meses.map((mes, index) => ({ label: mes, value: String(index + 1) })), String(ultimoMes || 12));
     llenarSelectComparador(comparadorDelito, delitos, delitoExtorsion);
     comparadorBianualListo = true;
+}
+
+function ultimoMesComparador(anio, delito){
+    const delitoNormalizado = normalizar(delito);
+    return datosSIDPOL.reduce((maximo, fila) => {
+        if(String(fila.ANIO || "") !== String(anio || "")) return maximo;
+        if(delitoNormalizado && normalizar(fila.MODALIDAD) !== delitoNormalizado) return maximo;
+        const mes = Number(fila.MES);
+        return mes >= 1 && mes <= 12 ? Math.max(maximo, mes) : maximo;
+    }, 0);
+}
+
+function periodoComparadorBianual(){
+    let inicio = Number(comparadorMesInicio?.value || 1);
+    let fin = Number(comparadorMesFin?.value || 12);
+    if(inicio > fin) [inicio, fin] = [fin, inicio];
+    return { inicio, fin, texto: `${meses[inicio - 1]} - ${meses[fin - 1]}` };
 }
 
 function datosComparadorPorAnio(anio, delito){
@@ -1338,9 +1368,12 @@ function datosComparadorPorAnio(anio, delito){
     const provincia = normalizar(filtros.provincia.value);
     const distrito = normalizar(filtros.distrito.value);
     const delitoNormalizado = normalizar(delito);
+    const periodo = periodoComparadorBianual();
     const filas = datosSIDPOL.filter((fila) => {
+        const mes = Number(fila.MES);
         if(String(fila.ANIO || "") !== String(anio || "")) return false;
         if(delitoNormalizado && normalizar(fila.MODALIDAD) !== delitoNormalizado) return false;
+        if(mes && (mes < periodo.inicio || mes > periodo.fin)) return false;
         if(departamento && normalizar(fila.DPTO_HECHO) !== departamento) return false;
         if(provincia && normalizar(fila.PROV_HECHO) !== provincia) return false;
         if(distrito && normalizar(fila.DIST_HECHO) !== distrito) return false;
@@ -1374,36 +1407,41 @@ function renderComparadorBianual(){
 
     const base = datosComparadorPorAnio(comparadorAnioBase.value, comparadorDelito.value);
     const comparado = datosComparadorPorAnio(comparadorAnioComparado.value, comparadorDelito.value);
+    const periodo = periodoComparadorBianual();
     const diferencia = comparado.total - base.total;
     const variacion = base.total ? (diferencia / base.total) * 100 : 0;
     const direccion = diferencia >= 0 ? "incremento" : "reduccion";
     const maxTotal = Math.max(base.total, comparado.total, 1);
-    const tieneMeses = [...base.meses, ...comparado.meses].some((fila) => fila.casos > 0);
-    const maxMes = Math.max(...base.meses.map((fila) => fila.casos), ...comparado.meses.map((fila) => fila.casos), 1);
+    const baseMeses = base.meses.slice(periodo.inicio - 1, periodo.fin);
+    const comparadoMeses = comparado.meses.slice(periodo.inicio - 1, periodo.fin);
+    const tieneMeses = [...baseMeses, ...comparadoMeses].some((fila) => fila.casos > 0);
+    const maxMes = Math.max(...baseMeses.map((fila) => fila.casos), ...comparadoMeses.map((fila) => fila.casos), 1);
     const width = 980;
     const height = tieneMeses ? 350 : 210;
     const baseBar = Math.max(8, (base.total / maxTotal) * 250);
     const comparadoBar = Math.max(8, (comparado.total / maxTotal) * 250);
-    const mesesSvg = tieneMeses ? base.meses.map((fila, index) => {
-        const x = 80 + index * 70;
+    const pasoMes = Math.min(72, 820 / Math.max(baseMeses.length, 1));
+    const mesesSvg = tieneMeses ? baseMeses.map((fila, index) => {
+        const mesReal = periodo.inicio + index;
+        const x = 80 + index * pasoMes;
         const altoBase = (fila.casos / maxMes) * 120;
-        const altoComparado = (comparado.meses[index].casos / maxMes) * 120;
+        const altoComparado = (comparadoMeses[index].casos / maxMes) * 120;
         return `
             <g>
                 <rect x="${x}" y="${250 - altoBase}" width="20" height="${altoBase}" rx="4" fill="#3d8bfd"></rect>
                 <rect x="${x + 24}" y="${250 - altoComparado}" width="20" height="${altoComparado}" rx="4" fill="#f1c84b"></rect>
-                <text x="${x + 22}" y="274" text-anchor="middle" class="year-chart-axis">${meses[index]}</text>
+                <text x="${x + 22}" y="274" text-anchor="middle" class="year-chart-axis">${meses[mesReal - 1]}</text>
             </g>
         `;
     }).join("") : "";
 
-    ultimaComparacionBianual = { base, comparado, delito: comparadorDelito.value, diferencia, variacion };
+    ultimaComparacionBianual = { base, comparado, delito: comparadorDelito.value, diferencia, variacion, periodo };
 
     comparadorResumen.innerHTML = `
         <div class="year-compare-card">
             <span>${base.anio}</span>
             <strong>${formatear(base.total)}</strong>
-            <small>${comparadorDelito.value}</small>
+            <small>${comparadorDelito.value} | ${periodo.texto}</small>
         </div>
         <div class="year-compare-card featured ${diferencia >= 0 ? "up" : "down"}">
             <span>Diferencia</span>
@@ -1413,7 +1451,7 @@ function renderComparadorBianual(){
         <div class="year-compare-card">
             <span>${comparado.anio}</span>
             <strong>${formatear(comparado.total)}</strong>
-            <small>${contextoComparadorBianual()}</small>
+            <small>${contextoComparadorBianual()} | ${periodo.texto}</small>
         </div>
     `;
 
@@ -1429,7 +1467,7 @@ function renderComparadorBianual(){
             </style>
             <rect width="${width}" height="${height}" rx="18" fill="#0b1218"></rect>
             <text x="32" y="34" class="year-chart-title">${comparadorDelito.value}</text>
-            <text x="32" y="58" class="year-chart-subtitle">${contextoComparadorBianual()} | comparativo anual</text>
+            <text x="32" y="58" class="year-chart-subtitle">${contextoComparadorBianual()} | ${periodo.texto} | comparativo ${base.anio} vs ${comparado.anio}</text>
             <g transform="translate(35 88)">
                 <text x="0" y="18" class="year-chart-label">${base.anio}</text>
                 <rect x="118" y="2" width="260" height="18" rx="9" fill="#142536"></rect>
@@ -1505,11 +1543,12 @@ function cargarAnaliticaTemporal(){
 function descargarComparadorCsv(){
     if(!ultimaComparacionBianual) renderComparadorBianual();
     if(!ultimaComparacionBianual) return;
-    const { base, comparado, delito, diferencia, variacion } = ultimaComparacionBianual;
+    const { base, comparado, delito, diferencia, variacion, periodo } = ultimaComparacionBianual;
     const lineas = [
         "Campo;Valor",
         `Delito;${delito}`,
         `Ambito;${contextoComparadorBianual()}`,
+        `Periodo;${periodo.texto}`,
         `Ano base;${base.anio}`,
         `Total ano base;${Math.round(base.total)}`,
         `Ano comparado;${comparado.anio}`,
@@ -1518,9 +1557,10 @@ function descargarComparadorCsv(){
         `Variacion %;${variacion.toFixed(1)}`
     ];
     lineas.push("", "Mes;"+base.anio+";"+comparado.anio+";Diferencia");
-    base.meses.forEach((fila, index) => {
-        const valorComparado = comparado.meses[index].casos;
-        lineas.push(`${meses[index]};${Math.round(fila.casos)};${Math.round(valorComparado)};${Math.round(valorComparado - fila.casos)}`);
+    base.meses.slice(periodo.inicio - 1, periodo.fin).forEach((fila, index) => {
+        const mesIndex = periodo.inicio - 1 + index;
+        const valorComparado = comparado.meses[mesIndex].casos;
+        lineas.push(`${meses[mesIndex]};${Math.round(fila.casos)};${Math.round(valorComparado)};${Math.round(valorComparado - fila.casos)}`);
     });
     const blob = new Blob(["\ufeff" + lineas.join("\n")], { type: "text/csv;charset=utf-8" });
     const enlace = document.createElement("a");
@@ -1528,6 +1568,66 @@ function descargarComparadorCsv(){
     enlace.download = `comparativo_${normalizar(delito).replace(/\s+/g, "_").toLowerCase()}_${base.anio}_${comparado.anio}.csv`;
     enlace.click();
     URL.revokeObjectURL(enlace.href);
+}
+
+function descargarComparadorPdf(){
+    if(!ultimaComparacionBianual) renderComparadorBianual();
+    if(!ultimaComparacionBianual || !comparadorGrafico) return;
+    const svg = comparadorGrafico.querySelector("svg");
+    if(!svg) return;
+    const { base, comparado, delito, diferencia, variacion, periodo } = ultimaComparacionBianual;
+    const fecha = new Date().toLocaleString("es-PE");
+    const svgTexto = new XMLSerializer().serializeToString(svg);
+    const ventana = window.open("", "_blank");
+    if(!ventana) return;
+    ventana.document.write(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Comparativo ${delito}</title>
+            <style>
+                @page{size:A4;margin:18mm}
+                body{font-family:Arial,sans-serif;color:#10202f;background:#fff}
+                .sheet{display:grid;gap:18px}
+                .header{display:flex;justify-content:space-between;gap:18px;border-bottom:3px solid #f1c84b;padding-bottom:14px}
+                .header h1{margin:0;font-size:24px;color:#07131d;text-transform:uppercase}
+                .header p{margin:4px 0 0;color:#4b6072;font-weight:700}
+                .meta{text-align:right;font-size:12px;color:#4b6072}
+                .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+                .card{border:1px solid #d8e0e8;border-left:5px solid #3d8bfd;border-radius:8px;padding:12px}
+                .card.diff{border-left-color:${diferencia >= 0 ? "#24a96f" : "#d53f3f"}}
+                .card span{display:block;color:#526679;font-size:12px;font-weight:800;text-transform:uppercase}
+                .card strong{display:block;margin:5px 0;color:#07131d;font-size:28px}
+                .card small{color:#526679;font-weight:700}
+                .chart svg{width:100%;height:auto}
+                .note{padding:10px 12px;background:#eef4f8;border-left:4px solid #f1c84b;color:#263949;font-size:12px}
+            </style>
+        </head>
+        <body>
+            <main class="sheet">
+                <section class="header">
+                    <div>
+                        <h1>Comparativo anual de ${delito}</h1>
+                        <p>Observatorio del Crimen | ${contextoComparadorBianual()} | ${periodo.texto}</p>
+                    </div>
+                    <div class="meta">
+                        <strong>Reporte generado</strong><br>${fecha}
+                    </div>
+                </section>
+                <section class="cards">
+                    <div class="card"><span>${base.anio}</span><strong>${formatear(base.total)}</strong><small>denuncias</small></div>
+                    <div class="card diff"><span>Diferencia</span><strong>${diferencia >= 0 ? "+" : ""}${formatear(diferencia)}</strong><small>${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}% vs ${base.anio}</small></div>
+                    <div class="card"><span>${comparado.anio}</span><strong>${formatear(comparado.total)}</strong><small>denuncias</small></div>
+                </section>
+                <section class="chart">${svgTexto}</section>
+                <p class="note">Fuente: datos agregados del dashboard ODC. El comparativo respeta el delito, anos, periodo mensual y ambito territorial seleccionados.</p>
+            </main>
+            <script>window.onload = () => setTimeout(() => window.print(), 250);</script>
+        </body>
+        </html>
+    `);
+    ventana.document.close();
 }
 
 function descargarComparadorPng(){
@@ -3496,9 +3596,13 @@ filtroComisariaPolicial.addEventListener("change", () => renderMapaPolicial());
     });
 });
 
-[comparadorAnioBase, comparadorAnioComparado, comparadorDelito].filter(Boolean).forEach((select) => {
+[comparadorAnioBase, comparadorAnioComparado, comparadorMesInicio, comparadorMesFin, comparadorDelito].filter(Boolean).forEach((select) => {
     select.addEventListener("change", renderComparadorBianual);
 });
+
+if(btnDescargarComparadorPdf){
+    btnDescargarComparadorPdf.addEventListener("click", descargarComparadorPdf);
+}
 
 if(btnDescargarComparadorCsv){
     btnDescargarComparadorCsv.addEventListener("click", descargarComparadorCsv);

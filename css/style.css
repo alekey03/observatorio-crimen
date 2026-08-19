@@ -1491,9 +1491,13 @@ tbody tr:hover{
 
 .year-compare-toolbar{
     display: grid;
-    grid-template-columns: minmax(150px, 0.55fr) minmax(150px, 0.55fr) minmax(280px, 1.25fr);
+    grid-template-columns: minmax(130px, 0.55fr) minmax(130px, 0.55fr) minmax(120px, 0.42fr) minmax(120px, 0.42fr) minmax(280px, 1.25fr);
     gap: 12px;
     margin-bottom: 14px;
+}
+
+.year-compare-toolbar .wide{
+    min-width: 0;
 }
 
 .year-compare-toolbar label{
