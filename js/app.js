@@ -175,6 +175,24 @@ const prodIndicadoresDisminuyen = document.getElementById("prodIndicadoresDismin
 const prodPctMejoran = document.getElementById("prodPctMejoran");
 const prodSemaforo = document.getElementById("prodSemaforo");
 const prodSemaforoDetalle = document.getElementById("prodSemaforoDetalle");
+const dashboardEstrategico = {
+    contexto: document.getElementById("dashboardFiltroContexto"),
+    total: document.getElementById("dashboardTotal"),
+    totalDetalle: document.getElementById("dashboardTotalDetalle"),
+    extorsion: document.getElementById("dashboardExtorsion"),
+    homicidio: document.getElementById("dashboardHomicidio"),
+    robos: document.getElementById("dashboardRobos"),
+    variacion: document.getElementById("dashboardVariacion"),
+    concentracion: document.getElementById("dashboardConcentracion"),
+    concentracionTexto: document.getElementById("dashboardConcentracionTexto"),
+    periodoPulso: document.getElementById("dashboardPeriodoPulso"),
+    pulso: document.getElementById("dashboardPulso"),
+    lectura: document.getElementById("dashboardLectura"),
+    modalidades: document.getElementById("dashboardTopModalidades"),
+    matriz: document.getElementById("dashboardMatriz"),
+    sparks: document.getElementById("dashboardSparks"),
+    territorios: document.getElementById("dashboardTerritorios")
+};
 const btnToggleSidebar = document.getElementById("btnToggleSidebar");
 const menuItems = document.querySelectorAll(".menu li[data-view]");
 const viewSections = document.querySelectorAll(".view-section");
@@ -891,6 +909,261 @@ function renderTabla(){
     `).join("");
 }
 
+function contextoDashboard(){
+    const partes = [
+        filtros.anio.value || "Todos los años",
+        filtros.mes.value ? meses[Number(filtros.mes.value) - 1] : "Todos los meses",
+        filtros.departamento.value || "Nacional",
+        filtros.provincia.value,
+        filtros.distrito.value,
+        filtros.delito.value || "Todos los delitos"
+    ].filter(Boolean);
+    return partes.join(" | ");
+}
+
+function serieMensualDashboard(datos){
+    const agrupado = new Map();
+    datos.forEach((fila) => {
+        const anio = Number(fila.ANIO);
+        const mes = Number(fila.MES);
+        if(!anio || !mes) return;
+        const clave = `${anio}-${String(mes).padStart(2, "0")}`;
+        agrupado.set(clave, (agrupado.get(clave) || 0) + obtenerCasos(fila));
+    });
+
+    return [...agrupado.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([clave, casos]) => {
+            const [anio, mesTexto] = clave.split("-");
+            const mes = Number(mesTexto);
+            return {
+                clave,
+                anio,
+                mes,
+                etiqueta: `${meses[mes - 1]} ${String(anio).slice(-2)}`,
+                casos
+            };
+        });
+}
+
+function renderPulsoDashboard(serie){
+    if(!dashboardEstrategico.pulso) return;
+    const visible = serie.slice(-10);
+    if(!visible.length){
+        renderEstadoVacio(dashboardEstrategico.pulso, "Sin datos mensuales para el dashboard");
+        return;
+    }
+
+    const maximo = Math.max(...visible.map((fila) => fila.casos), 1);
+    const width = 860;
+    const height = 260;
+    const padding = { top: 30, right: 26, bottom: 42, left: 58 };
+    const innerWidth = width - padding.left - padding.right;
+    const innerHeight = height - padding.top - padding.bottom;
+    const promedio = visible.reduce((suma, fila) => suma + fila.casos, 0) / visible.length;
+    const yPromedio = padding.top + innerHeight - ((promedio / maximo) * innerHeight);
+    const puntos = visible.map((fila, index) => {
+        const divisor = Math.max(visible.length - 1, 1);
+        return {
+            ...fila,
+            x: padding.left + (innerWidth / divisor) * index,
+            y: padding.top + innerHeight - ((fila.casos / maximo) * innerHeight)
+        };
+    });
+    const path = puntos.map((punto, index) => `${index ? "L" : "M"} ${punto.x} ${punto.y}`).join(" ");
+    const area = `${path} L ${puntos[puntos.length - 1].x} ${padding.top + innerHeight} L ${puntos[0].x} ${padding.top + innerHeight} Z`;
+
+    dashboardEstrategico.periodoPulso.textContent = `${visible[0].etiqueta} - ${visible[visible.length - 1].etiqueta}`;
+    dashboardEstrategico.pulso.innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Pulso mensual del delito">
+            <defs>
+                <linearGradient id="dashboardPulseGradient" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#3d8bfd" stop-opacity=".38"></stop>
+                    <stop offset="100%" stop-color="#3d8bfd" stop-opacity="0"></stop>
+                </linearGradient>
+            </defs>
+            <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + innerHeight}" stroke="#33404d"></line>
+            <line x1="${padding.left}" y1="${padding.top + innerHeight}" x2="${padding.left + innerWidth}" y2="${padding.top + innerHeight}" stroke="#33404d"></line>
+            <line x1="${padding.left}" y1="${yPromedio}" x2="${padding.left + innerWidth}" y2="${yPromedio}" stroke="#f1c84b" stroke-dasharray="6 7" opacity=".75"></line>
+            <path d="${area}" fill="url(#dashboardPulseGradient)"></path>
+            <path d="${path}" fill="none" stroke="#3d8bfd" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+            ${puntos.map((punto, index) => `
+                <g>
+                    <circle cx="${punto.x}" cy="${punto.y}" r="${index === puntos.length - 1 ? 6 : 4.5}" fill="${index === puntos.length - 1 ? "#f1c84b" : "#25c19f"}"></circle>
+                    <text x="${punto.x}" y="${punto.y - 12}" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800">${formatear(punto.casos)}</text>
+                    <text x="${punto.x}" y="${height - 15}" text-anchor="middle" fill="#cfe3f4" font-size="13" font-weight="700">${punto.etiqueta}</text>
+                </g>
+            `).join("")}
+            <text x="12" y="${padding.top + 5}" fill="#cfe3f4" font-size="13">${formatear(maximo)}</text>
+            <text x="18" y="${padding.top + innerHeight}" fill="#cfe3f4" font-size="13">0</text>
+        </svg>
+    `;
+}
+
+function renderMatrizDashboard(datos, modalidades, territorios){
+    if(!dashboardEstrategico.matriz) return;
+    const topModalidades = modalidades.slice(0, 5);
+    const topTerritorios = territorios.slice(0, 5);
+    if(!topModalidades.length || !topTerritorios.length){
+        renderEstadoVacio(dashboardEstrategico.matriz, "Sin datos para construir la matriz");
+        return;
+    }
+
+    const maximo = Math.max(...topModalidades.flatMap((modalidad) => {
+        return topTerritorios.map((territorio) => datos.reduce((suma, fila) => {
+            const mismoDelito = fila.MODALIDAD === modalidad.nombre;
+            const mismoTerritorio = fila[campoRankingTerritorial()] === territorio.nombre;
+            return mismoDelito && mismoTerritorio ? suma + obtenerCasos(fila) : suma;
+        }, 0));
+    }), 1);
+
+    dashboardEstrategico.matriz.innerHTML = `
+        <div class="matrix-head"></div>
+        ${topTerritorios.map((territorio) => `<div class="matrix-head">${territorio.nombre}</div>`).join("")}
+        ${topModalidades.map((modalidad) => `
+            <div class="matrix-label">${modalidad.nombre}</div>
+            ${topTerritorios.map((territorio) => {
+                const valor = datos.reduce((suma, fila) => {
+                    const mismoDelito = fila.MODALIDAD === modalidad.nombre;
+                    const mismoTerritorio = fila[campoRankingTerritorial()] === territorio.nombre;
+                    return mismoDelito && mismoTerritorio ? suma + obtenerCasos(fila) : suma;
+                }, 0);
+                const relacion = valor / maximo;
+                const clase = relacion >= .66 ? "critical" : relacion >= .33 ? "high" : valor ? "medium" : "low";
+                return `<div class="matrix-cell ${clase}"><strong>${formatear(valor)}</strong></div>`;
+            }).join("")}
+        `).join("")}
+    `;
+}
+
+function renderSparksDashboard(datosModalidades, modalidades){
+    if(!dashboardEstrategico.sparks) return;
+    const filas = modalidades.slice(0, 6);
+    if(!filas.length){
+        renderEstadoVacio(dashboardEstrategico.sparks, "Sin modalidades para mostrar");
+        return;
+    }
+
+    dashboardEstrategico.sparks.innerHTML = filas.map((fila) => {
+        const serie = serieMensualDashboard(datosModalidades.filter((item) => item.MODALIDAD === fila.nombre)).slice(-6);
+        const primero = serie[0]?.casos || 0;
+        const ultimo = serie[serie.length - 1]?.casos || 0;
+        const variacion = primero ? ((ultimo - primero) / primero) * 100 : 0;
+        const maximo = Math.max(...serie.map((item) => item.casos), 1);
+        const puntos = serie.map((item, index) => {
+            const x = 8 + (84 / Math.max(serie.length - 1, 1)) * index;
+            const y = 34 - (item.casos / maximo) * 28;
+            return `${x},${y}`;
+        }).join(" ");
+        return `
+            <div class="spark-row">
+                <div>
+                    <strong>${fila.nombre}</strong>
+                    <span>${formatear(fila.casos)} denuncias</span>
+                </div>
+                <svg viewBox="0 0 100 40" aria-hidden="true">
+                    <polyline points="${puntos}" fill="none" stroke="${variacion >= 0 ? "#e65f5c" : "#25c19f"}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                </svg>
+                <b class="${variacion >= 0 ? "up" : "down"}">${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}%</b>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderTerritoriosDashboard(territorios, total){
+    if(!dashboardEstrategico.territorios) return;
+    if(!territorios.length){
+        renderEstadoVacio(dashboardEstrategico.territorios, "Sin territorios para mostrar");
+        return;
+    }
+
+    dashboardEstrategico.territorios.innerHTML = `
+        ${territorios.slice(0, 7).map((fila, index) => {
+            const porcentaje = total ? (fila.casos / total) * 100 : 0;
+            return `
+                <div class="territory-line">
+                    <span>${String(index + 1).padStart(2, "0")}</span>
+                    <strong>${fila.nombre}</strong>
+                    <b>${formatear(fila.casos)}</b>
+                    <small>${porcentaje.toFixed(1)}%</small>
+                </div>
+            `;
+        }).join("")}
+    `;
+}
+
+function renderLecturaDashboard(total, modalidades, territorios, variacion){
+    if(!dashboardEstrategico.lectura) return;
+    const principal = territorios[0];
+    const modalidad = modalidades[0];
+    const lectura = [
+        {
+            icono: variacion >= 0 ? "fa-arrow-trend-up" : "fa-arrow-trend-down",
+            clase: variacion >= 0 ? "danger" : "success",
+            titulo: variacion >= 0 ? "Incidencia con presion al alza" : "Incidencia con tendencia contenida",
+            texto: `${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}% frente al mes comparable anterior.`
+        },
+        {
+            icono: "fa-location-crosshairs",
+            clase: "warning",
+            titulo: principal ? `${principal.nombre} concentra la carga` : "Sin concentracion territorial",
+            texto: principal ? `${formatear(principal.casos)} denuncias dentro de ${formatear(total)} casos filtrados.` : "No hay territorio dominante con los filtros actuales."
+        },
+        {
+            icono: "fa-triangle-exclamation",
+            clase: "info",
+            titulo: modalidad ? "Modalidad prioritaria" : "Sin modalidad prioritaria",
+            texto: modalidad ? `${modalidad.nombre} lidera con ${formatear(modalidad.casos)} denuncias.` : "Seleccione un periodo con informacion disponible."
+        }
+    ];
+
+    dashboardEstrategico.lectura.innerHTML = lectura.map((item) => `
+        <div class="dashboard-reading-item ${item.clase}">
+            <i class="fas ${item.icono}"></i>
+            <div>
+                <strong>${item.titulo}</strong>
+                <p>${item.texto}</p>
+            </div>
+        </div>
+    `).join("");
+}
+
+function renderDashboardEstrategico(){
+    if(!dashboardEstrategico.total) return;
+    const datos = obtenerDatosFiltrados();
+    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
+    const datosSerie = obtenerDatosFiltrados("mes", fuenteModalidadesActual());
+    const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
+    const extorsion = totalPorCoincidencia(datosModalidades, "EXTORSION");
+    const homicidio = totalPorCoincidencia(datosModalidades, "HOMICIDIO");
+    const robos = totalPorCoincidencia(datosModalidades, "ROBO");
+    const territorios = topAgrupado(datos, (fila) => fila[campoRankingTerritorial()], 10);
+    const modalidades = topAgrupado(datosModalidades, (fila) => fila.MODALIDAD, 10);
+    const principal = territorios[0];
+    const concentracion = principal && total ? (principal.casos / total) * 100 : 0;
+    const serie = serieMensualDashboard(datosSerie);
+    const ultimo = serie[serie.length - 1]?.casos || 0;
+    const anterior = serie[serie.length - 2]?.casos || 0;
+    const variacion = anterior ? ((ultimo - anterior) / anterior) * 100 : 0;
+
+    dashboardEstrategico.contexto.textContent = contextoDashboard();
+    dashboardEstrategico.total.textContent = formatear(total);
+    dashboardEstrategico.totalDetalle.textContent = `${formatear(territorios.length)} ${etiquetaRankingTerritorial()} evaluados`;
+    dashboardEstrategico.extorsion.textContent = formatear(extorsion);
+    dashboardEstrategico.homicidio.textContent = formatear(homicidio);
+    dashboardEstrategico.robos.textContent = formatear(robos);
+    dashboardEstrategico.variacion.textContent = `${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}%`;
+    dashboardEstrategico.concentracion.textContent = `${concentracion.toFixed(1)}%`;
+    dashboardEstrategico.concentracionTexto.textContent = principal ? principal.nombre : "Sin territorio";
+
+    renderPulsoDashboard(serie);
+    renderBarras(dashboardEstrategico.modalidades, modalidades.slice(0, 7), "bar", "Sin modalidades para mostrar");
+    renderMatrizDashboard(datosModalidades, modalidades, territorios);
+    renderSparksDashboard(datosModalidades, modalidades);
+    renderTerritoriosDashboard(territorios, total);
+    renderLecturaDashboard(total, modalidades, territorios, variacion);
+}
+
 function actualizarAnalitica(){
     const datos = obtenerDatosFiltrados();
     const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
@@ -907,6 +1180,7 @@ function actualizarAnalitica(){
     renderAlertas(datos, datosModalidades);
     renderTabla();
     renderResumenEjecutivo();
+    renderDashboardEstrategico();
     if(analiticaTemporalCargada) renderAnaliticaTemporal();
     if(vistaActual === "analisis-predictivo") renderAnalisisPredictivo();
 }
@@ -2840,7 +3114,7 @@ async function cargarProduccionPolicial(){
 function activarVista(vista){
     vistaActual = vista;
     const vistaPolicial = ["denuncias-comisaria", "hechos-jurisdiccion"].includes(vista);
-    const ocultarContextoSidpol = vista === "produccion-policial";
+    const ocultarContextoSidpol = ["dashboard", "produccion-policial"].includes(vista);
     sidpolContextSections.forEach((section) => section.classList.toggle("is-hidden", ocultarContextoSidpol));
     if(vistaPolicial){
         modoPolicial = vista === "hechos-jurisdiccion" ? "hecho" : "registro";
@@ -2848,10 +3122,10 @@ function activarVista(vista){
     }
     menuItems.forEach((item) => item.classList.toggle("active", item.dataset.view === vista));
 
-    const mostrarMapaDelito = ["inicio", "dashboard", "mapa-delito"].includes(vista);
-    const mostrarAnalytics = ["inicio", "dashboard", "estadisticas"].includes(vista);
-    const mostrarDetalle = ["inicio", "dashboard", "estadisticas"].includes(vista);
-    const mostrarEjecutivo = ["inicio", "dashboard"].includes(vista);
+    const mostrarMapaDelito = ["inicio", "mapa-delito"].includes(vista);
+    const mostrarAnalytics = ["inicio", "estadisticas"].includes(vista);
+    const mostrarDetalle = ["inicio", "estadisticas"].includes(vista);
+    const mostrarEjecutivo = vista === "inicio";
 
     viewSections.forEach((section) => {
         const nombre = section.dataset.section;
@@ -2863,6 +3137,7 @@ function activarVista(vista){
             (nombre === "analisis-temporal" && vista === "analisis-temporal") ||
             (nombre === "analisis-predictivo" && vista === "analisis-predictivo") ||
             (nombre === "produccion-policial" && vista === "produccion-policial") ||
+            (nombre === "dashboard-estrategico" && vista === "dashboard") ||
             (nombre === "executive" && mostrarEjecutivo) ||
             (nombre === "analytics" && mostrarAnalytics) ||
             (nombre === "detalle" && mostrarDetalle);
@@ -2872,6 +3147,8 @@ function activarVista(vista){
 
     if(vista === "mapa-calor"){
         cargarMapaCalor();
+    }else if(vista === "dashboard"){
+        renderDashboardEstrategico();
     }else if(vistaPolicial){
         cargarMapaPolicial();
     }else if(vista === "alertas"){

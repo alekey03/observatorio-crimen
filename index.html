@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Observatorio del Crimen - COMOPPOL PNP</title>
 
-    <link rel="stylesheet" href="css/style.css?v=20260819-1">
+    <link rel="stylesheet" href="css/style.css?v=20260819-2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="css/public.css?v=1">
@@ -224,6 +224,125 @@
                 </div>
                 <div id="actividadOperativa" class="briefing-list"></div>
             </article>
+        </section>
+
+        <section class="strategic-dashboard view-section is-hidden" data-section="dashboard-estrategico" aria-label="Dashboard estrategico del delito">
+            <article class="strategic-hero">
+                <div>
+                    <p class="eyebrow">Centro de comando analitico</p>
+                    <h2>Dashboard estrategico del delito</h2>
+                    <p>Lectura ejecutiva de incidencia, concentracion, modalidades y variacion operativa con los filtros activos.</p>
+                </div>
+                <div class="strategic-filter-card">
+                    <span>Contexto activo</span>
+                    <strong id="dashboardFiltroContexto">Periodo completo nacional</strong>
+                </div>
+            </article>
+
+            <div class="strategic-kpis" aria-label="Indicadores estrategicos del delito">
+                <article class="strategic-kpi">
+                    <i class="fas fa-file-signature"></i>
+                    <span>Total denuncias</span>
+                    <strong id="dashboardTotal">0</strong>
+                    <small id="dashboardTotalDetalle">Casos filtrados</small>
+                </article>
+                <article class="strategic-kpi danger">
+                    <i class="fas fa-phone-volume"></i>
+                    <span>Extorsiones</span>
+                    <strong id="dashboardExtorsion">0</strong>
+                    <small>Seguimiento prioritario</small>
+                </article>
+                <article class="strategic-kpi alert">
+                    <i class="fas fa-skull-crossbones"></i>
+                    <span>Homicidios</span>
+                    <strong id="dashboardHomicidio">0</strong>
+                    <small>Alto impacto social</small>
+                </article>
+                <article class="strategic-kpi info">
+                    <i class="fas fa-mask"></i>
+                    <span>Robos</span>
+                    <strong id="dashboardRobos">0</strong>
+                    <small>Incidencia patrimonial</small>
+                </article>
+                <article class="strategic-kpi trend">
+                    <i class="fas fa-arrow-trend-up"></i>
+                    <span>Variacion mensual</span>
+                    <strong id="dashboardVariacion">0%</strong>
+                    <small>Mes comparado anterior</small>
+                </article>
+                <article class="strategic-kpi focus">
+                    <i class="fas fa-bullseye"></i>
+                    <span>Concentracion</span>
+                    <strong id="dashboardConcentracion">0%</strong>
+                    <small id="dashboardConcentracionTexto">Sin territorio</small>
+                </article>
+            </div>
+
+            <div class="strategic-layout">
+                <article class="analytics-panel strategic-pulse">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Pulso del delito</p>
+                            <h2>Tendencia mensual y presión operativa</h2>
+                        </div>
+                        <span id="dashboardPeriodoPulso" class="panel-badge">Serie mensual</span>
+                    </div>
+                    <div id="dashboardPulso" class="dashboard-pulse-chart" aria-label="Tendencia mensual del delito"></div>
+                </article>
+
+                <article class="analytics-panel strategic-reading">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Lectura ejecutiva</p>
+                            <h2>Hallazgos clave</h2>
+                        </div>
+                        <i class="fas fa-tower-broadcast panel-symbol"></i>
+                    </div>
+                    <div id="dashboardLectura" class="dashboard-reading-list"></div>
+                </article>
+            </div>
+
+            <div class="strategic-lower-grid">
+                <article class="analytics-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Modalidades</p>
+                            <h2>Top delitos priorizados</h2>
+                        </div>
+                    </div>
+                    <div id="dashboardTopModalidades" class="bar-list"></div>
+                </article>
+
+                <article class="analytics-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Riesgo operativo</p>
+                            <h2>Matriz modalidad x territorio</h2>
+                        </div>
+                    </div>
+                    <div id="dashboardMatriz" class="dashboard-risk-matrix"></div>
+                </article>
+
+                <article class="analytics-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Variacion</p>
+                            <h2>Tendencias por modalidad</h2>
+                        </div>
+                    </div>
+                    <div id="dashboardSparks" class="dashboard-spark-list"></div>
+                </article>
+
+                <article class="analytics-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Territorio</p>
+                            <h2>Concentracion territorial</h2>
+                        </div>
+                    </div>
+                    <div id="dashboardTerritorios" class="dashboard-territory-table"></div>
+                </article>
+            </div>
         </section>
 
         <section class="map-section view-section" data-section="mapa-delito">
@@ -760,7 +879,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="js/app.js?v=20260819-1"></script>
+    <script src="js/app.js?v=20260819-2"></script>
 </body>
 </html>
 
