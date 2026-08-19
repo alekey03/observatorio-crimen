@@ -193,19 +193,6 @@ const dashboardEstrategico = {
     sparks: document.getElementById("dashboardSparks"),
     territorios: document.getElementById("dashboardTerritorios")
 };
-const estadisticasPerfil = {
-    contexto: document.getElementById("statsContexto"),
-    diversidad: document.getElementById("statsDiversidad"),
-    alcance: document.getElementById("statsAlcance"),
-    concentracion: document.getElementById("statsConcentracion"),
-    concentracionTexto: document.getElementById("statsConcentracionTexto"),
-    total: document.getElementById("statsTotal"),
-    modalidades: document.getElementById("statsModalidades"),
-    territorio: document.getElementById("statsTerritorio"),
-    hotspots: document.getElementById("statsHotspots"),
-    tabla: document.getElementById("statsTabla"),
-    lectura: document.getElementById("statsLectura")
-};
 const btnToggleSidebar = document.getElementById("btnToggleSidebar");
 const menuItems = document.querySelectorAll(".menu li[data-view]");
 const viewSections = document.querySelectorAll(".view-section");
@@ -1179,98 +1166,6 @@ function renderDashboardEstrategico(){
     renderLecturaDashboard(total, modalidades, territorios, variacion);
 }
 
-function renderTablaEstadistica(datosModalidades, total){
-    if(!estadisticasPerfil.tabla) return;
-    const filas = topAgrupado(datosModalidades, (fila) => {
-        const territorio = [fila.DPTO_HECHO, fila.PROV_HECHO, fila.DIST_HECHO].filter(Boolean).join(" / ") || "SIN TERRITORIO";
-        return `${territorio}||${fila.MODALIDAD || "NO INDICA"}`;
-    }, 10).map((fila) => {
-        const [territorio, modalidad] = fila.nombre.split("||");
-        return {
-            territorio,
-            modalidad,
-            casos: fila.casos,
-            peso: total ? (fila.casos / total) * 100 : 0
-        };
-    });
-
-    estadisticasPerfil.tabla.innerHTML = filas.length ? filas.map((fila) => `
-        <tr>
-            <td>${fila.territorio}</td>
-            <td>${fila.modalidad}</td>
-            <td>${formatear(fila.casos)}</td>
-            <td>${fila.peso.toFixed(1)}%</td>
-        </tr>
-    `).join("") : `<tr><td colspan="4">Sin combinaciones para los filtros seleccionados</td></tr>`;
-}
-
-function renderLecturaEstadistica(total, modalidades, territorios){
-    if(!estadisticasPerfil.lectura) return;
-    const principalModalidad = modalidades[0];
-    const principalTerritorio = territorios[0];
-    const concentracion = principalTerritorio && total ? (principalTerritorio.casos / total) * 100 : 0;
-    const lectura = [
-        {
-            icono: "fa-chart-pie",
-            titulo: "Modalidad dominante",
-            texto: principalModalidad
-                ? `${principalModalidad.nombre} lidera el perfil con ${formatear(principalModalidad.casos)} casos.`
-                : "Sin modalidad dominante para el filtro actual."
-        },
-        {
-            icono: "fa-location-crosshairs",
-            titulo: "Concentracion territorial",
-            texto: principalTerritorio
-                ? `${principalTerritorio.nombre} concentra ${concentracion.toFixed(1)}% de la carga filtrada.`
-                : "Sin territorio predominante para el filtro actual."
-        },
-        {
-            icono: "fa-layer-group",
-            titulo: "Diversidad delictiva",
-            texto: `${formatear(modalidades.length)} modalidades y ${formatear(territorios.length)} ${etiquetaRankingTerritorial()} aparecen en el perfil estadistico.`
-        }
-    ];
-
-    estadisticasPerfil.lectura.innerHTML = lectura.map((item) => `
-        <div class="stats-reading-item">
-            <i class="fas ${item.icono}"></i>
-            <div>
-                <strong>${item.titulo}</strong>
-                <p>${item.texto}</p>
-            </div>
-        </div>
-    `).join("");
-}
-
-function renderEstadisticasPerfil(){
-    if(!estadisticasPerfil.total) return;
-    const datos = obtenerDatosFiltrados();
-    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
-    const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
-    const totalModalidades = datosModalidades.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
-    const modalidades = topAgrupado(datosModalidades, (fila) => fila.MODALIDAD, 8);
-    const territorios = topAgrupado(datos, (fila) => fila[campoRankingTerritorial()], 8);
-    const hotspots = topAgrupado(datosModalidades, (fila) => {
-        const territorio = [fila.DPTO_HECHO, fila.PROV_HECHO, fila.DIST_HECHO].filter(Boolean).join(" / ");
-        return `${territorio || "SIN TERRITORIO"} - ${fila.MODALIDAD || "NO INDICA"}`;
-    }, 6);
-    const principal = territorios[0];
-    const concentracion = principal && total ? (principal.casos / total) * 100 : 0;
-
-    estadisticasPerfil.contexto.textContent = contextoDashboard();
-    estadisticasPerfil.diversidad.textContent = formatear(modalidades.length);
-    estadisticasPerfil.alcance.textContent = formatear(territorios.length);
-    estadisticasPerfil.concentracion.textContent = `${concentracion.toFixed(1)}%`;
-    estadisticasPerfil.concentracionTexto.textContent = principal ? principal.nombre : "Sin territorio";
-    estadisticasPerfil.total.textContent = formatear(total);
-
-    renderBarras(estadisticasPerfil.modalidades, modalidades, "bar", "Sin modalidades para mostrar");
-    renderBarras(estadisticasPerfil.territorio, territorios, "rank", `Sin ${etiquetaRankingTerritorial()} para mostrar`);
-    renderBarras(estadisticasPerfil.hotspots, hotspots, "hotspot", "Sin cruces criticos para mostrar");
-    renderTablaEstadistica(datosModalidades, totalModalidades || total);
-    renderLecturaEstadistica(total, modalidades, territorios);
-}
-
 function actualizarAnalitica(){
     const datos = obtenerDatosFiltrados();
     const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
@@ -1288,7 +1183,6 @@ function actualizarAnalitica(){
     renderTabla();
     renderResumenEjecutivo();
     renderDashboardEstrategico();
-    renderEstadisticasPerfil();
     if(analiticaTemporalCargada) renderAnaliticaTemporal();
     if(vistaActual === "analisis-predictivo") renderAnalisisPredictivo();
 }
@@ -3246,7 +3140,6 @@ function activarVista(vista){
             (nombre === "analisis-predictivo" && vista === "analisis-predictivo") ||
             (nombre === "produccion-policial" && vista === "produccion-policial") ||
             (nombre === "dashboard-estrategico" && vista === "dashboard") ||
-            (nombre === "estadisticas-perfil" && vista === "estadisticas") ||
             (nombre === "executive" && mostrarEjecutivo) ||
             (nombre === "analytics" && mostrarAnalytics) ||
             (nombre === "detalle" && mostrarDetalle);
@@ -3258,8 +3151,6 @@ function activarVista(vista){
         cargarMapaCalor();
     }else if(vista === "dashboard"){
         renderDashboardEstrategico();
-    }else if(vista === "estadisticas"){
-        renderEstadisticasPerfil();
     }else if(vistaPolicial){
         cargarMapaPolicial();
     }else if(vista === "alertas"){

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Observatorio del Crimen - COMOPPOL PNP</title>
 
-    <link rel="stylesheet" href="css/style.css?v=20260819-2">
+    <link rel="stylesheet" href="css/style.css?v=20260819-5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="css/public.css?v=1">
@@ -35,7 +35,6 @@
                 <li data-view="analisis-temporal"><i class="fas fa-clock-rotate-left"></i><span>Analisis temporal</span></li>
                 <li data-view="analisis-predictivo"><i class="fas fa-arrow-trend-up"></i><span>Analisis predictivo</span></li>
                 <li data-view="produccion-policial"><i class="fas fa-chart-simple"></i><span>Produccion policial</span></li>
-                <li data-view="estadisticas"><i class="fas fa-chart-line"></i><span>Estadisticas</span></li>
                 <li data-view="alertas"><i class="fas fa-triangle-exclamation"></i><span>Alertas</span></li>
             </ul>
         </nav>
@@ -797,82 +796,6 @@
             </article>
         </section>
 
-        <section class="stats-dashboard view-section is-hidden" data-section="estadisticas-perfil" aria-label="Perfil estadistico del delito">
-            <div class="stats-hero">
-                <div>
-                    <p class="eyebrow">Estadistica descriptiva</p>
-                    <h2>Perfil estadistico del delito</h2>
-                    <p>Composicion, concentracion y principales combinaciones delictivas segun los filtros activos.</p>
-                </div>
-                <div class="stats-context-card">
-                    <span>Lectura actual</span>
-                    <strong id="statsContexto">Filtros activos</strong>
-                </div>
-            </div>
-
-            <div class="stats-kpis">
-                <article class="stats-kpi">
-                    <i class="fas fa-layer-group"></i>
-                    <span>Modalidades activas</span>
-                    <strong id="statsDiversidad">0</strong>
-                </article>
-                <article class="stats-kpi territory">
-                    <i class="fas fa-location-dot"></i>
-                    <span>Territorios evaluados</span>
-                    <strong id="statsAlcance">0</strong>
-                </article>
-                <article class="stats-kpi focus">
-                    <i class="fas fa-bullseye"></i>
-                    <span>Concentracion principal</span>
-                    <strong id="statsConcentracion">0%</strong>
-                    <small id="statsConcentracionTexto">Sin territorio</small>
-                </article>
-                <article class="stats-kpi volume">
-                    <i class="fas fa-database"></i>
-                    <span>Base filtrada</span>
-                    <strong id="statsTotal">0</strong>
-                </article>
-            </div>
-
-            <div class="stats-layout">
-                <article class="analytics-panel stats-main-card">
-                    <div class="panel-header">
-                        <div><p class="eyebrow">Modalidades</p><h2>Composicion delictiva</h2></div>
-                        <span class="panel-badge">Top 8</span>
-                    </div>
-                    <div id="statsModalidades" class="bar-list stats-bars"></div>
-                </article>
-
-                <article class="analytics-panel stats-reading-card">
-                    <div class="panel-header">
-                        <div><p class="eyebrow">Sintesis</p><h2>Lectura estadistica</h2></div>
-                        <i class="fas fa-chart-simple panel-symbol"></i>
-                    </div>
-                    <div id="statsLectura" class="stats-reading-list"></div>
-                </article>
-            </div>
-
-            <div class="stats-lower-grid">
-                <article class="analytics-panel">
-                    <div class="panel-header"><div><p class="eyebrow">Territorio</p><h2>Ranking territorial</h2></div></div>
-                    <div id="statsTerritorio" class="rank-list"></div>
-                </article>
-                <article class="analytics-panel">
-                    <div class="panel-header"><div><p class="eyebrow">Cruce</p><h2>Zonas y modalidades criticas</h2></div></div>
-                    <div id="statsHotspots" class="hotspot-list"></div>
-                </article>
-                <article class="analytics-panel stats-table-panel">
-                    <div class="panel-header"><div><p class="eyebrow">Detalle</p><h2>Combinaciones predominantes</h2></div><span class="panel-badge">Top 10</span></div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Territorio</th><th>Modalidad</th><th>Casos</th><th>Peso</th></tr></thead>
-                            <tbody id="statsTabla"></tbody>
-                        </table>
-                    </div>
-                </article>
-            </div>
-        </section>
-
         <section class="analytics-grid view-section" data-section="analytics" aria-label="Analítica del delito">
             <article class="analytics-panel trend-panel">
                 <div class="panel-header">
@@ -955,7 +878,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="js/app.js?v=20260819-4"></script>
+    <script src="js/app.js?v=20260819-5"></script>
 </body>
 </html>
 
