@@ -2849,8 +2849,8 @@ function activarVista(vista){
     menuItems.forEach((item) => item.classList.toggle("active", item.dataset.view === vista));
 
     const mostrarMapaDelito = ["inicio", "dashboard", "mapa-delito"].includes(vista);
-    const mostrarAnalytics = ["inicio", "dashboard", "estadisticas", "reportes"].includes(vista);
-    const mostrarDetalle = ["inicio", "dashboard", "estadisticas", "reportes"].includes(vista);
+    const mostrarAnalytics = ["inicio", "dashboard", "estadisticas"].includes(vista);
+    const mostrarDetalle = ["inicio", "dashboard", "estadisticas"].includes(vista);
     const mostrarEjecutivo = ["inicio", "dashboard"].includes(vista);
 
     viewSections.forEach((section) => {
