@@ -71,6 +71,8 @@ let datosProduccionPolicial = null;
 let produccionPolicialCargada = false;
 let comparadorBianualListo = false;
 let ultimaComparacionBianual = null;
+const cacheComparadorMensual = new Map();
+let renderComparadorId = 0;
 
 const filtros = {
     anio: document.getElementById("filtroAnio"),
@@ -1464,12 +1466,34 @@ function periodoComparadorBianual(){
     return { inicio, fin, texto: `${meses[inicio - 1]} - ${meses[fin - 1]}` };
 }
 
-function datosComparadorPorAnio(anio, delito){
+function cargarFuenteMensualComparador(anio){
+    const clave = String(anio || "");
+    if(!clave) return Promise.resolve([]);
+    if(cacheComparadorMensual.has(clave)) return Promise.resolve(cacheComparadorMensual.get(clave));
+    if(anioSIDPOLMensual === clave && datosSIDPOLMensual.length){
+        const copiaActual = datosSIDPOLMensual.slice();
+        cacheComparadorMensual.set(clave, copiaActual);
+        return Promise.resolve(copiaActual);
+    }
+    return cargarJson(`data/api/modalidades_mensuales/${encodeURIComponent(clave)}.json`)
+        .then((datos) => {
+            const normalizados = Array.isArray(datos) ? datos.map(normalizarFilaDatos) : [];
+            cacheComparadorMensual.set(clave, normalizados);
+            return normalizados;
+        })
+        .catch((error) => {
+            console.warn(`No se pudo cargar detalle mensual para ${clave}`, error);
+            cacheComparadorMensual.set(clave, []);
+            return [];
+        });
+}
+
+function datosComparadorPorAnio(anio, delito, fuente = datosSIDPOL){
     const departamento = normalizar(filtros.departamento.value);
     const provincia = normalizar(filtros.provincia.value);
     const distrito = normalizar(filtros.distrito.value);
     const periodo = periodoComparadorBianual();
-    const filas = datosSIDPOL.filter((fila) => {
+    const filas = fuente.filter((fila) => {
         const mes = Number(fila.MES);
         if(String(fila.ANIO || "") !== String(anio || "")) return false;
         if(delito && !modalidadCoincideDelito(fila.MODALIDAD, delito)) return false;
@@ -1497,7 +1521,7 @@ function contextoComparadorBianual(){
     return territorio || "Nacional";
 }
 
-function renderComparadorBianual(){
+async function renderComparadorBianual(){
     if(!comparadorGrafico || !comparadorResumen) return;
     inicializarComparadorBianual();
     if(!comparadorBianualListo){
@@ -1505,8 +1529,24 @@ function renderComparadorBianual(){
         return;
     }
 
-    const base = datosComparadorPorAnio(comparadorAnioBase.value, comparadorDelito.value);
-    const comparado = datosComparadorPorAnio(comparadorAnioComparado.value, comparadorDelito.value);
+    const renderId = ++renderComparadorId;
+    renderEstadoVacio(comparadorGrafico, "Cargando detalle mensual del comparador...");
+    const [fuenteBaseMensual, fuenteComparadaMensual] = await Promise.all([
+        cargarFuenteMensualComparador(comparadorAnioBase.value),
+        cargarFuenteMensualComparador(comparadorAnioComparado.value)
+    ]);
+    if(renderId !== renderComparadorId) return;
+
+    const base = datosComparadorPorAnio(
+        comparadorAnioBase.value,
+        comparadorDelito.value,
+        fuenteBaseMensual.length ? fuenteBaseMensual : datosSIDPOL
+    );
+    const comparado = datosComparadorPorAnio(
+        comparadorAnioComparado.value,
+        comparadorDelito.value,
+        fuenteComparadaMensual.length ? fuenteComparadaMensual : datosSIDPOL
+    );
     const periodo = periodoComparadorBianual();
     const diferencia = comparado.total - base.total;
     const variacion = base.total ? (diferencia / base.total) * 100 : 0;
@@ -1665,8 +1705,8 @@ function cargarAnaliticaTemporal(){
     });
 }
 
-function descargarComparadorCsv(){
-    if(!ultimaComparacionBianual) renderComparadorBianual();
+async function descargarComparadorCsv(){
+    if(!ultimaComparacionBianual) await renderComparadorBianual();
     if(!ultimaComparacionBianual) return;
     const { base, comparado, delito, diferencia, variacion, periodo } = ultimaComparacionBianual;
     const lineas = [
@@ -1695,8 +1735,8 @@ function descargarComparadorCsv(){
     URL.revokeObjectURL(enlace.href);
 }
 
-function descargarComparadorPdf(){
-    if(!ultimaComparacionBianual) renderComparadorBianual();
+async function descargarComparadorPdf(){
+    if(!ultimaComparacionBianual) await renderComparadorBianual();
     if(!ultimaComparacionBianual || !comparadorGrafico) return;
     const svg = comparadorGrafico.querySelector("svg");
     if(!svg) return;
@@ -1767,8 +1807,9 @@ function descargarComparadorPdf(){
     ventana.document.close();
 }
 
-function descargarComparadorPng(){
+async function descargarComparadorPng(){
     if(!comparadorGrafico) return;
+    if(!comparadorGrafico.querySelector("svg")) await renderComparadorBianual();
     const svg = comparadorGrafico.querySelector("svg");
     if(!svg) return;
     const serializer = new XMLSerializer();

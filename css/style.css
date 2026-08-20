@@ -1668,11 +1668,12 @@ tbody tr:hover{
     display: grid;
     grid-template-columns: minmax(360px, 0.92fr) minmax(420px, 1.08fr);
     gap: 18px;
-    align-items: start;
+    align-items: stretch;
 }
 
 .compare-table-card{
     overflow-x: auto;
+    min-height: 420px;
     background: linear-gradient(145deg, #edf4fb, #f9fbfe);
     border: 1px solid #9eb4c8;
     border-radius: 8px;
