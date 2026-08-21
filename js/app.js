@@ -1608,7 +1608,7 @@ async function renderComparadorBianual(){
     const baseY = 170;
     const comparadoY = 265;
     const tieneDetalleMensual = [...baseMeses, ...comparadoMeses].some((fila) => fila.casos > 0);
-    const colorDiferencia = diferencia >= 0 ? "#22e58a" : "#ff5c5c";
+    const colorDiferencia = diferencia >= 0 ? "#ff5c5c" : "#22e58a";
     const textoDiferencia = `${diferencia >= 0 ? "+" : ""}${formatear(diferencia)}`;
     const textoVariacion = `${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}%`;
 
@@ -1834,7 +1834,7 @@ async function descargarComparadorPdf(){
                 .meta{text-align:right;font-size:12px;color:#4b6072}
                 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
                 .card{border:1px solid #d8e0e8;border-left:5px solid #3d8bfd;border-radius:8px;padding:12px}
-                .card.diff{border-left-color:${diferencia >= 0 ? "#24a96f" : "#d53f3f"}}
+                .card.diff{border-left-color:${diferencia >= 0 ? "#d53f3f" : "#24a96f"}}
                 .card span{display:block;color:#526679;font-size:12px;font-weight:800;text-transform:uppercase}
                 .card strong{display:block;margin:5px 0;color:#07131d;font-size:28px}
                 .card small{color:#526679;font-weight:700}
@@ -1846,7 +1846,9 @@ async function descargarComparadorPdf(){
                 td:first-child{background:#dceaf6;font-weight:800}
                 .total-row td{background:#f1c84b;color:#06121c;font-weight:900}
                 .up{color:#b42318;font-weight:900}
-                .down{color:#1d4ed8;font-weight:900}
+                .down{color:#047857;font-weight:900}
+                .total-row .up{color:#b42318}
+                .total-row .down{color:#047857}
                 .monthly-note{background:#eef5fb;color:#334b63;font-weight:800}
                 .chart svg{width:100%;height:auto}
                 .note{padding:10px 12px;background:#eef4f8;border-left:4px solid #f1c84b;color:#263949;font-size:12px}
