@@ -1469,13 +1469,16 @@ function periodoComparadorBianual(){
 function cargarFuenteMensualComparador(anio){
     const clave = String(anio || "");
     if(!clave) return Promise.resolve([]);
-    if(cacheComparadorMensual.has(clave)) return Promise.resolve(cacheComparadorMensual.get(clave));
+    if(cacheComparadorMensual.has(clave)){
+        const datosCacheados = cacheComparadorMensual.get(clave);
+        if(datosCacheados.length) return Promise.resolve(datosCacheados);
+    }
     if(anioSIDPOLMensual === clave && datosSIDPOLMensual.length){
         const copiaActual = datosSIDPOLMensual.slice();
         cacheComparadorMensual.set(clave, copiaActual);
         return Promise.resolve(copiaActual);
     }
-    return cargarJson(`data/api/modalidades_mensuales/${encodeURIComponent(clave)}.json`)
+    return cargarJson(`data/api/modalidades_mensuales/${encodeURIComponent(clave)}.json?v=${Date.now()}`)
         .then((datos) => {
             const normalizados = Array.isArray(datos) ? datos.map(normalizarFilaDatos) : [];
             cacheComparadorMensual.set(clave, normalizados);
@@ -1483,7 +1486,6 @@ function cargarFuenteMensualComparador(anio){
         })
         .catch((error) => {
             console.warn(`No se pudo cargar detalle mensual para ${clave}`, error);
-            cacheComparadorMensual.set(clave, []);
             return [];
         });
 }
@@ -1530,15 +1532,20 @@ function datosComparadorPorAnio(anio, delito, fuente = datosSIDPOL, periodo = pe
         return true;
     });
     const mesesResumen = Array.from({ length: 12 }, (_, index) => ({ mes: index + 1, casos: 0 }));
+    let filasConMes = 0;
     filas.forEach((fila) => {
         const mes = Number(fila.MES);
-        if(mes >= 1 && mes <= 12) mesesResumen[mes - 1].casos += obtenerCasos(fila);
+        if(mes >= 1 && mes <= 12){
+            mesesResumen[mes - 1].casos += obtenerCasos(fila);
+            filasConMes += 1;
+        }
     });
     return {
         anio: String(anio || ""),
         total: filas.reduce((suma, fila) => suma + obtenerCasos(fila), 0),
         meses: mesesResumen,
-        filas
+        filas,
+        tieneDetalleMensual: filasConMes > 0
     };
 }
 
@@ -1607,7 +1614,7 @@ async function renderComparadorBianual(){
     const comparadoBarWidth = Math.max(10, (comparado.total / maxTotal) * barMax);
     const baseY = 170;
     const comparadoY = 265;
-    const tieneDetalleMensual = [...baseMeses, ...comparadoMeses].some((fila) => fila.casos > 0);
+    const tieneDetalleMensual = base.tieneDetalleMensual && comparado.tieneDetalleMensual;
     const colorDiferencia = diferencia >= 0 ? "#ff5c5c" : "#22e58a";
     const textoDiferencia = `${diferencia >= 0 ? "+" : ""}${formatear(diferencia)}`;
     const textoVariacion = `${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}%`;
@@ -1640,7 +1647,7 @@ async function renderComparadorBianual(){
             `;
         }).join("") : `
             <tr>
-                <td class="monthly-note" colspan="5">Sin detalle mensual disponible en la fuente agregada. Se muestra el total del periodo seleccionado.</td>
+                <td class="monthly-note" colspan="5">Sin detalle mensual completo para uno de los años. Se muestra el total del periodo seleccionado para evitar meses en cero que no corresponden.</td>
             </tr>
         `;
         comparadorTablaBody.innerHTML = `
