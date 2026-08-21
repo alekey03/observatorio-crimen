@@ -1488,11 +1488,37 @@ function cargarFuenteMensualComparador(anio){
         });
 }
 
-function datosComparadorPorAnio(anio, delito, fuente = datosSIDPOL){
+function filtrosComparadorTerritorial(){
+    return {
+        departamento: normalizar(filtros.departamento.value),
+        provincia: normalizar(filtros.provincia.value),
+        distrito: normalizar(filtros.distrito.value)
+    };
+}
+
+function filaCoincideComparador(fila, anio, delito, territorio){
+    if(String(fila.ANIO || "") !== String(anio || "")) return false;
+    if(delito && !modalidadCoincideDelito(fila.MODALIDAD, delito)) return false;
+    if(territorio.departamento && normalizar(fila.DPTO_HECHO) !== territorio.departamento) return false;
+    if(territorio.provincia && normalizar(fila.PROV_HECHO) !== territorio.provincia) return false;
+    if(territorio.distrito && normalizar(fila.DIST_HECHO) !== territorio.distrito) return false;
+    return true;
+}
+
+function ultimoMesFuenteComparador(anio, delito, fuente = datosSIDPOL){
+    const territorio = filtrosComparadorTerritorial();
+    return fuente.reduce((maximo, fila) => {
+        if(!filaCoincideComparador(fila, anio, delito, territorio)) return maximo;
+        const mes = Number(fila.MES);
+        if(!(mes >= 1 && mes <= 12) || obtenerCasos(fila) <= 0) return maximo;
+        return Math.max(maximo, mes);
+    }, 0);
+}
+
+function datosComparadorPorAnio(anio, delito, fuente = datosSIDPOL, periodo = periodoComparadorBianual()){
     const departamento = normalizar(filtros.departamento.value);
     const provincia = normalizar(filtros.provincia.value);
     const distrito = normalizar(filtros.distrito.value);
-    const periodo = periodoComparadorBianual();
     const filas = fuente.filter((fila) => {
         const mes = Number(fila.MES);
         if(String(fila.ANIO || "") !== String(anio || "")) return false;
@@ -1537,17 +1563,35 @@ async function renderComparadorBianual(){
     ]);
     if(renderId !== renderComparadorId) return;
 
+    const fuenteBase = fuenteBaseMensual.length ? fuenteBaseMensual : datosSIDPOL;
+    const fuenteComparada = fuenteComparadaMensual.length ? fuenteComparadaMensual : datosSIDPOL;
+    const periodoSeleccionado = periodoComparadorBianual();
+    const ultimoBase = ultimoMesFuenteComparador(comparadorAnioBase.value, comparadorDelito.value, fuenteBase);
+    const ultimoComparado = ultimoMesFuenteComparador(comparadorAnioComparado.value, comparadorDelito.value, fuenteComparada);
+    const finDisponible = Math.min(
+        periodoSeleccionado.fin,
+        ultimoBase || periodoSeleccionado.fin,
+        ultimoComparado || periodoSeleccionado.fin
+    );
+    const periodo = {
+        inicio: periodoSeleccionado.inicio,
+        fin: Math.max(periodoSeleccionado.inicio, finDisponible),
+        texto: `${meses[periodoSeleccionado.inicio - 1]} - ${meses[Math.max(periodoSeleccionado.inicio, finDisponible) - 1]}`
+    };
+    const periodoAjustado = periodo.fin !== periodoSeleccionado.fin;
+
     const base = datosComparadorPorAnio(
         comparadorAnioBase.value,
         comparadorDelito.value,
-        fuenteBaseMensual.length ? fuenteBaseMensual : datosSIDPOL
+        fuenteBase,
+        periodo
     );
     const comparado = datosComparadorPorAnio(
         comparadorAnioComparado.value,
         comparadorDelito.value,
-        fuenteComparadaMensual.length ? fuenteComparadaMensual : datosSIDPOL
+        fuenteComparada,
+        periodo
     );
-    const periodo = periodoComparadorBianual();
     const diferencia = comparado.total - base.total;
     const variacion = base.total ? (diferencia / base.total) * 100 : 0;
     const direccion = diferencia >= 0 ? "incremento" : "reduccion";
@@ -1556,13 +1600,13 @@ async function renderComparadorBianual(){
     const comparadoMeses = comparado.meses.slice(periodo.inicio - 1, periodo.fin);
     const width = 820;
     const height = 430;
-    const baseBarHeight = Math.max(14, (base.total / maxTotal) * 210);
-    const comparadoBarHeight = Math.max(14, (comparado.total / maxTotal) * 210);
-    const baseX = 210;
-    const comparadoX = 500;
-    const chartBaseY = 342;
-    const lineStartY = chartBaseY - baseBarHeight - 24;
-    const lineEndY = chartBaseY - comparadoBarHeight - 24;
+    const barX = 245;
+    const barMax = 395;
+    const barHeight = 54;
+    const baseBarWidth = Math.max(10, (base.total / maxTotal) * barMax);
+    const comparadoBarWidth = Math.max(10, (comparado.total / maxTotal) * barMax);
+    const baseY = 170;
+    const comparadoY = 265;
     const tieneDetalleMensual = [...baseMeses, ...comparadoMeses].some((fila) => fila.casos > 0);
     const colorDiferencia = diferencia >= 0 ? "#22e58a" : "#ff5c5c";
     const textoDiferencia = `${diferencia >= 0 ? "+" : ""}${formatear(diferencia)}`;
@@ -1615,7 +1659,7 @@ async function renderComparadorBianual(){
         <div class="year-compare-card">
             <span>${base.anio}</span>
             <strong>${formatear(base.total)}</strong>
-            <small>${comparadorDelito.value} | ${periodo.texto}</small>
+            <small>${comparadorDelito.value} | ${periodo.texto}${periodoAjustado ? " | cierre disponible" : ""}</small>
         </div>
         <div class="year-compare-card featured ${diferencia >= 0 ? "up" : "down"}">
             <span>Diferencia</span>
@@ -1625,7 +1669,7 @@ async function renderComparadorBianual(){
         <div class="year-compare-card">
             <span>${comparado.anio}</span>
             <strong>${formatear(comparado.total)}</strong>
-            <small>${contextoComparadorBianual()} | ${periodo.texto}</small>
+            <small>${contextoComparadorBianual()} | ${periodo.texto}${periodoAjustado ? " | cierre disponible" : ""}</small>
         </div>
     `;
 
@@ -1634,67 +1678,53 @@ async function renderComparadorBianual(){
             <defs>
                 <linearGradient id="yearChartBg" x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0%" stop-color="#08131c"></stop>
-                    <stop offset="55%" stop-color="#0e2030"></stop>
-                    <stop offset="100%" stop-color="#071018"></stop>
+                    <stop offset="100%" stop-color="#102235"></stop>
                 </linearGradient>
-                <linearGradient id="yearBarBase" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#4b91ff"></stop>
-                    <stop offset="100%" stop-color="#1d4ed8"></stop>
+                <linearGradient id="yearBarBase" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#1d4ed8"></stop>
+                    <stop offset="100%" stop-color="#60a5fa"></stop>
                 </linearGradient>
-                <linearGradient id="yearBarCompared" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#f7d96a"></stop>
-                    <stop offset="100%" stop-color="#f59e0b"></stop>
+                <linearGradient id="yearBarCompared" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#f59e0b"></stop>
+                    <stop offset="100%" stop-color="#f8d45c"></stop>
                 </linearGradient>
-                <filter id="yearGlow" x="-40%" y="-40%" width="180%" height="180%">
-                    <feGaussianBlur stdDeviation="7" result="blur"></feGaussianBlur>
-                    <feMerge>
-                        <feMergeNode in="blur"></feMergeNode>
-                        <feMergeNode in="SourceGraphic"></feMergeNode>
-                    </feMerge>
-                </filter>
             </defs>
             <style>
-                .year-chart-title{fill:#ffffff;font:900 28px Arial,sans-serif;letter-spacing:.03em}
-                .year-chart-subtitle,.year-chart-axis{fill:#a9bdd2;font:800 12px Arial,sans-serif}
-                .year-chart-label{fill:#ffffff;font:900 18px Arial,sans-serif}
-                .year-chart-value{fill:#ffffff;font:900 18px Arial,sans-serif}
-                .year-chart-small{fill:#bdd0e2;font:800 11px Arial,sans-serif}
-                .year-chart-diff{fill:${colorDiferencia};font:900 28px Arial,sans-serif}
-                .year-chart-percent{fill:${colorDiferencia};font:900 15px Arial,sans-serif}
+                .year-title{fill:#ffffff;font:900 28px Arial,sans-serif;letter-spacing:.02em}
+                .year-subtitle{fill:#bdd0e2;font:800 12px Arial,sans-serif}
+                .year-label{fill:#f8fbff;font:900 18px Arial,sans-serif}
+                .year-small{fill:#b8c9da;font:800 12px Arial,sans-serif}
+                .year-value{fill:#ffffff;font:900 24px Arial,sans-serif}
+                .year-diff{fill:${colorDiferencia};font:900 34px Arial,sans-serif}
+                .year-pct{fill:${colorDiferencia};font:900 17px Arial,sans-serif}
             </style>
             <rect width="${width}" height="${height}" rx="16" fill="url(#yearChartBg)"></rect>
-            <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="16" fill="none" stroke="rgba(241,200,75,.58)"></rect>
-            <text x="32" y="42" class="year-chart-subtitle">COMPARATIVO DELICTIVO</text>
-            <text x="${width / 2}" y="54" text-anchor="middle" class="year-chart-title">${comparadorDelito.value}</text>
-            <text x="${width / 2}" y="78" text-anchor="middle" class="year-chart-subtitle">${periodo.texto} | ${contextoComparadorBianual()}</text>
+            <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="16" fill="none" stroke="rgba(241,200,75,.42)"></rect>
 
-            <rect x="300" y="94" width="220" height="70" rx="12" fill="rgba(255,255,255,.045)" stroke="rgba(255,255,255,.14)"></rect>
-            <text x="410" y="123" text-anchor="middle" class="year-chart-small">VARIACION ABSOLUTA</text>
-            <text x="410" y="151" text-anchor="middle" class="year-chart-diff">${textoDiferencia}</text>
-            <text x="410" y="174" text-anchor="middle" class="year-chart-percent">${textoVariacion} vs ${base.anio}</text>
+            <text x="34" y="44" class="year-subtitle">COMPARATIVO DELICTIVO</text>
+            <text x="34" y="78" class="year-title">${comparadorDelito.value}</text>
+            <text x="34" y="102" class="year-subtitle">${periodo.texto} | ${contextoComparadorBianual()}${periodoAjustado ? " | comparacion ajustada al cierre disponible" : ""}</text>
 
-            <line x1="110" y1="${chartBaseY}" x2="710" y2="${chartBaseY}" stroke="rgba(190,211,231,.45)" stroke-width="1.2"></line>
-            <line x1="110" y1="130" x2="110" y2="${chartBaseY}" stroke="rgba(190,211,231,.28)" stroke-width="1.2"></line>
-            <line x1="110" y1="275" x2="710" y2="275" stroke="rgba(190,211,231,.13)" stroke-dasharray="6 8"></line>
-            <line x1="110" y1="210" x2="710" y2="210" stroke="rgba(190,211,231,.13)" stroke-dasharray="6 8"></line>
-            <line x1="110" y1="145" x2="710" y2="145" stroke="rgba(190,211,231,.13)" stroke-dasharray="6 8"></line>
+            <rect x="590" y="34" width="190" height="92" rx="12" fill="rgba(255,255,255,.055)" stroke="rgba(255,255,255,.14)"></rect>
+            <text x="685" y="62" text-anchor="middle" class="year-small">DIFERENCIA</text>
+            <text x="685" y="96" text-anchor="middle" class="year-diff">${textoDiferencia}</text>
+            <text x="685" y="118" text-anchor="middle" class="year-pct">${textoVariacion} vs ${base.anio}</text>
 
-            <rect x="${baseX - 13}" y="${chartBaseY - baseBarHeight - 8}" width="126" height="${baseBarHeight + 8}" rx="8" fill="rgba(75,145,255,.13)" filter="url(#yearGlow)"></rect>
-            <rect x="${comparadoX - 13}" y="${chartBaseY - comparadoBarHeight - 8}" width="126" height="${comparadoBarHeight + 8}" rx="8" fill="rgba(241,200,75,.16)" filter="url(#yearGlow)"></rect>
-            <rect x="${baseX}" y="${chartBaseY - baseBarHeight}" width="100" height="${baseBarHeight}" rx="7" fill="url(#yearBarBase)"></rect>
-            <rect x="${comparadoX}" y="${chartBaseY - comparadoBarHeight}" width="100" height="${comparadoBarHeight}" rx="7" fill="url(#yearBarCompared)"></rect>
+            <text x="54" y="${baseY + 34}" class="year-label">${base.anio}</text>
+            <text x="54" y="${baseY + 58}" class="year-small">${formatear(base.total)} denuncias</text>
+            <rect x="${barX}" y="${baseY}" width="${barMax}" height="${barHeight}" rx="10" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.12)"></rect>
+            <rect x="${barX}" y="${baseY}" width="${baseBarWidth}" height="${barHeight}" rx="10" fill="url(#yearBarBase)"></rect>
+            <text x="${barX + baseBarWidth - 12}" y="${baseY + 35}" text-anchor="end" class="year-value">${formatear(base.total)}</text>
 
-            <circle cx="${baseX + 50}" cy="${lineStartY}" r="5" fill="#4b91ff"></circle>
-            <circle cx="${comparadoX + 50}" cy="${lineEndY}" r="5" fill="#f1c84b"></circle>
-            <line x1="${baseX + 50}" y1="${lineStartY}" x2="${comparadoX + 50}" y2="${lineEndY}" stroke="${colorDiferencia}" stroke-width="3" stroke-dasharray="10 9"></line>
+            <text x="54" y="${comparadoY + 34}" class="year-label">${comparado.anio}</text>
+            <text x="54" y="${comparadoY + 58}" class="year-small">${formatear(comparado.total)} denuncias</text>
+            <rect x="${barX}" y="${comparadoY}" width="${barMax}" height="${barHeight}" rx="10" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.12)"></rect>
+            <rect x="${barX}" y="${comparadoY}" width="${comparadoBarWidth}" height="${barHeight}" rx="10" fill="url(#yearBarCompared)"></rect>
+            <text x="${barX + comparadoBarWidth - 12}" y="${comparadoY + 35}" text-anchor="end" class="year-value">${formatear(comparado.total)}</text>
 
-            <text x="${baseX + 50}" y="${chartBaseY - baseBarHeight - 16}" text-anchor="middle" class="year-chart-value">${formatear(base.total)}</text>
-            <text x="${comparadoX + 50}" y="${chartBaseY - comparadoBarHeight - 16}" text-anchor="middle" class="year-chart-value">${formatear(comparado.total)}</text>
-            <text x="${baseX + 50}" y="380" text-anchor="middle" class="year-chart-label">${base.anio}</text>
-            <text x="${baseX + 50}" y="402" text-anchor="middle" class="year-chart-small">${formatear(base.total)} denuncias</text>
-            <text x="${comparadoX + 50}" y="380" text-anchor="middle" class="year-chart-label">${comparado.anio}</text>
-            <text x="${comparadoX + 50}" y="402" text-anchor="middle" class="year-chart-small">${formatear(comparado.total)} denuncias</text>
-            <text x="${width / 2}" y="405" text-anchor="middle" class="year-chart-subtitle">${direccion.toUpperCase()} ${textoVariacion}</text>
+            <line x1="${barX}" y1="354" x2="${barX + barMax}" y2="354" stroke="rgba(255,255,255,.18)" stroke-width="1"></line>
+            <text x="${barX}" y="386" class="year-subtitle">${direccion.toUpperCase()} ${textoVariacion}</text>
+            <text x="${barX + barMax}" y="386" text-anchor="end" class="year-subtitle">Fuente: SIDPOL agregado</text>
         </svg>
     `;
 }
