@@ -228,14 +228,20 @@
 
         <section class="strategic-dashboard view-section is-hidden" data-section="dashboard-estrategico" aria-label="Dashboard estrategico del delito">
             <article class="strategic-hero">
-                <div>
+                <div class="strategic-hero-copy">
                     <p class="eyebrow">Centro de comando analitico</p>
-                    <h2>Dashboard estrategico del delito</h2>
-                    <p>Lectura ejecutiva de incidencia, concentracion, modalidades y variacion operativa con los filtros activos.</p>
+                    <h2>Panorama ejecutivo del delito</h2>
+                    <p>Lectura integrada de incidencia policial, presion territorial, modalidades prioritarias y comportamiento mensual.</p>
+                    <div class="strategic-hero-tags" aria-label="Ejes del dashboard">
+                        <span><i class="fas fa-chart-line"></i> Evolucion</span>
+                        <span><i class="fas fa-bullseye"></i> Concentracion</span>
+                        <span><i class="fas fa-triangle-exclamation"></i> Priorizacion</span>
+                    </div>
                 </div>
                 <div class="strategic-filter-card">
                     <span>Contexto activo</span>
                     <strong id="dashboardFiltroContexto">Periodo completo nacional</strong>
+                    <small>Vista ejecutiva con datos agregados del SIDPOL.</small>
                 </div>
             </article>
 
@@ -319,7 +325,7 @@
                     <div class="panel-header">
                         <div>
                             <p class="eyebrow">Pulso del delito</p>
-                            <h2>Tendencia mensual y presión operativa</h2>
+                            <h2>Evolucion mensual de la incidencia</h2>
                         </div>
                         <span id="dashboardPeriodoPulso" class="panel-badge">Serie mensual</span>
                     </div>
@@ -353,7 +359,7 @@
                     <div class="panel-header">
                         <div>
                             <p class="eyebrow">Riesgo operativo</p>
-                            <h2>Matriz modalidad x territorio</h2>
+                            <h2>Cruce modalidad x territorio</h2>
                         </div>
                     </div>
                     <div id="dashboardMatriz" class="dashboard-risk-matrix"></div>

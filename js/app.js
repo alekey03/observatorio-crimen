@@ -1066,6 +1066,22 @@ function tieneSerieMensualDashboard(datos){
     return datos.some((fila) => Number(fila.ANIO) && Number(fila.MES) && obtenerCasos(fila));
 }
 
+function datosSerieDashboard(){
+    const candidatas = [
+        datosSIDPOLMensual.length && (!filtros.anio.value || anioSIDPOLMensual === filtros.anio.value) ? datosSIDPOLMensual : [],
+        datosSIDPOL,
+        datosTerritorio
+    ];
+
+    for(const fuente of candidatas){
+        if(!fuente.length) continue;
+        const serie = obtenerDatosFiltrados("mes", fuente);
+        if(tieneSerieMensualDashboard(serie)) return serie;
+    }
+
+    return [];
+}
+
 function renderPulsoDashboard(serie){
     if(!dashboardEstrategico.pulso) return;
     const visible = serie.slice(-10);
@@ -1075,9 +1091,9 @@ function renderPulsoDashboard(serie){
     }
 
     const maximo = Math.max(...visible.map((fila) => fila.casos), 1);
-    const width = 860;
-    const height = 260;
-    const padding = { top: 30, right: 26, bottom: 42, left: 58 };
+    const width = 900;
+    const height = 285;
+    const padding = { top: 38, right: 30, bottom: 50, left: 62 };
     const innerWidth = width - padding.left - padding.right;
     const innerHeight = height - padding.top - padding.bottom;
     const promedio = visible.reduce((suma, fila) => suma + fila.casos, 0) / visible.length;
@@ -1098,24 +1114,24 @@ function renderPulsoDashboard(serie){
         <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Pulso mensual del delito">
             <defs>
                 <linearGradient id="dashboardPulseGradient" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#3d8bfd" stop-opacity=".38"></stop>
-                    <stop offset="100%" stop-color="#3d8bfd" stop-opacity="0"></stop>
+                    <stop offset="0%" stop-color="#25c19f" stop-opacity=".34"></stop>
+                    <stop offset="100%" stop-color="#25c19f" stop-opacity="0"></stop>
                 </linearGradient>
             </defs>
-            <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + innerHeight}" stroke="#33404d"></line>
-            <line x1="${padding.left}" y1="${padding.top + innerHeight}" x2="${padding.left + innerWidth}" y2="${padding.top + innerHeight}" stroke="#33404d"></line>
+            <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + innerHeight}" stroke="#3f5368" opacity=".9"></line>
+            <line x1="${padding.left}" y1="${padding.top + innerHeight}" x2="${padding.left + innerWidth}" y2="${padding.top + innerHeight}" stroke="#3f5368" opacity=".9"></line>
             <line x1="${padding.left}" y1="${yPromedio}" x2="${padding.left + innerWidth}" y2="${yPromedio}" stroke="#f1c84b" stroke-dasharray="6 7" opacity=".75"></line>
             <path d="${area}" fill="url(#dashboardPulseGradient)"></path>
-            <path d="${path}" fill="none" stroke="#3d8bfd" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="${path}" fill="none" stroke="#25c19f" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"></path>
             ${puntos.map((punto, index) => `
                 <g>
-                    <circle cx="${punto.x}" cy="${punto.y}" r="${index === puntos.length - 1 ? 6 : 4.5}" fill="${index === puntos.length - 1 ? "#f1c84b" : "#25c19f"}"></circle>
+                    <circle cx="${punto.x}" cy="${punto.y}" r="${index === puntos.length - 1 ? 7 : 5}" fill="${index === puntos.length - 1 ? "#f1c84b" : "#25c19f"}" stroke="#071018" stroke-width="2"></circle>
                     <text x="${punto.x}" y="${punto.y - 12}" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800">${formatear(punto.casos)}</text>
-                    <text x="${punto.x}" y="${height - 15}" text-anchor="middle" fill="#cfe3f4" font-size="13" font-weight="700">${punto.etiqueta}</text>
+                    <text x="${punto.x}" y="${height - 16}" text-anchor="middle" fill="#dff4ff" font-size="13" font-weight="800">${punto.etiqueta}</text>
                 </g>
             `).join("")}
-            <text x="12" y="${padding.top + 5}" fill="#cfe3f4" font-size="13">${formatear(maximo)}</text>
-            <text x="18" y="${padding.top + innerHeight}" fill="#cfe3f4" font-size="13">0</text>
+            <text x="12" y="${padding.top + 5}" fill="#dff4ff" font-size="13" font-weight="800">${formatear(maximo)}</text>
+            <text x="18" y="${padding.top + innerHeight}" fill="#dff4ff" font-size="13" font-weight="800">0</text>
         </svg>
     `;
 }
@@ -1253,13 +1269,7 @@ function renderDashboardEstrategico(){
     const datos = obtenerDatosFiltrados();
     const fuenteModalidades = fuenteModalidadesActual();
     const datosModalidades = obtenerDatosFiltrados("", fuenteModalidades.length ? fuenteModalidades : datosSIDPOL);
-    const fuenteSerieModalidad = fuenteModalidades.length ? fuenteModalidades : datosSIDPOL;
-    let datosSerie = filtros.delito.value && fuenteSerieModalidad.length
-        ? obtenerDatosFiltrados("mes", fuenteSerieModalidad)
-        : [];
-    if(!tieneSerieMensualDashboard(datosSerie)){
-        datosSerie = obtenerDatosFiltrados(["mes", "delito"], datosTerritorio);
-    }
+    const datosSerie = datosSerieDashboard();
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
     const extorsion = totalPorCoincidencia(datosModalidades, "EXTORSION");
     const homicidio = totalPorCoincidencia(datosModalidades, "HOMICIDIO");

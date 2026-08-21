@@ -4494,3 +4494,223 @@ select{
         grid-template-columns: 1fr;
     }
 }
+
+/* Dashboard estrategico: vista ejecutiva del Observatorio */
+.strategic-dashboard{
+    gap: 16px;
+}
+
+.strategic-dashboard .strategic-hero{
+    min-height: 190px;
+    padding: 30px 34px;
+    border-color: rgba(241, 200, 75, .7);
+    background:
+        linear-gradient(105deg, rgba(6, 16, 24, .98) 0%, rgba(8, 29, 40, .98) 48%, rgba(8, 16, 24, .98) 100%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0 1px, transparent 1px 84px);
+}
+
+.strategic-dashboard .strategic-hero::after{
+    content: "";
+    position: absolute;
+    right: 26%;
+    top: 18px;
+    bottom: 18px;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(37, 193, 159, .75), transparent);
+}
+
+.strategic-dashboard .strategic-hero h2{
+    max-width: 980px;
+    font-size: clamp(2.3rem, 4vw, 4.15rem);
+}
+
+.strategic-hero-tags{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.strategic-hero-tags span{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 7px 11px;
+    color: #dff4ff;
+    border: 1px solid rgba(61, 139, 253, .42);
+    border-radius: 7px;
+    background: rgba(7, 16, 24, .82);
+    font-size: .78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.strategic-hero-tags i{
+    color: var(--gold);
+}
+
+.strategic-dashboard .strategic-filter-card{
+    border-color: rgba(241, 200, 75, .42);
+    background: linear-gradient(150deg, rgba(9, 24, 34, .96), rgba(7, 15, 23, .96));
+}
+
+.strategic-filter-card small{
+    display: block;
+    margin-top: 10px;
+    color: #8fb1c9;
+    font-size: .76rem;
+    line-height: 1.35;
+}
+
+.strategic-dashboard .dashboard-filter-panel{
+    border-color: rgba(241, 200, 75, .28);
+    background: linear-gradient(135deg, rgba(12, 23, 32, .96), rgba(7, 15, 23, .98));
+}
+
+.strategic-dashboard .dashboard-filter-grid{
+    grid-template-columns: repeat(6, minmax(150px, 1fr));
+}
+
+.strategic-dashboard .dashboard-filter-grid select{
+    min-height: 44px;
+    border-color: rgba(74, 100, 125, .95);
+    background: #071119;
+}
+
+.strategic-dashboard .strategic-kpis{
+    gap: 10px;
+}
+
+.strategic-dashboard .strategic-kpi{
+    min-height: 136px;
+    padding: 17px;
+    border-radius: 8px;
+    background:
+        linear-gradient(150deg, rgba(20, 35, 49, .98), rgba(7, 16, 24, .98) 70%),
+        radial-gradient(circle at 96% 100%, rgba(61, 139, 253, .24), transparent 58%);
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.strategic-dashboard .strategic-kpi:hover{
+    transform: translateY(-2px);
+    border-color: rgba(241, 200, 75, .44);
+    box-shadow: 0 18px 32px rgba(0,0,0,.22);
+}
+
+.strategic-dashboard .strategic-kpi i{
+    float: none;
+    margin: 0 0 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 9px;
+}
+
+.strategic-dashboard .strategic-kpi strong{
+    clear: none;
+    margin-top: 8px;
+    font-size: clamp(1.65rem, 2.65vw, 2.45rem);
+}
+
+.strategic-dashboard .strategic-layout{
+    grid-template-columns: minmax(0, 1.35fr) minmax(360px, .65fr);
+}
+
+.strategic-dashboard .analytics-panel{
+    border-radius: 8px;
+    background:
+        linear-gradient(180deg, rgba(14, 27, 38, .98), rgba(7, 16, 24, .98)),
+        linear-gradient(90deg, rgba(241, 200, 75, .04), transparent 38%);
+}
+
+.strategic-dashboard .strategic-pulse{
+    min-height: 430px;
+    border-color: rgba(61, 139, 253, .42);
+}
+
+.strategic-dashboard .dashboard-pulse-chart{
+    padding-top: 4px;
+}
+
+.strategic-dashboard .dashboard-pulse-chart svg{
+    min-height: 330px;
+    filter: drop-shadow(0 16px 26px rgba(0,0,0,.2));
+}
+
+.strategic-dashboard .strategic-reading{
+    border-color: rgba(241, 200, 75, .55);
+}
+
+.strategic-dashboard .dashboard-reading-item{
+    min-height: 98px;
+    border-color: rgba(74, 100, 125, .82);
+    background: linear-gradient(90deg, rgba(8, 17, 24, .92), rgba(15, 28, 39, .92));
+}
+
+.strategic-dashboard .dashboard-reading-item strong{
+    color: #ffffff;
+    font-size: 1rem;
+}
+
+.strategic-dashboard .strategic-lower-grid{
+    grid-template-columns: minmax(310px, .85fr) minmax(520px, 1.25fr) minmax(330px, .8fr);
+}
+
+.strategic-dashboard .strategic-lower-grid .analytics-panel:nth-child(1){
+    border-color: rgba(61, 139, 253, .42);
+}
+
+.strategic-dashboard .strategic-lower-grid .analytics-panel:nth-child(2){
+    border-color: rgba(241, 200, 75, .42);
+}
+
+.strategic-dashboard .strategic-lower-grid .analytics-panel:nth-child(3){
+    border-color: rgba(37, 193, 159, .42);
+}
+
+.strategic-dashboard .bar-list .bar{
+    min-height: 52px;
+}
+
+.strategic-dashboard .bar-list .bar span{
+    font-weight: 900;
+}
+
+.strategic-dashboard .dashboard-risk-matrix{
+    gap: 7px;
+}
+
+.strategic-dashboard .matrix-head{
+    background: rgba(241, 200, 75, .14);
+}
+
+.strategic-dashboard .matrix-cell{
+    min-height: 48px;
+}
+
+.strategic-dashboard .spark-row{
+    border-color: rgba(74, 100, 125, .74);
+    background: rgba(8, 17, 24, .9);
+}
+
+.strategic-dashboard .dashboard-territory-table{
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.strategic-dashboard .territory-line{
+    grid-template-columns: 34px minmax(0, 1fr);
+    min-height: 78px;
+    align-content: center;
+    border-color: rgba(74, 100, 125, .78);
+    background: linear-gradient(145deg, rgba(15, 28, 39, .92), rgba(7, 16, 24, .96));
+}
+
+.strategic-dashboard .territory-line b,
+.strategic-dashboard .territory-line small{
+    grid-column: 2;
+    text-align: left;
+}
+
+.strategic-dashboard .territory-line b{
+    color: #ffffff;
+}
