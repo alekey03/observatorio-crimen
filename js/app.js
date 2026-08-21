@@ -1446,7 +1446,7 @@ function inicializarComparadorBianual(){
     llenarSelectComparador(comparadorAnioComparado, anios, anioMasReciente);
     llenarSelectComparador(comparadorMesInicio, meses.map((mes, index) => ({ label: mes, value: String(index + 1) })), "1");
     llenarSelectComparador(comparadorMesFin, meses.map((mes, index) => ({ label: mes, value: String(index + 1) })), String(ultimoMes || 12));
-    llenarSelectComparador(comparadorDelito, delitos, delitoExtorsion);
+    llenarSelectDelitos(comparadorDelito, delitos, "Todos los delitos", delitoExtorsion);
     comparadorBianualListo = true;
 }
 
