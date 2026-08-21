@@ -1674,8 +1674,10 @@ tbody tr:hover{
 .compare-table-card{
     overflow-x: auto;
     min-height: 420px;
-    background: linear-gradient(145deg, #edf4fb, #f9fbfe);
-    border: 1px solid #9eb4c8;
+    background:
+        radial-gradient(circle at top left, rgba(61, 139, 253, .16), transparent 24rem),
+        linear-gradient(145deg, #09131c, #101c27);
+    border: 1px solid rgba(61, 139, 253, .34);
     border-radius: 8px;
     padding: 10px;
     box-shadow: 0 14px 34px rgba(2, 11, 20, 0.18);
@@ -1685,43 +1687,51 @@ tbody tr:hover{
     width: 100%;
     min-width: 520px;
     border-collapse: collapse;
-    color: #06121c;
+    color: #f8fbff;
     font-size: 0.86rem;
 }
 
 .compare-table-card th{
-    background: #17324a;
-    color: #ffffff;
+    background: #10263a !important;
+    color: #f1c84b !important;
     font-weight: 900;
+    letter-spacing: .02em;
 }
 
 .compare-table-card th,
 .compare-table-card td{
     padding: 8px 10px;
-    border: 1px solid #b6c6d6;
+    border: 1px solid rgba(129, 162, 191, .42);
     text-align: center;
-    background: #fbfdff;
+    background: rgba(15, 29, 42, .94);
+    color: #f8fbff;
 }
 
 .compare-table-card td:first-child{
-    background: #dceaf6;
-    color: #102031;
+    background: rgba(61, 139, 253, .18);
+    color: #ffffff;
+    font-weight: 900;
+}
+
+.compare-table-card tbody td:nth-child(2),
+.compare-table-card tbody td:nth-child(3){
+    color: #ffffff;
     font-weight: 900;
 }
 
 .compare-table-card .total-row td{
-    background: #f1c84b;
+    background: #f1c84b !important;
     color: #06121c;
     font-weight: 900;
 }
 
 .compare-table-card .up{
-    color: #b42318;
+    color: #ff5c5c;
     font-weight: 900;
 }
 
 .compare-table-card .down{
-    color: #1d4ed8;
+    color: #4b91ff;
     font-weight: 900;
 }
 
