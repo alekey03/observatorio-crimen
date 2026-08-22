@@ -5162,3 +5162,119 @@ select{
 .strategic-dashboard .territory-line span{
     color: var(--gold);
 }
+
+/* Normalizacion tipografica institucional: misma escala visual en todas las vistas */
+.view-section,
+.view-section input,
+.view-section select,
+.view-section button{
+    font-family: "Segoe UI", Arial, sans-serif;
+    letter-spacing: 0;
+}
+
+.view-section h1,
+.view-section h2,
+.view-section h3,
+.view-section strong{
+    letter-spacing: 0;
+}
+
+.view-section .eyebrow,
+.view-section .section-eyebrow,
+.view-section .panel-badge,
+.view-section label span,
+.view-section th,
+.view-section .legend-pill,
+.view-section .tab-chip{
+    font-size: .74rem;
+    line-height: 1.2;
+    font-weight: 800;
+}
+
+.hero h1,
+.strategic-dashboard .strategic-hero h2,
+.production-hero h2,
+.predictive-header h2,
+.comparison-header h2{
+    font-size: clamp(1.75rem, 2.25vw, 2.35rem);
+    line-height: 1.12;
+    font-weight: 850;
+}
+
+.section-header h2,
+.panel-header h2,
+.analytics-panel h2,
+.map-card h2,
+.production-panel h2,
+.predictive-panel h2,
+.comparison-card h2{
+    font-size: clamp(1.28rem, 1.55vw, 1.65rem);
+    line-height: 1.18;
+    font-weight: 850;
+}
+
+.strategic-dashboard .strategic-hero{
+    min-height: 150px;
+    padding: 22px 28px;
+}
+
+.strategic-dashboard .strategic-hero p,
+.view-section .hero p,
+.view-section .section-copy,
+.view-section .panel-copy{
+    font-size: .96rem;
+    line-height: 1.45;
+}
+
+.strategic-dashboard .strategic-kpis{
+    gap: 12px;
+}
+
+.strategic-dashboard .strategic-kpi{
+    min-height: 112px;
+    padding: 18px;
+}
+
+.strategic-dashboard .strategic-kpi strong,
+.metric-card strong,
+.kpi-card strong,
+.production-score-card strong,
+.predictive-kpi strong,
+.compare-summary-card strong{
+    font-size: clamp(1.75rem, 2.15vw, 2.2rem);
+    line-height: 1;
+}
+
+.strategic-dashboard .strategic-kpi span,
+.metric-card span,
+.kpi-card span,
+.production-score-card span,
+.predictive-kpi span,
+.compare-summary-card span{
+    font-size: .78rem;
+    line-height: 1.25;
+}
+
+.strategic-dashboard .strategic-kpi small,
+.metric-card small,
+.kpi-card small,
+.production-score-card small,
+.predictive-kpi small,
+.compare-summary-card small{
+    font-size: .82rem;
+    line-height: 1.35;
+}
+
+.strategic-dashboard .dashboard-filter-grid,
+.filters-grid,
+.comparison-filters{
+    gap: 14px;
+}
+
+.strategic-dashboard .analytics-panel,
+.production-panel,
+.predictive-panel,
+.comparison-card,
+.map-card{
+    border-radius: 8px;
+}
