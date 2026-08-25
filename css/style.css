@@ -5278,3 +5278,59 @@ select{
 .map-card{
     border-radius: 8px;
 }
+
+/* Afinado final: el dashboard usa la misma voz tipografica que Inicio */
+.strategic-dashboard{
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.strategic-dashboard .strategic-hero h2{
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: clamp(1.9rem, 2.15vw, 2.45rem);
+    font-weight: 750;
+    line-height: 1.16;
+    text-transform: none;
+}
+
+.strategic-dashboard .strategic-hero p:not(.eyebrow){
+    font-size: .98rem;
+    font-weight: 400;
+}
+
+.strategic-dashboard .eyebrow,
+.strategic-dashboard .strategic-hero-tags span,
+.strategic-dashboard .dashboard-filter-grid span,
+.strategic-dashboard .panel-badge,
+.strategic-dashboard .matrix-head{
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.strategic-dashboard .panel-header.compact h3,
+.strategic-dashboard .panel-header h2,
+.strategic-dashboard .analytics-panel h2{
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: clamp(1.2rem, 1.4vw, 1.55rem);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.strategic-dashboard .strategic-kpi span,
+.strategic-dashboard .bar-list .bar span,
+.strategic-dashboard .spark-row strong,
+.strategic-dashboard .territory-line strong,
+.strategic-dashboard .territory-line b{
+    font-weight: 700;
+}
+
+.strategic-dashboard .strategic-kpi strong{
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: clamp(1.6rem, 1.95vw, 2rem);
+    font-weight: 750;
+}
+
+.strategic-dashboard .dashboard-filter-grid select{
+    font-weight: 600;
+}
