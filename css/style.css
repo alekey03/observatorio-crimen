@@ -5424,3 +5424,14 @@ select{
     font-weight: 400;
     line-height: 1.2;
 }
+
+/* Dashboard usa el encabezado, filtros y tarjetas globales de Inicio */
+.strategic-dashboard > .strategic-hero,
+.strategic-dashboard > .dashboard-filter-panel,
+.strategic-dashboard > .strategic-kpis{
+    display: none;
+}
+
+.strategic-dashboard{
+    margin-top: 18px;
+}

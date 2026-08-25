@@ -3704,7 +3704,7 @@ async function cargarProduccionPolicial(){
 function activarVista(vista){
     vistaActual = vista;
     const vistaPolicial = ["denuncias-comisaria", "hechos-jurisdiccion"].includes(vista);
-    const ocultarContextoSidpol = ["dashboard", "produccion-policial", "comparador-delitos"].includes(vista);
+    const ocultarContextoSidpol = ["produccion-policial", "comparador-delitos"].includes(vista);
     sidpolContextSections.forEach((section) => section.classList.toggle("is-hidden", ocultarContextoSidpol));
     if(vistaPolicial){
         modoPolicial = vista === "hechos-jurisdiccion" ? "hecho" : "registro";
