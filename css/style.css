@@ -5334,3 +5334,93 @@ select{
 .strategic-dashboard .dashboard-filter-grid select{
     font-weight: 600;
 }
+
+/* Dashboard: encabezado homologado con Inicio */
+.strategic-dashboard .strategic-hero{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    grid-template-columns: none;
+    gap: 24px;
+    min-height: 0;
+    padding: 30px;
+    overflow: visible;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--gold);
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(32, 42, 52, 0.96), rgba(24, 32, 40, 0.96));
+    box-shadow: var(--shadow);
+}
+
+.strategic-dashboard .strategic-hero::before,
+.strategic-dashboard .strategic-hero::after{
+    display: none;
+}
+
+.strategic-dashboard .strategic-hero-copy{
+    max-width: 880px;
+}
+
+.strategic-dashboard .strategic-hero h2{
+    margin: 0 0 10px;
+    color: var(--text);
+    font-size: clamp(2rem, 4vw, 3.8rem);
+    font-weight: 700;
+    line-height: 1;
+    text-transform: none;
+}
+
+.strategic-dashboard .strategic-hero p:not(.eyebrow){
+    max-width: 760px;
+    margin-bottom: 0;
+    color: var(--muted);
+    font-size: 1.05rem;
+    font-weight: 400;
+    line-height: 1.55;
+}
+
+.strategic-dashboard .strategic-hero .eyebrow{
+    color: var(--gold);
+}
+
+.strategic-dashboard .strategic-hero-tags{
+    display: none;
+}
+
+.strategic-dashboard .strategic-filter-card{
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 38px;
+    margin-top: 48px;
+    padding: 0 13px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #121820;
+    box-shadow: none;
+}
+
+.strategic-dashboard .strategic-filter-card::before{
+    content: "";
+    width: 9px;
+    height: 9px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 0 4px rgba(245, 158, 76, 0.18);
+}
+
+.strategic-dashboard .strategic-filter-card span,
+.strategic-dashboard .strategic-filter-card small{
+    display: none;
+}
+
+.strategic-dashboard .strategic-filter-card strong{
+    color: var(--muted);
+    font-size: .92rem;
+    font-weight: 400;
+    line-height: 1.2;
+}
