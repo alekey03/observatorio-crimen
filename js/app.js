@@ -199,6 +199,12 @@ const prodDashboardPulso = document.getElementById("prodDashboardPulso");
 const prodDashboardBarras = document.getElementById("prodDashboardBarras");
 const prodDashboardBalance = document.getElementById("prodDashboardBalance");
 const prodDashboardBrief = document.getElementById("prodDashboardBrief");
+const prodChartColumns = document.getElementById("prodChartColumns");
+const prodChartCategory = document.getElementById("prodChartCategory");
+const prodChartLine = document.getElementById("prodChartLine");
+const prodChartPct = document.getElementById("prodChartPct");
+const prodChartDonut = document.getElementById("prodChartDonut");
+const prodChartBrief = document.getElementById("prodChartBrief");
 const prodTotalIndicadores = document.getElementById("prodTotalIndicadores");
 const prodIndicadoresMejoran = document.getElementById("prodIndicadoresMejoran");
 const prodIndicadoresDisminuyen = document.getElementById("prodIndicadoresDisminuyen");
@@ -3584,7 +3590,7 @@ function renderResumenProduccion(){
 function renderDashboardVisualProduccion(){
     const indicadores = datosProduccionPolicial?.indicadores || [];
     if(!indicadores.length){
-        [prodDashboardBarras, prodDashboardBalance, prodDashboardBrief].forEach((contenedor) => {
+        [prodDashboardBarras, prodDashboardBalance, prodDashboardBrief, prodChartColumns, prodChartCategory, prodChartLine, prodChartPct, prodChartDonut, prodChartBrief].forEach((contenedor) => {
             if(contenedor) renderEstadoVacio(contenedor, "Sin indicadores disponibles");
         });
         return;
@@ -3665,6 +3671,127 @@ function renderDashboardVisualProduccion(){
             <p><b>Impulso:</b> ${principalAvance ? principalAvance.indicador : "sin avance identificado"} lidera el crecimiento operativo.</p>
             <p><b>Atencion:</b> ${principalBrecha ? principalBrecha.indicador : "sin brecha identificada"} concentra la mayor reduccion.</p>
             <p><b>Referencia clave:</b> dinero incautado ${dinero ? dinero.valor_2026_txt : "sin dato"} en el periodo reportado.</p>
+        `;
+    }
+
+    const columnas = obtenerIndicadoresProduccion([
+        "Operativos",
+        "Bandas criminales desarticuladas",
+        "Detenidos nacionales",
+        "Captura de requisitoriados",
+        "Vehiculos recuperados",
+        "Celulares incautados"
+    ]);
+    const maxColumnas = Math.max(...columnas.map((fila) => Math.max(Number(fila.valor_2025) || 0, Number(fila.valor_2026) || 0)), 1);
+
+    if(prodChartColumns){
+        prodChartColumns.innerHTML = `
+            <div class="production-column-legend"><span><i></i>2025</span><span><i></i>2026</span></div>
+            <div class="production-column-plot">
+                ${columnas.map((fila) => {
+                    const alto2025 = Math.max((Number(fila.valor_2025) / maxColumnas) * 100, 4);
+                    const alto2026 = Math.max((Number(fila.valor_2026) / maxColumnas) * 100, 4);
+                    return `
+                        <div class="production-column-group">
+                            <div class="production-column-bars">
+                                <span class="year-2025" style="height:${alto2025}%"><b>${fila.valor_2025_txt}</b></span>
+                                <span class="year-2026" style="height:${alto2026}%"><b>${fila.valor_2026_txt}</b></span>
+                            </div>
+                            <strong>${escaparHtml(fila.indicador)}</strong>
+                        </div>
+                    `;
+                }).join("")}
+            </div>
+        `;
+    }
+
+    const categorias = obtenerIndicadoresProduccion([
+        "Operativos",
+        "Papeletas impuestas IRNT",
+        "PBC - ketes",
+        "Detenidos nacionales",
+        "Celulares incautados"
+    ]);
+    const maxCategoria = Math.max(...categorias.map((fila) => Number(fila.valor_2026) || 0), 1);
+    if(prodChartCategory){
+        prodChartCategory.innerHTML = categorias.map((fila) => {
+            const ancho = Math.max((Number(fila.valor_2026) / maxCategoria) * 100, 4);
+            return `
+                <div class="production-horizontal-row">
+                    <span>${escaparHtml(fila.indicador)}</span>
+                    <i style="width:${ancho}%"></i>
+                    <b>${fila.valor_2026_txt}</b>
+                </div>
+            `;
+        }).join("");
+    }
+
+    const linea = columnas.map((fila) => Number(fila.variacion_pct) || 0);
+    const minLinea = Math.min(...linea, 0);
+    const maxLinea = Math.max(...linea, 1);
+    const rangoLinea = Math.max(maxLinea - minLinea, 1);
+    const puntos = linea.map((valor, index) => {
+        const x = 10 + (index * (80 / Math.max(linea.length - 1, 1)));
+        const y = 82 - (((valor - minLinea) / rangoLinea) * 64);
+        return `${x},${y}`;
+    }).join(" ");
+    if(prodChartLine){
+        prodChartLine.innerHTML = `
+            <svg viewBox="0 0 100 100" role="img" aria-label="Linea de variacion porcentual">
+                <line x1="8" y1="82" x2="92" y2="82"></line>
+                <line x1="8" y1="18" x2="8" y2="82"></line>
+                <polyline points="${puntos}"></polyline>
+                ${linea.map((valor, index) => {
+                    const [x, y] = puntos.split(" ")[index].split(",");
+                    return `<circle cx="${x}" cy="${y}" r="2.3"></circle>`;
+                }).join("")}
+            </svg>
+            <div class="production-line-labels">
+                ${columnas.map((fila) => `<span>${escaparHtml(fila.indicador.split(" ")[0])}</span>`).join("")}
+            </div>
+        `;
+    }
+
+    const tasas = [...indicadores]
+        .filter((fila) => Number.isFinite(Number(fila.variacion_pct)))
+        .sort((a, b) => Math.abs(Number(b.variacion_pct)) - Math.abs(Number(a.variacion_pct)))
+        .slice(0, 6);
+    const maxTasa = Math.max(...tasas.map((fila) => Math.abs(Number(fila.variacion_pct) || 0)), 1);
+    if(prodChartPct){
+        prodChartPct.innerHTML = tasas.map((fila) => {
+            const alto = Math.max((Math.abs(Number(fila.variacion_pct) || 0) / maxTasa) * 100, 6);
+            const clase = Number(fila.variacion_pct) >= 0 ? "up" : "down";
+            return `
+                <div class="production-rate-bar ${clase}">
+                    <b>${Number(fila.variacion_pct).toFixed(0)}%</b>
+                    <i style="height:${alto}%"></i>
+                    <span>${escaparHtml(fila.indicador.split(" ")[0])}</span>
+                </div>
+            `;
+        }).join("");
+    }
+
+    if(prodChartDonut){
+        prodChartDonut.style.setProperty("--good", `${porcentaje * 3.6}deg`);
+        prodChartDonut.innerHTML = `
+            <div class="production-donut">
+                <strong>${porcentaje}%</strong>
+                <span>mejoran</span>
+            </div>
+            <div class="production-donut-detail">
+                <p><i class="good"></i><b>${avances}</b> indicadores en avance</p>
+                <p><i class="bad"></i><b>${brechas}</b> indicadores en descenso</p>
+                <p><i class="neutral"></i><b>${indicadores.length}</b> indicadores evaluados</p>
+            </div>
+        `;
+    }
+
+    if(prodChartBrief){
+        prodChartBrief.innerHTML = `
+            <p><b>Produccion policial:</b> tablero acumulado nacional extraido del PDF diario.</p>
+            <p><b>Mayor impulso:</b> ${principalAvance ? principalAvance.indicador : "sin dato"} con ${principalAvance ? principalAvance.variacion_txt : "0"}.</p>
+            <p><b>Punto critico:</b> ${principalBrecha ? principalBrecha.indicador : "sin dato"} con ${principalBrecha ? principalBrecha.variacion_txt : "0"}.</p>
+            <p><b>Lectura:</b> priorizar seguimiento sobre indicadores que disminuyen y sostener los avances operativos.</p>
         `;
     }
 }

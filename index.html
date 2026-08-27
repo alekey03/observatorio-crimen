@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Observatorio del Crimen - COMOPPOL PNP</title>
 
-    <link rel="stylesheet" href="css/style.css?v=20260827-produccion-vertical">
+    <link rel="stylesheet" href="css/style.css?v=20260827-produccion-graficos">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="css/public.css?v=1">
@@ -833,36 +833,66 @@
                     </div>
                 </article>
 
-                <article class="production-visual-card production-capacity-card">
+                <article class="production-visual-card production-chart-card production-chart-wide">
                     <div class="panel-header">
                         <div>
-                            <p class="eyebrow">Comparativo visual</p>
-                            <h2>Capacidad operativa 2025 vs 2026</h2>
+                            <p class="eyebrow">Comparativo general</p>
+                            <h2>Cantidad acumulada 2025 vs 2026</h2>
                         </div>
-                        <span class="panel-badge">Top operativo</span>
+                        <span class="panel-badge">Barras comparativas</span>
                     </div>
-                    <div id="prodDashboardBarras" class="production-vertical-bars"></div>
+                    <div id="prodChartColumns" class="production-column-chart"></div>
                 </article>
 
-                <article class="production-visual-card">
+                <article class="production-visual-card production-chart-card">
                     <div class="panel-header">
                         <div>
-                            <p class="eyebrow">Balance</p>
-                            <h2>Estado de indicadores</h2>
+                            <p class="eyebrow">Produccion 2026</p>
+                            <h2>Indicadores principales</h2>
                         </div>
                     </div>
-                    <div id="prodDashboardBalance" class="production-balance-list"></div>
+                    <div id="prodChartCategory" class="production-horizontal-chart"></div>
                 </article>
 
-                <article class="production-visual-card production-brief-card">
+                <article class="production-visual-card production-chart-card">
                     <div class="panel-header">
                         <div>
-                            <p class="eyebrow">Texto breve</p>
-                            <h2>Lectura para direccion</h2>
+                            <p class="eyebrow">Pulso comparado</p>
+                            <h2>Variacion por indicador</h2>
+                        </div>
+                    </div>
+                    <div id="prodChartLine" class="production-line-card"></div>
+                </article>
+
+                <article class="production-visual-card production-chart-card">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Tasa de cambio</p>
+                            <h2>% de variacion operativa</h2>
+                        </div>
+                    </div>
+                    <div id="prodChartPct" class="production-rate-chart"></div>
+                </article>
+
+                <article class="production-visual-card production-chart-card">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Balance ejecutivo</p>
+                            <h2>Mejoran vs disminuyen</h2>
+                        </div>
+                    </div>
+                    <div id="prodChartDonut" class="production-donut-panel"></div>
+                </article>
+
+                <article class="production-visual-card production-chart-card production-brief-card">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Lectura breve</p>
+                            <h2>Interpretacion rapida</h2>
                         </div>
                         <i class="fas fa-bullhorn panel-symbol"></i>
                     </div>
-                    <div id="prodDashboardBrief" class="production-brief-list"></div>
+                    <div id="prodChartBrief" class="production-brief-list"></div>
                 </article>
             </section>
 
@@ -1008,7 +1038,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="js/app.js?v=20260827-produccion-vertical"></script>
+    <script src="js/app.js?v=20260827-produccion-graficos"></script>
 </body>
 </html>
 
