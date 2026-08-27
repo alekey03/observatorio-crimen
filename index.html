@@ -82,25 +82,24 @@
                 </button>
             </div>
             <div class="filters-panel">
+            <select id="filtroAnio" class="filter-hidden-state" aria-hidden="true" tabindex="-1">
+                <option value=""></option>
+            </select>
+            <select id="filtroMes" class="filter-hidden-state" aria-hidden="true" tabindex="-1">
+                <option value=""></option>
+            </select>
+            <select id="filtroDia" class="filter-hidden-state" aria-hidden="true" tabindex="-1">
+                <option value=""></option>
+            </select>
+
             <label>
-                <span>Año</span>
-                <select id="filtroAnio">
-                    <option value="">Seleccionar varios años</option>
-                </select>
+                <span>Desde</span>
+                <input id="filtroFechaDesde" type="date">
             </label>
 
             <label>
-                <span>Mes</span>
-                <select id="filtroMes">
-                    <option value="">Seleccionar varios meses</option>
-                </select>
-            </label>
-
-            <label>
-                <span>Día</span>
-                <select id="filtroDia">
-                    <option value="">Seleccionar varios días</option>
-                </select>
+                <span>Hasta</span>
+                <input id="filtroFechaHasta" type="date">
             </label>
 
             <label>
@@ -249,17 +248,16 @@
                     <span class="panel-badge">Delitos prioritarios agrupados</span>
                 </div>
                 <div class="dashboard-filter-grid">
+                    <select id="dashboardFiltroAnio" class="filter-hidden-state" aria-hidden="true" tabindex="-1"></select>
+                    <select id="dashboardFiltroMes" class="filter-hidden-state" aria-hidden="true" tabindex="-1"></select>
+                    <select id="dashboardFiltroDia" class="filter-hidden-state" aria-hidden="true" tabindex="-1"></select>
                     <label>
-                        <span>Año</span>
-                        <select id="dashboardFiltroAnio"></select>
+                        <span>Desde</span>
+                        <input id="dashboardFiltroFechaDesde" type="date">
                     </label>
                     <label>
-                        <span>Mes</span>
-                        <select id="dashboardFiltroMes"></select>
-                    </label>
-                    <label>
-                        <span>Día</span>
-                        <select id="dashboardFiltroDia"></select>
+                        <span>Hasta</span>
+                        <input id="dashboardFiltroFechaHasta" type="date">
                     </label>
                     <label>
                         <span>Departamento</span>

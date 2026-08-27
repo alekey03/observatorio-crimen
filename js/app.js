@@ -26,6 +26,7 @@ let errorSIDPOLMensual = false;
 let datosSIDPOLDiario = [];
 let datosSIDPOLDiarioCargados = false;
 let cargaDatosSIDPOLDiarioPromise = null;
+let claveCargaDatosSIDPOLDiario = "";
 let anioSIDPOLDiario = "";
 const cacheDatosSIDPOLDiario = new Map();
 let datosTerritorio = [];
@@ -83,6 +84,8 @@ const filtros = {
     anio: document.getElementById("filtroAnio"),
     mes: document.getElementById("filtroMes"),
     dia: document.getElementById("filtroDia"),
+    fechaDesde: document.getElementById("filtroFechaDesde"),
+    fechaHasta: document.getElementById("filtroFechaHasta"),
     departamento: document.getElementById("filtroDepartamento"),
     provincia: document.getElementById("filtroProvincia"),
     distrito: document.getElementById("filtroDistrito"),
@@ -93,6 +96,8 @@ const filtrosDashboard = {
     anio: document.getElementById("dashboardFiltroAnio"),
     mes: document.getElementById("dashboardFiltroMes"),
     dia: document.getElementById("dashboardFiltroDia"),
+    fechaDesde: document.getElementById("dashboardFiltroFechaDesde"),
+    fechaHasta: document.getElementById("dashboardFiltroFechaHasta"),
     departamento: document.getElementById("dashboardFiltroDepartamento"),
     provincia: document.getElementById("dashboardFiltroProvincia"),
     distrito: document.getElementById("dashboardFiltroDistrito"),
@@ -357,8 +362,12 @@ function normalizarFilaDatos(fila){
     };
 }
 
+function fechasActivas(){
+    return Boolean(filtros.fechaDesde?.value || filtros.fechaHasta?.value);
+}
+
 function fuenteDatosPrincipal(){
-    if(filtros.dia.value) return datosSIDPOLDiario;
+    if(fechasActivas() || filtros.dia.value) return datosSIDPOLDiario;
     return filtros.delito.value ? fuenteModalidadesFiltrable() : datosTerritorio;
 }
 
@@ -368,7 +377,21 @@ function fuenteModalidadesActual(){
 }
 
 function fuenteModalidadesFiltrable(){
-    return filtros.dia.value ? datosSIDPOLDiario : fuenteModalidadesActual();
+    return fechasActivas() || filtros.dia.value ? datosSIDPOLDiario : fuenteModalidadesActual();
+}
+
+function fechaNumero(valor){
+    const partes = String(valor || "").split("-").map(Number);
+    if(partes.length !== 3 || partes.some((parte) => !parte)) return 0;
+    return partes[0] * 10000 + partes[1] * 100 + partes[2];
+}
+
+function fechaNumeroFila(fila){
+    const anio = Number(fila.ANIO) || 0;
+    const mes = Number(fila.MES) || 0;
+    const dia = Number(fila.DIA) || 0;
+    if(!anio || !mes || !dia) return 0;
+    return anio * 10000 + mes * 100 + dia;
 }
 
 function obtenerDatosFiltrados(ignorar = "", fuente = null){
@@ -377,6 +400,8 @@ function obtenerDatosFiltrados(ignorar = "", fuente = null){
     const anio = filtros.anio.value;
     const mes = filtros.mes.value;
     const diaHasta = Number(filtros.dia.value) || 0;
+    const fechaDesde = fechaNumero(filtros.fechaDesde?.value);
+    const fechaHasta = fechaNumero(filtros.fechaHasta?.value);
     const departamento = normalizar(filtros.departamento.value);
     const provincia = normalizar(filtros.provincia.value);
     const distrito = normalizar(filtros.distrito.value);
@@ -385,9 +410,16 @@ function obtenerDatosFiltrados(ignorar = "", fuente = null){
     return origen.filter((fila) => {
         if(!ignorados.has("anio") && anio && fila.ANIO !== anio) return false;
         if(!ignorados.has("mes") && mes && String(fila.MES || "") !== mes) return false;
+        if(!ignorados.has("fecha") && (fechaDesde || fechaHasta)){
+            const fechaFila = fechaNumeroFila(fila);
+            if(!fechaFila) return false;
+            if(fechaDesde && fechaFila < fechaDesde) return false;
+            if(fechaHasta && fechaFila > fechaHasta) return false;
+        }
         if(!ignorados.has("dia") && diaHasta){
             const diaFila = Number(fila.DIA) || 0;
-            if(!diaFila || diaFila > diaHasta) return false;
+            if(!diaFila) return false;
+            if(diaFila > diaHasta) return false;
         }
         if(!ignorados.has("departamento") && departamento && normalizar(fila.DPTO_HECHO) !== departamento) return false;
         if(!ignorados.has("provincia") && provincia && normalizar(fila.PROV_HECHO) !== provincia) return false;
@@ -427,7 +459,7 @@ function llenarSelectMeses(select, opciones, valorActual = ""){
         .sort((a, b) => a - b);
 
     select.innerHTML = "";
-    select.appendChild(new Option("Seleccionar varios meses", ""));
+    select.appendChild(new Option("Todos los meses", ""));
     mesesDisponibles.forEach((mes) => {
         select.appendChild(new Option(meses[mes - 1], String(mes)));
     });
@@ -467,7 +499,7 @@ function llenarSelectDelitos(select, opciones, etiqueta, valorActual = ""){
 function llenarSelectDias(select, valorActual = ""){
     if(!select) return;
     select.innerHTML = "";
-    select.appendChild(new Option("Seleccionar varios días", ""));
+    select.appendChild(new Option("Todos los días", ""));
     Array.from({ length: 31 }, (_, index) => String(index + 1)).forEach((dia) => {
         select.appendChild(new Option(dia, dia));
     });
@@ -480,7 +512,9 @@ function sincronizarFiltrosDashboard(){
     Object.entries(filtrosDashboard).forEach(([clave, selectDashboard]) => {
         const selectPrincipal = filtros[clave];
         if(!selectDashboard || !selectPrincipal) return;
-        selectDashboard.innerHTML = selectPrincipal.innerHTML;
+        if(selectDashboard.tagName === "SELECT"){
+            selectDashboard.innerHTML = selectPrincipal.innerHTML;
+        }
         selectDashboard.value = selectPrincipal.value;
         selectDashboard.disabled = selectPrincipal.disabled;
     });
@@ -494,7 +528,7 @@ function actualizarOpciones(){
     const provinciaActual = filtros.provincia.value;
     const distritoActual = filtros.distrito.value;
     const delitoActual = filtros.delito.value;
-    const fuenteDiariaActiva = Boolean(filtros.dia.value);
+    const fuenteDiariaActiva = fechasActivas() || Boolean(filtros.dia.value);
     const fuenteDiariaLista = !fuenteDiariaActiva || datosSIDPOLDiarioCargados;
     const mensualListo = fuenteDiariaActiva || !filtros.mes.value || (
         filtros.anio.value && anioSIDPOLMensual === filtros.anio.value
@@ -509,13 +543,13 @@ function actualizarOpciones(){
 
     llenarSelect(
         filtros.anio,
-        opcionesUnicas(obtenerDatosFiltrados(["anio", "mes", "dia", "delito"], fuenteOpcionesTemporales), "ANIO"),
-        "Seleccionar varios años",
+        opcionesUnicas(obtenerDatosFiltrados(["anio", "mes", "dia", "fecha", "delito"], fuenteOpcionesTemporales), "ANIO"),
+        "Todos los años",
         anioActual
     );
     llenarSelectMeses(
         filtros.mes,
-        opcionesUnicas(obtenerDatosFiltrados(["mes", "dia", "delito"], fuenteOpcionesTemporales), "MES"),
+        opcionesUnicas(obtenerDatosFiltrados(["mes", "dia", "fecha", "delito"], fuenteOpcionesTemporales), "MES"),
         mesActual
     );
     llenarSelectDias(filtros.dia, diaActual);
@@ -809,9 +843,10 @@ function renderResumenEjecutivo(){
     `).join("") : `<tr><td colspan="4">Sin datos para los filtros seleccionados</td></tr>`;
 
     const alcance = territorios.length;
-    const periodo = filtros.mes.value
-        ? `${meses[Number(filtros.mes.value) - 1]} ${filtros.anio.value || ""}`.trim()
-        : filtros.anio.value || "periodo completo";
+    const periodo = [
+        filtros.fechaDesde?.value ? `desde ${filtros.fechaDesde.value}` : "",
+        filtros.fechaHasta?.value ? `hasta ${filtros.fechaHasta.value}` : ""
+    ].filter(Boolean).join(" ") || "periodo completo";
     const briefing = [
         {
             icono: "fa-location-crosshairs",
@@ -1100,10 +1135,12 @@ function renderTabla(){
 }
 
 function contextoDashboard(){
+    const periodo = [
+        filtros.fechaDesde?.value ? `Desde ${filtros.fechaDesde.value}` : "",
+        filtros.fechaHasta?.value ? `Hasta ${filtros.fechaHasta.value}` : ""
+    ].filter(Boolean).join(" | ") || "Periodo completo";
     const partes = [
-        filtros.anio.value || "Varios años",
-        filtros.mes.value ? meses[Number(filtros.mes.value) - 1] : "Varios meses",
-        filtros.dia.value ? `Día ${filtros.dia.value}` : "Varios días",
+        periodo,
         filtros.departamento.value || "Nacional",
         filtros.provincia.value,
         filtros.distrito.value,
@@ -2313,11 +2350,12 @@ function actualizarTextoResumen(){
         filtros.distrito.value
     ].filter(Boolean).join(" / ") || "Perú";
     const delito = filtros.delito.value || "todos los delitos";
-    const anio = filtros.anio.value || "varios años";
-    const mes = filtros.mes.value ? meses[Number(filtros.mes.value) - 1] : "varios meses";
-    const dia = filtros.dia.value ? `día ${filtros.dia.value}` : "varios días";
+    const periodo = [
+        filtros.fechaDesde?.value ? `desde ${filtros.fechaDesde.value}` : "",
+        filtros.fechaHasta?.value ? `hasta ${filtros.fechaHasta.value}` : ""
+    ].filter(Boolean).join(" ") || "periodo completo";
 
-    textoResumen.textContent = `${territorio}: ${formatear(total)} casos para ${delito}, ${mes}, ${dia}, ${anio}.`;
+    textoResumen.textContent = `${territorio}: ${formatear(total)} casos para ${delito}, ${periodo}.`;
 }
 
 function actualizarDashboard(debeRenderMapa = true){
@@ -2344,43 +2382,68 @@ function cargarCsv(ruta){
     });
 }
 
+function aniosDesdeRangoFechas(){
+    const desde = filtros.fechaDesde?.value || "";
+    const hasta = filtros.fechaHasta?.value || "";
+    const anios = new Set();
+    [desde, hasta].forEach((fecha) => {
+        const anio = fecha.slice(0, 4);
+        if(anio) anios.add(anio);
+    });
+    if(filtros.anio.value) anios.add(filtros.anio.value);
+    if(!anios.size){
+        const ultimo = opcionesUnicas(datosTerritorio, "ANIO").pop();
+        if(ultimo) anios.add(ultimo);
+    }
+    return [...anios].sort();
+}
+
 function cargarDatosDiarios(){
-    const anio = filtros.anio.value || opcionesUnicas(datosTerritorio, "ANIO").pop() || "";
-    if(!anio){
+    const anios = aniosDesdeRangoFechas();
+    const cacheKey = anios.join(",");
+    if(!cacheKey){
         datosSIDPOLDiario = [];
         datosSIDPOLDiarioCargados = true;
         anioSIDPOLDiario = "";
+        claveCargaDatosSIDPOLDiario = "";
         return Promise.resolve(datosSIDPOLDiario);
     }
 
-    if(datosSIDPOLDiarioCargados && anioSIDPOLDiario === anio) return Promise.resolve(datosSIDPOLDiario);
-    if(cacheDatosSIDPOLDiario.has(anio)){
-        datosSIDPOLDiario = cacheDatosSIDPOLDiario.get(anio);
+    if(datosSIDPOLDiarioCargados && anioSIDPOLDiario === cacheKey) return Promise.resolve(datosSIDPOLDiario);
+    if(cacheDatosSIDPOLDiario.has(cacheKey)){
+        datosSIDPOLDiario = cacheDatosSIDPOLDiario.get(cacheKey);
         datosSIDPOLDiarioCargados = true;
-        anioSIDPOLDiario = anio;
+        anioSIDPOLDiario = cacheKey;
         return Promise.resolve(datosSIDPOLDiario);
     }
-    if(cargaDatosSIDPOLDiarioPromise) return cargaDatosSIDPOLDiarioPromise;
+    if(cargaDatosSIDPOLDiarioPromise && claveCargaDatosSIDPOLDiario === cacheKey) return cargaDatosSIDPOLDiarioPromise;
 
-    cargaDatosSIDPOLDiarioPromise = cargarJson(`data/api/diario_por_anio/${encodeURIComponent(anio)}.json`)
-        .then((respuesta) => {
-            datosSIDPOLDiario = respuesta
+    claveCargaDatosSIDPOLDiario = cacheKey;
+    cargaDatosSIDPOLDiarioPromise = Promise.all(
+        anios.map((anio) =>
+            cargarJson(`data/api/diario_por_anio/${encodeURIComponent(anio)}.json`).catch(() => [])
+        )
+    )
+        .then((respuestas) => {
+            datosSIDPOLDiario = respuestas.flat()
                 .map(normalizarFilaDatos)
                 .filter((fila) => fila.ANIO && fila.MES && fila.DIA && fila.DPTO_HECHO && fila.MODALIDAD);
             datosSIDPOLDiarioCargados = true;
-            anioSIDPOLDiario = anio;
-            cacheDatosSIDPOLDiario.set(anio, datosSIDPOLDiario);
+            anioSIDPOLDiario = cacheKey;
+            cacheDatosSIDPOLDiario.set(cacheKey, datosSIDPOLDiario);
             return datosSIDPOLDiario;
         })
         .catch((error) => {
             datosSIDPOLDiario = [];
             datosSIDPOLDiarioCargados = false;
             anioSIDPOLDiario = "";
+            claveCargaDatosSIDPOLDiario = "";
             console.error(error);
             return [];
         })
         .finally(() => {
             cargaDatosSIDPOLDiarioPromise = null;
+            claveCargaDatosSIDPOLDiario = "";
         });
 
     return cargaDatosSIDPOLDiarioPromise;
@@ -4106,6 +4169,8 @@ function reiniciarVista(){
     filtros.anio.value = "";
     filtros.mes.value = "";
     filtros.dia.value = "";
+    filtros.fechaDesde.value = "";
+    filtros.fechaHasta.value = "";
     filtros.departamento.value = "";
     filtros.provincia.value = "";
     filtros.distrito.value = "";
@@ -4122,7 +4187,7 @@ function reiniciarVista(){
 
 Object.values(filtros).forEach((select) => {
     select.addEventListener("change", async () => {
-        if(filtros.dia.value){
+        if(fechasActivas() || filtros.dia.value){
             await cargarDatosDiarios();
         }
         if((select === filtros.mes || select === filtros.anio) && filtros.mes.value && filtros.anio.value){
