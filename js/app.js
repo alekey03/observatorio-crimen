@@ -26,6 +26,8 @@ let errorSIDPOLMensual = false;
 let datosSIDPOLDiario = [];
 let datosSIDPOLDiarioCargados = false;
 let cargaDatosSIDPOLDiarioPromise = null;
+let anioSIDPOLDiario = "";
+const cacheDatosSIDPOLDiario = new Map();
 let datosTerritorio = [];
 let geoDepartamentos = null;
 let geoProvincias = null;
@@ -417,6 +419,24 @@ function llenarSelect(select, opciones, etiqueta, valorActual = ""){
     }
 }
 
+function llenarSelectMeses(select, opciones, valorActual = ""){
+    if(!select) return;
+    const mesesDisponibles = opciones
+        .map((opcion) => Number(opcion))
+        .filter((opcion) => opcion >= 1 && opcion <= 12)
+        .sort((a, b) => a - b);
+
+    select.innerHTML = "";
+    select.appendChild(new Option("Seleccionar varios meses", ""));
+    mesesDisponibles.forEach((mes) => {
+        select.appendChild(new Option(meses[mes - 1], String(mes)));
+    });
+
+    if(valorActual && mesesDisponibles.includes(Number(valorActual))){
+        select.value = String(Number(valorActual));
+    }
+}
+
 function llenarSelectDelitos(select, opciones, etiqueta, valorActual = ""){
     const valorNormalizado = normalizar(valorDelitoActualizado(valorActual));
     const opcionesOtros = opciones.filter((opcion) => !modalidadEnGrupoPrioritario(opcion));
@@ -447,7 +467,7 @@ function llenarSelectDelitos(select, opciones, etiqueta, valorActual = ""){
 function llenarSelectDias(select, valorActual = ""){
     if(!select) return;
     select.innerHTML = "";
-    select.appendChild(new Option("Todos", ""));
+    select.appendChild(new Option("Seleccionar varios días", ""));
     Array.from({ length: 31 }, (_, index) => String(index + 1)).forEach((dia) => {
         select.appendChild(new Option(dia, dia));
     });
@@ -468,6 +488,7 @@ function sincronizarFiltrosDashboard(){
 
 function actualizarOpciones(){
     const anioActual = filtros.anio.value;
+    const mesActual = filtros.mes.value;
     const diaActual = filtros.dia.value;
     const departamentoActual = filtros.departamento.value;
     const provinciaActual = filtros.provincia.value;
@@ -482,12 +503,20 @@ function actualizarOpciones(){
     const datosParaDelitos = mensualListo && fuenteDiariaLista
         ? obtenerDatosFiltrados("delito", fuenteParaDelitos)
         : [];
+    const fuenteOpcionesTemporales = fuenteDiariaActiva && datosSIDPOLDiarioCargados
+        ? datosSIDPOLDiario
+        : datosTerritorio;
 
     llenarSelect(
         filtros.anio,
-        opcionesUnicas(obtenerDatosFiltrados(["anio", "delito"], fuenteDiariaActiva ? datosSIDPOLDiario : datosTerritorio), "ANIO"),
-        "Todos los años",
+        opcionesUnicas(obtenerDatosFiltrados(["anio", "mes", "dia", "delito"], fuenteOpcionesTemporales), "ANIO"),
+        "Seleccionar varios años",
         anioActual
+    );
+    llenarSelectMeses(
+        filtros.mes,
+        opcionesUnicas(obtenerDatosFiltrados(["mes", "dia", "delito"], fuenteOpcionesTemporales), "MES"),
+        mesActual
     );
     llenarSelectDias(filtros.dia, diaActual);
     llenarSelect(filtros.departamento, opcionesUnicas(obtenerDatosFiltrados("departamento"), "DPTO_HECHO"), "Todos los departamentos", departamentoActual);
@@ -1072,9 +1101,9 @@ function renderTabla(){
 
 function contextoDashboard(){
     const partes = [
-        filtros.anio.value || "Todos los años",
-        filtros.mes.value ? meses[Number(filtros.mes.value) - 1] : "Todos los meses",
-        filtros.dia.value ? `Día ${filtros.dia.value}` : "Todos",
+        filtros.anio.value || "Varios años",
+        filtros.mes.value ? meses[Number(filtros.mes.value) - 1] : "Varios meses",
+        filtros.dia.value ? `Día ${filtros.dia.value}` : "Varios días",
         filtros.departamento.value || "Nacional",
         filtros.provincia.value,
         filtros.distrito.value,
@@ -2284,9 +2313,9 @@ function actualizarTextoResumen(){
         filtros.distrito.value
     ].filter(Boolean).join(" / ") || "Perú";
     const delito = filtros.delito.value || "todos los delitos";
-    const anio = filtros.anio.value || "todos los años";
-    const mes = filtros.mes.value ? meses[Number(filtros.mes.value) - 1] : "todos los meses";
-    const dia = filtros.dia.value ? `hasta el día ${filtros.dia.value}` : "todos los días";
+    const anio = filtros.anio.value || "varios años";
+    const mes = filtros.mes.value ? meses[Number(filtros.mes.value) - 1] : "varios meses";
+    const dia = filtros.dia.value ? `día ${filtros.dia.value}` : "varios días";
 
     textoResumen.textContent = `${territorio}: ${formatear(total)} casos para ${delito}, ${mes}, ${dia}, ${anio}.`;
 }
@@ -2316,20 +2345,37 @@ function cargarCsv(ruta){
 }
 
 function cargarDatosDiarios(){
-    if(datosSIDPOLDiarioCargados) return Promise.resolve(datosSIDPOLDiario);
+    const anio = filtros.anio.value || opcionesUnicas(datosTerritorio, "ANIO").pop() || "";
+    if(!anio){
+        datosSIDPOLDiario = [];
+        datosSIDPOLDiarioCargados = true;
+        anioSIDPOLDiario = "";
+        return Promise.resolve(datosSIDPOLDiario);
+    }
+
+    if(datosSIDPOLDiarioCargados && anioSIDPOLDiario === anio) return Promise.resolve(datosSIDPOLDiario);
+    if(cacheDatosSIDPOLDiario.has(anio)){
+        datosSIDPOLDiario = cacheDatosSIDPOLDiario.get(anio);
+        datosSIDPOLDiarioCargados = true;
+        anioSIDPOLDiario = anio;
+        return Promise.resolve(datosSIDPOLDiario);
+    }
     if(cargaDatosSIDPOLDiarioPromise) return cargaDatosSIDPOLDiarioPromise;
 
-    cargaDatosSIDPOLDiarioPromise = cargarCsv("data/delitos_maestro.csv")
-        .then((datos) => {
-            datosSIDPOLDiario = datos
+    cargaDatosSIDPOLDiarioPromise = cargarJson(`data/api/diario_por_anio/${encodeURIComponent(anio)}.json`)
+        .then((respuesta) => {
+            datosSIDPOLDiario = respuesta
                 .map(normalizarFilaDatos)
                 .filter((fila) => fila.ANIO && fila.MES && fila.DIA && fila.DPTO_HECHO && fila.MODALIDAD);
             datosSIDPOLDiarioCargados = true;
+            anioSIDPOLDiario = anio;
+            cacheDatosSIDPOLDiario.set(anio, datosSIDPOLDiario);
             return datosSIDPOLDiario;
         })
         .catch((error) => {
             datosSIDPOLDiario = [];
             datosSIDPOLDiarioCargados = false;
+            anioSIDPOLDiario = "";
             console.error(error);
             return [];
         })
