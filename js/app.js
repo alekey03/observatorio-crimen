@@ -15,8 +15,8 @@ const limitesPeru = L.latLngBounds(
 
 mapa.setMaxBounds(limitesPeru);
 
-L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", {
-    attribution: "&copy; CARTO"
+L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+    attribution: "Tiles &copy; Esri"
 }).addTo(mapa);
 
 let datosSIDPOL = [];
@@ -2396,8 +2396,8 @@ function inicializarMapaCalor(){
     mapaCalor.createPane("limitesCalorPane");
     mapaCalor.getPane("limitesCalorPane").style.zIndex = 450;
 
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        attribution: "&copy; CARTO"
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+        attribution: "Tiles &copy; Esri"
     }).addTo(mapaCalor);
 }
 
@@ -2678,8 +2678,8 @@ function inicializarMapaAlertas(){
     }).setView(vistaPeru.centro, vistaPeru.zoom);
 
     mapaAlertas.setMaxBounds(limitesPeru);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        attribution: "&copy; CARTO"
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+        attribution: "Tiles &copy; Esri"
     }).addTo(mapaAlertas);
 }
 
@@ -2968,8 +2968,8 @@ function inicializarMapaPolicial(){
         minZoom: 5
     }).setView(vistaPeru.centro, vistaPeru.zoom);
     mapaPolicial.setMaxBounds(limitesPeru);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        attribution: "&copy; CARTO"
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+        attribution: "Tiles &copy; Esri"
     }).addTo(mapaPolicial);
 }
 
