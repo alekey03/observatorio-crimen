@@ -188,7 +188,7 @@ h2{
 
 .filters-panel{
     display: grid;
-    grid-template-columns: repeat(6, minmax(130px, 1fr));
+    grid-template-columns: repeat(7, minmax(118px, 1fr));
     gap: 14px;
     margin-top: 18px;
     padding: 18px;
@@ -1032,7 +1032,7 @@ button:hover{
 
 .dashboard-filter-grid{
     display: grid;
-    grid-template-columns: repeat(6, minmax(130px, 1fr));
+    grid-template-columns: repeat(7, minmax(118px, 1fr));
     gap: 10px;
 }
 
@@ -5127,7 +5127,7 @@ select{
 }
 
 .strategic-dashboard .dashboard-filter-grid{
-    grid-template-columns: repeat(6, minmax(150px, 1fr));
+    grid-template-columns: repeat(7, minmax(130px, 1fr));
 }
 
 .strategic-dashboard .dashboard-filter-grid select{

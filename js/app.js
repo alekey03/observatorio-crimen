@@ -23,6 +23,9 @@ let datosSIDPOL = [];
 let datosSIDPOLMensual = [];
 let anioSIDPOLMensual = "";
 let errorSIDPOLMensual = false;
+let datosSIDPOLDiario = [];
+let datosSIDPOLDiarioCargados = false;
+let cargaDatosSIDPOLDiarioPromise = null;
 let datosTerritorio = [];
 let geoDepartamentos = null;
 let geoProvincias = null;
@@ -77,6 +80,7 @@ let renderComparadorId = 0;
 const filtros = {
     anio: document.getElementById("filtroAnio"),
     mes: document.getElementById("filtroMes"),
+    dia: document.getElementById("filtroDia"),
     departamento: document.getElementById("filtroDepartamento"),
     provincia: document.getElementById("filtroProvincia"),
     distrito: document.getElementById("filtroDistrito"),
@@ -86,6 +90,7 @@ const filtros = {
 const filtrosDashboard = {
     anio: document.getElementById("dashboardFiltroAnio"),
     mes: document.getElementById("dashboardFiltroMes"),
+    dia: document.getElementById("dashboardFiltroDia"),
     departamento: document.getElementById("dashboardFiltroDepartamento"),
     provincia: document.getElementById("dashboardFiltroProvincia"),
     distrito: document.getElementById("dashboardFiltroDistrito"),
@@ -341,6 +346,7 @@ function normalizarFilaDatos(fila){
         ...fila,
         ANIO: String(fila.ANIO || "").trim(),
         MES: String(fila.MES || "").trim(),
+        DIA: String(fila.DIA || "").trim(),
         DPTO_HECHO: String(fila.DPTO_HECHO || "").trim(),
         PROV_HECHO: String(fila.PROV_HECHO || "").trim(),
         DIST_HECHO: String(fila.DIST_HECHO || "").trim(),
@@ -350,7 +356,8 @@ function normalizarFilaDatos(fila){
 }
 
 function fuenteDatosPrincipal(){
-    return filtros.delito.value ? fuenteModalidadesActual() : datosTerritorio;
+    if(filtros.dia.value) return datosSIDPOLDiario;
+    return filtros.delito.value ? fuenteModalidadesFiltrable() : datosTerritorio;
 }
 
 function fuenteModalidadesActual(){
@@ -358,11 +365,16 @@ function fuenteModalidadesActual(){
     return anioSIDPOLMensual === filtros.anio.value ? datosSIDPOLMensual : [];
 }
 
+function fuenteModalidadesFiltrable(){
+    return filtros.dia.value ? datosSIDPOLDiario : fuenteModalidadesActual();
+}
+
 function obtenerDatosFiltrados(ignorar = "", fuente = null){
     const origen = fuente || fuenteDatosPrincipal();
     const ignorados = new Set(Array.isArray(ignorar) ? ignorar : [ignorar]);
     const anio = filtros.anio.value;
     const mes = filtros.mes.value;
+    const diaHasta = Number(filtros.dia.value) || 0;
     const departamento = normalizar(filtros.departamento.value);
     const provincia = normalizar(filtros.provincia.value);
     const distrito = normalizar(filtros.distrito.value);
@@ -371,6 +383,10 @@ function obtenerDatosFiltrados(ignorar = "", fuente = null){
     return origen.filter((fila) => {
         if(!ignorados.has("anio") && anio && fila.ANIO !== anio) return false;
         if(!ignorados.has("mes") && mes && String(fila.MES || "") !== mes) return false;
+        if(!ignorados.has("dia") && diaHasta){
+            const diaFila = Number(fila.DIA) || 0;
+            if(!diaFila || diaFila > diaHasta) return false;
+        }
         if(!ignorados.has("departamento") && departamento && normalizar(fila.DPTO_HECHO) !== departamento) return false;
         if(!ignorados.has("provincia") && provincia && normalizar(fila.PROV_HECHO) !== provincia) return false;
         if(!ignorados.has("distrito") && distrito && normalizar(fila.DIST_HECHO) !== distrito) return false;
@@ -428,6 +444,18 @@ function llenarSelectDelitos(select, opciones, etiqueta, valorActual = ""){
     if(opcionSeleccionada) select.value = opcionSeleccionada.value;
 }
 
+function llenarSelectDias(select, valorActual = ""){
+    if(!select) return;
+    select.innerHTML = "";
+    select.appendChild(new Option("Todos los días", ""));
+    Array.from({ length: 31 }, (_, index) => String(index + 1)).forEach((dia) => {
+        select.appendChild(new Option(`Hasta día ${dia}`, dia));
+    });
+    if(valorActual && Number(valorActual) >= 1 && Number(valorActual) <= 31){
+        select.value = String(Number(valorActual));
+    }
+}
+
 function sincronizarFiltrosDashboard(){
     Object.entries(filtrosDashboard).forEach(([clave, selectDashboard]) => {
         const selectPrincipal = filtros[clave];
@@ -440,23 +468,28 @@ function sincronizarFiltrosDashboard(){
 
 function actualizarOpciones(){
     const anioActual = filtros.anio.value;
+    const diaActual = filtros.dia.value;
     const departamentoActual = filtros.departamento.value;
     const provinciaActual = filtros.provincia.value;
     const distritoActual = filtros.distrito.value;
     const delitoActual = filtros.delito.value;
-    const mensualListo = !filtros.mes.value || (
+    const fuenteDiariaActiva = Boolean(filtros.dia.value);
+    const fuenteDiariaLista = !fuenteDiariaActiva || datosSIDPOLDiarioCargados;
+    const mensualListo = fuenteDiariaActiva || !filtros.mes.value || (
         filtros.anio.value && anioSIDPOLMensual === filtros.anio.value
     );
-    const datosParaDelitos = mensualListo
-        ? obtenerDatosFiltrados("delito", fuenteModalidadesActual())
+    const fuenteParaDelitos = fuenteDiariaActiva ? datosSIDPOLDiario : fuenteModalidadesFiltrable();
+    const datosParaDelitos = mensualListo && fuenteDiariaLista
+        ? obtenerDatosFiltrados("delito", fuenteParaDelitos)
         : [];
 
     llenarSelect(
         filtros.anio,
-        opcionesUnicas(obtenerDatosFiltrados(["anio", "delito"], datosTerritorio), "ANIO"),
+        opcionesUnicas(obtenerDatosFiltrados(["anio", "delito"], fuenteDiariaActiva ? datosSIDPOLDiario : datosTerritorio), "ANIO"),
         "Todos los años",
         anioActual
     );
+    llenarSelectDias(filtros.dia, diaActual);
     llenarSelect(filtros.departamento, opcionesUnicas(obtenerDatosFiltrados("departamento"), "DPTO_HECHO"), "Todos los departamentos", departamentoActual);
 
     if(filtros.departamento.value){
@@ -484,7 +517,7 @@ function actualizarOpciones(){
 
     filtros.provincia.disabled = !filtros.departamento.value;
     filtros.distrito.disabled = !filtros.provincia.value;
-    filtros.delito.disabled = Boolean(filtros.mes.value) && !mensualListo;
+    filtros.delito.disabled = (Boolean(filtros.mes.value) && !mensualListo) || !fuenteDiariaLista;
     sincronizarFiltrosDashboard();
 }
 
@@ -702,7 +735,7 @@ function buscarValorSelect(select, valor){
 
 function actualizarIndicadores(){
     const datos = obtenerDatosFiltrados();
-    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
+    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesFiltrable());
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
     const extorsiones = totalPorCoincidencia(datosModalidades, "EXTORSION");
     const homicidios = totalPorCoincidencia(datosModalidades, "HOMICIDIO");
@@ -716,7 +749,7 @@ function actualizarIndicadores(){
 
 function renderResumenEjecutivo(){
     const datos = obtenerDatosFiltrados();
-    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
+    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesFiltrable());
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
     const campo = campoRankingTerritorial();
     const territorios = topAgrupado(datos, (fila) => fila[campo], 1000);
@@ -1011,7 +1044,7 @@ function renderAlertas(datos, datosModalidades){
 }
 
 function renderTabla(){
-    const datosTabla = obtenerDatosFiltrados("", fuenteModalidadesActual());
+    const datosTabla = obtenerDatosFiltrados("", fuenteModalidadesFiltrable());
     const filas = topAgrupado(datosTabla, (fila) => {
         const territorio = [fila.DPTO_HECHO, fila.PROV_HECHO, fila.DIST_HECHO].filter(Boolean).join(" / ");
         return `${territorio}||${fila.MODALIDAD}||${fila.ANIO}`;
@@ -1041,6 +1074,7 @@ function contextoDashboard(){
     const partes = [
         filtros.anio.value || "Todos los años",
         filtros.mes.value ? meses[Number(filtros.mes.value) - 1] : "Todos los meses",
+        filtros.dia.value ? `Hasta día ${filtros.dia.value}` : "Todos los días",
         filtros.departamento.value || "Nacional",
         filtros.provincia.value,
         filtros.distrito.value,
@@ -1279,7 +1313,7 @@ function renderLecturaDashboard(total, modalidades, territorios, variacion){
 function renderDashboardEstrategico(){
     if(!dashboardEstrategico.total) return;
     const datos = obtenerDatosFiltrados();
-    const fuenteModalidades = fuenteModalidadesActual();
+    const fuenteModalidades = fuenteModalidadesFiltrable();
     const datosModalidades = obtenerDatosFiltrados("", fuenteModalidades.length ? fuenteModalidades : datosSIDPOL);
     const datosSerie = datosSerieDashboard();
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
@@ -1315,7 +1349,7 @@ function renderDashboardEstrategico(){
 
 function actualizarAnalitica(){
     const datos = obtenerDatosFiltrados();
-    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
+    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesFiltrable());
     const modalidades = topAgrupado(datosModalidades, (fila) => fila.MODALIDAD, 8);
     const ranking = topAgrupado(datos, (fila) => fila[campoRankingTerritorial()], 8);
     const hotspots = topAgrupado(datos, (fila) => {
@@ -1760,7 +1794,7 @@ async function renderComparadorBianual(){
 
 function renderAnaliticaTemporal(){
     const datos = obtenerDatosFiltrados();
-    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesActual());
+    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesFiltrable());
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
     const territorios = topAgrupado(datos, (fila) => fila[campoRankingTerritorial()], 30);
     const personas = filtrarPeriodoTemporal(datosPersonasTemporal);
@@ -2252,8 +2286,9 @@ function actualizarTextoResumen(){
     const delito = filtros.delito.value || "todos los delitos";
     const anio = filtros.anio.value || "todos los años";
     const mes = filtros.mes.value ? meses[Number(filtros.mes.value) - 1] : "todos los meses";
+    const dia = filtros.dia.value ? `hasta el día ${filtros.dia.value}` : "todos los días";
 
-    textoResumen.textContent = `${territorio}: ${formatear(total)} casos para ${delito}, ${mes}, ${anio}.`;
+    textoResumen.textContent = `${territorio}: ${formatear(total)} casos para ${delito}, ${mes}, ${dia}, ${anio}.`;
 }
 
 function actualizarDashboard(debeRenderMapa = true){
@@ -2278,6 +2313,31 @@ function cargarCsv(ruta){
             error: reject
         });
     });
+}
+
+function cargarDatosDiarios(){
+    if(datosSIDPOLDiarioCargados) return Promise.resolve(datosSIDPOLDiario);
+    if(cargaDatosSIDPOLDiarioPromise) return cargaDatosSIDPOLDiarioPromise;
+
+    cargaDatosSIDPOLDiarioPromise = cargarCsv("data/delitos_maestro.csv")
+        .then((datos) => {
+            datosSIDPOLDiario = datos
+                .map(normalizarFilaDatos)
+                .filter((fila) => fila.ANIO && fila.MES && fila.DIA && fila.DPTO_HECHO && fila.MODALIDAD);
+            datosSIDPOLDiarioCargados = true;
+            return datosSIDPOLDiario;
+        })
+        .catch((error) => {
+            datosSIDPOLDiario = [];
+            datosSIDPOLDiarioCargados = false;
+            console.error(error);
+            return [];
+        })
+        .finally(() => {
+            cargaDatosSIDPOLDiarioPromise = null;
+        });
+
+    return cargaDatosSIDPOLDiarioPromise;
 }
 
 function cargarMetadata(){
@@ -3999,6 +4059,7 @@ function pintarEstadoDatos(totalRegistros, metadata){
 function reiniciarVista(){
     filtros.anio.value = "";
     filtros.mes.value = "";
+    filtros.dia.value = "";
     filtros.departamento.value = "";
     filtros.provincia.value = "";
     filtros.distrito.value = "";
@@ -4015,6 +4076,9 @@ function reiniciarVista(){
 
 Object.values(filtros).forEach((select) => {
     select.addEventListener("change", async () => {
+        if(filtros.dia.value){
+            await cargarDatosDiarios();
+        }
         if((select === filtros.mes || select === filtros.anio) && filtros.mes.value && filtros.anio.value){
             await cargarModalidadesMensuales(filtros.anio.value);
         }
