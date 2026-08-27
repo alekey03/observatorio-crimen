@@ -447,9 +447,9 @@ function llenarSelectDelitos(select, opciones, etiqueta, valorActual = ""){
 function llenarSelectDias(select, valorActual = ""){
     if(!select) return;
     select.innerHTML = "";
-    select.appendChild(new Option("Todos los días", ""));
+    select.appendChild(new Option("Todos", ""));
     Array.from({ length: 31 }, (_, index) => String(index + 1)).forEach((dia) => {
-        select.appendChild(new Option(`Hasta día ${dia}`, dia));
+        select.appendChild(new Option(dia, dia));
     });
     if(valorActual && Number(valorActual) >= 1 && Number(valorActual) <= 31){
         select.value = String(Number(valorActual));
@@ -1074,7 +1074,7 @@ function contextoDashboard(){
     const partes = [
         filtros.anio.value || "Todos los años",
         filtros.mes.value ? meses[Number(filtros.mes.value) - 1] : "Todos los meses",
-        filtros.dia.value ? `Hasta día ${filtros.dia.value}` : "Todos los días",
+        filtros.dia.value ? `Día ${filtros.dia.value}` : "Todos",
         filtros.departamento.value || "Nacional",
         filtros.provincia.value,
         filtros.distrito.value,
