@@ -194,6 +194,11 @@ const produccionAvances = document.getElementById("produccionAvances");
 const produccionBrechas = document.getElementById("produccionBrechas");
 const produccionTabla = document.getElementById("produccionTabla");
 const produccionMosaico = document.getElementById("produccionMosaico");
+const prodDashboardTexto = document.getElementById("prodDashboardTexto");
+const prodDashboardPulso = document.getElementById("prodDashboardPulso");
+const prodDashboardBarras = document.getElementById("prodDashboardBarras");
+const prodDashboardBalance = document.getElementById("prodDashboardBalance");
+const prodDashboardBrief = document.getElementById("prodDashboardBrief");
 const prodTotalIndicadores = document.getElementById("prodTotalIndicadores");
 const prodIndicadoresMejoran = document.getElementById("prodIndicadoresMejoran");
 const prodIndicadoresDisminuyen = document.getElementById("prodIndicadoresDisminuyen");
@@ -3576,6 +3581,94 @@ function renderResumenProduccion(){
     if(prodSemaforoDetalle) prodSemaforoDetalle.textContent = detalle;
 }
 
+function renderDashboardVisualProduccion(){
+    const indicadores = datosProduccionPolicial?.indicadores || [];
+    if(!indicadores.length){
+        [prodDashboardBarras, prodDashboardBalance, prodDashboardBrief].forEach((contenedor) => {
+            if(contenedor) renderEstadoVacio(contenedor, "Sin indicadores disponibles");
+        });
+        return;
+    }
+
+    const avances = indicadores.filter((fila) => Number(fila.variacion) > 0).length;
+    const brechas = indicadores.filter((fila) => Number(fila.variacion) < 0).length;
+    const porcentaje = indicadores.length ? Math.round((avances / indicadores.length) * 100) : 0;
+    const principalAvance = (datosProduccionPolicial?.avances || [])[0];
+    const principalBrecha = (datosProduccionPolicial?.brechas || [])[0];
+    const operativos = buscarIndicadorProduccion("Operativos");
+    const dinero = buscarIndicadorProduccion("Dinero incautado");
+    const barras = obtenerIndicadoresProduccion([
+        "Operativos",
+        "Bandas criminales desarticuladas",
+        "Captura de requisitoriados",
+        "Armas de fuego incautadas",
+        "Vehiculos recuperados"
+    ]);
+    const maximo = Math.max(...barras.map((fila) => Math.max(Number(fila.valor_2025) || 0, Number(fila.valor_2026) || 0)), 1);
+
+    if(prodDashboardTexto){
+        prodDashboardTexto.textContent = `${avances} indicadores mejoran y ${brechas} requieren seguimiento frente al acumulado 2025.`;
+    }
+
+    if(prodDashboardPulso){
+        prodDashboardPulso.style.setProperty("--pulse", `${Math.min(porcentaje, 100) * 3.6}deg`);
+        prodDashboardPulso.innerHTML = `<strong>${porcentaje}%</strong><span>mejora</span>`;
+    }
+
+    if(prodDashboardBarras){
+        prodDashboardBarras.innerHTML = barras.map((fila) => {
+            const ancho2025 = Math.max((Number(fila.valor_2025) / maximo) * 100, 2);
+            const ancho2026 = Math.max((Number(fila.valor_2026) / maximo) * 100, 2);
+            const clase = Number(fila.variacion) >= 0 ? "up" : "down";
+            return `
+                <div class="production-vertical-bar-row ${clase}">
+                    <div class="production-vertical-label">
+                        <i class="fas ${iconoIndicadorProduccion(fila.indicador)}"></i>
+                        <strong>${escaparHtml(fila.indicador)}</strong>
+                    </div>
+                    <div class="production-vertical-measures">
+                        <span><b>2025</b><i style="width:${ancho2025}%"></i><em>${fila.valor_2025_txt}</em></span>
+                        <span><b>2026</b><i style="width:${ancho2026}%"></i><em>${fila.valor_2026_txt}</em></span>
+                    </div>
+                    <strong>${fila.variacion_txt}</strong>
+                </div>
+            `;
+        }).join("");
+    }
+
+    if(prodDashboardBalance){
+        prodDashboardBalance.innerHTML = `
+            <div class="production-balance-item good">
+                <i class="fas fa-arrow-trend-up"></i>
+                <span>Mayor avance</span>
+                <strong>${principalAvance ? escaparHtml(principalAvance.indicador) : "Sin dato"}</strong>
+                <b>${principalAvance ? principalAvance.variacion_txt : "0"}</b>
+            </div>
+            <div class="production-balance-item bad">
+                <i class="fas fa-arrow-trend-down"></i>
+                <span>Mayor descenso</span>
+                <strong>${principalBrecha ? escaparHtml(principalBrecha.indicador) : "Sin dato"}</strong>
+                <b>${principalBrecha ? principalBrecha.variacion_txt : "0"}</b>
+            </div>
+            <div class="production-balance-item neutral">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Operativos ejecutados</span>
+                <strong>${operativos ? operativos.valor_2026_txt : "Sin dato"}</strong>
+                <b>${operativos ? operativos.variacion_txt : "0"}</b>
+            </div>
+        `;
+    }
+
+    if(prodDashboardBrief){
+        prodDashboardBrief.innerHTML = `
+            <p><b>Resumen:</b> el tablero mide produccion policial acumulada nacional, no denuncias registradas.</p>
+            <p><b>Impulso:</b> ${principalAvance ? principalAvance.indicador : "sin avance identificado"} lidera el crecimiento operativo.</p>
+            <p><b>Atencion:</b> ${principalBrecha ? principalBrecha.indicador : "sin brecha identificada"} concentra la mayor reduccion.</p>
+            <p><b>Referencia clave:</b> dinero incautado ${dinero ? dinero.valor_2026_txt : "sin dato"} en el periodo reportado.</p>
+        `;
+    }
+}
+
 function renderMosaicoProduccion(){
     if(!produccionMosaico) return;
     const indicadores = datosProduccionPolicial?.indicadores || [];
@@ -3680,6 +3773,7 @@ function renderProduccionPolicial(){
     pintarKpiProduccion(buscarIndicadorProduccion("Captura de requisitoriados"), prodRequisitoriados, prodRequisitoriadosVar);
 
     renderResumenProduccion();
+    renderDashboardVisualProduccion();
     renderBarrasProduccion();
     renderRankingProduccion(produccionAvances, datosProduccionPolicial.avances, "Sin avances frente al periodo anterior");
     renderRankingProduccion(produccionBrechas, datosProduccionPolicial.brechas, "Sin brechas frente al periodo anterior");
