@@ -3899,20 +3899,36 @@ function renderDashboardVisualProduccion(){
     const minLinea = Math.min(...linea, 0);
     const maxLinea = Math.max(...linea, 1);
     const rangoLinea = Math.max(maxLinea - minLinea, 1);
+    const anchoLinea = 620;
+    const altoLinea = 176;
+    const margenLinea = { left: 34, right: 24, top: 22, bottom: 36 };
+    const areaLineaAncho = anchoLinea - margenLinea.left - margenLinea.right;
+    const areaLineaAlto = altoLinea - margenLinea.top - margenLinea.bottom;
+    const escalaYLinea = (valor) => margenLinea.top + areaLineaAlto - (((valor - minLinea) / rangoLinea) * areaLineaAlto);
+    const yBaseLinea = escalaYLinea(0);
     const puntos = linea.map((valor, index) => {
-        const x = 10 + (index * (80 / Math.max(linea.length - 1, 1)));
-        const y = 82 - (((valor - minLinea) / rangoLinea) * 64);
+        const x = margenLinea.left + (index * (areaLineaAncho / Math.max(linea.length - 1, 1)));
+        const y = escalaYLinea(valor);
         return `${x},${y}`;
     }).join(" ");
     if(prodChartLine){
+        const puntosSeparados = puntos.split(" ");
         prodChartLine.innerHTML = `
-            <svg viewBox="0 0 100 100" role="img" aria-label="Linea de variacion porcentual">
-                <line x1="8" y1="82" x2="92" y2="82"></line>
-                <line x1="8" y1="18" x2="8" y2="82"></line>
+            <svg viewBox="0 0 ${anchoLinea} ${altoLinea}" role="img" aria-label="Linea de variacion porcentual">
+                <line class="production-line-axis" x1="${margenLinea.left}" y1="${margenLinea.top}" x2="${margenLinea.left}" y2="${margenLinea.top + areaLineaAlto}"></line>
+                <line class="production-line-axis" x1="${margenLinea.left}" y1="${margenLinea.top + areaLineaAlto}" x2="${margenLinea.left + areaLineaAncho}" y2="${margenLinea.top + areaLineaAlto}"></line>
+                <line class="production-line-grid" x1="${margenLinea.left}" y1="${margenLinea.top + areaLineaAlto * .33}" x2="${margenLinea.left + areaLineaAncho}" y2="${margenLinea.top + areaLineaAlto * .33}"></line>
+                <line class="production-line-grid" x1="${margenLinea.left}" y1="${margenLinea.top + areaLineaAlto * .66}" x2="${margenLinea.left + areaLineaAncho}" y2="${margenLinea.top + areaLineaAlto * .66}"></line>
+                <line class="production-line-zero" x1="${margenLinea.left}" y1="${yBaseLinea}" x2="${margenLinea.left + areaLineaAncho}" y2="${yBaseLinea}"></line>
                 <polyline points="${puntos}"></polyline>
                 ${linea.map((valor, index) => {
-                    const [x, y] = puntos.split(" ")[index].split(",");
-                    return `<circle cx="${x}" cy="${y}" r="2.3"></circle>`;
+                    const [x, y] = puntosSeparados[index].split(",");
+                    return `
+                        <g>
+                            <circle cx="${x}" cy="${y}" r="4.6"></circle>
+                            <text x="${x}" y="${Number(y) - 10}" text-anchor="middle">${valor >= 0 ? "+" : ""}${valor.toFixed(1)}%</text>
+                        </g>
+                    `;
                 }).join("")}
             </svg>
             <div class="production-line-labels">
