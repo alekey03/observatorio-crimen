@@ -1377,40 +1377,7 @@ function renderLecturaDashboard(total, modalidades, territorios, variacion){
 }
 
 function renderDashboardEstrategico(){
-    if(!dashboardEstrategico.total) return;
-    const datos = obtenerDatosFiltrados();
-    const fuenteModalidades = fuenteModalidadesFiltrable();
-    const datosModalidades = obtenerDatosFiltrados("", fuenteModalidades.length ? fuenteModalidades : datosSIDPOL);
-    const datosSerie = datosSerieDashboard();
-    const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
-    const extorsion = totalPorCoincidencia(datosModalidades, "EXTORSION");
-    const homicidio = totalPorCoincidencia(datosModalidades, "HOMICIDIO");
-    const robos = totalPorCoincidencia(datosModalidades, "ROBO");
-    const territorios = topAgrupado(datos, (fila) => fila[campoRankingTerritorial()], 10);
-    const modalidades = topAgrupado(datosModalidades, (fila) => fila.MODALIDAD, 10);
-    const principal = territorios[0];
-    const concentracion = principal && total ? (principal.casos / total) * 100 : 0;
-    const serie = serieMensualDashboard(datosSerie);
-    const ultimo = serie[serie.length - 1]?.casos || 0;
-    const anterior = serie[serie.length - 2]?.casos || 0;
-    const variacion = anterior ? ((ultimo - anterior) / anterior) * 100 : 0;
-
-    dashboardEstrategico.contexto.textContent = contextoDashboard();
-    dashboardEstrategico.total.textContent = formatear(total);
-    dashboardEstrategico.totalDetalle.textContent = `${formatear(territorios.length)} ${etiquetaRankingTerritorial()} evaluados`;
-    dashboardEstrategico.extorsion.textContent = formatear(extorsion);
-    dashboardEstrategico.homicidio.textContent = formatear(homicidio);
-    dashboardEstrategico.robos.textContent = formatear(robos);
-    dashboardEstrategico.variacion.textContent = `${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}%`;
-    dashboardEstrategico.concentracion.textContent = `${concentracion.toFixed(1)}%`;
-    dashboardEstrategico.concentracionTexto.textContent = principal ? principal.nombre : "Sin territorio";
-
-    renderPulsoDashboard(serie);
-    renderBarras(dashboardEstrategico.modalidades, modalidades.slice(0, 7), "bar", "Sin modalidades para mostrar");
-    renderMatrizDashboard(datosModalidades, modalidades, territorios);
-    renderSparksDashboard(datosModalidades, modalidades);
-    renderTerritoriosDashboard(territorios, total);
-    renderLecturaDashboard(total, modalidades, territorios, variacion);
+    if(vistaActual === "dashboard") renderDashboardOverview();
 }
 
 function actualizarAnalitica(){
@@ -4110,6 +4077,7 @@ async function cargarProduccionPolicial(){
 
 function activarVista(vista){
     vistaActual = vista;
+    document.body.classList.toggle("dashboard-view", vista === "dashboard");
     const vistaPolicial = ["denuncias-comisaria", "hechos-jurisdiccion"].includes(vista);
     const ocultarContextoSidpol = ["produccion-policial", "comparador-delitos"].includes(vista);
     sidpolContextSections.forEach((section) => section.classList.toggle("is-hidden", ocultarContextoSidpol));
