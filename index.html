@@ -7,6 +7,7 @@
 
     <link rel="stylesheet" href="css/style.css?v=20260827-filtro-dia-v2">
     <link rel="stylesheet" href="css/dashboard.css?v=20260917">
+    <link rel="stylesheet" href="css/observatorio.css?v=20260918">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="css/public.css?v=1">
@@ -568,6 +569,8 @@
         </section>
 
         <section class="temporal-dashboard view-section is-hidden" data-section="analisis-temporal" aria-label="Analisis temporal y patrones delictivos">
+            <div id="observatorioTemporal" class="obs-analysis"></div>
+            <div hidden>
             <div class="temporal-heading">
                 <div>
                     <p class="eyebrow">Inteligencia estadistica</p>
@@ -629,6 +632,7 @@
                 <div class="panel-header"><div><p class="eyebrow">Seguimiento</p><h2>Alertas recientes</h2></div><i class="fas fa-tower-broadcast panel-symbol"></i></div>
                 <div id="timelineTemporal" class="temporal-timeline"></div>
             </article>
+            </div>
         </section>
 
         <section class="compare-dashboard view-section is-hidden" data-section="comparador-delitos" aria-label="Comparador anual de delitos">
@@ -669,6 +673,8 @@
         </section>
 
         <section class="predictive-dashboard view-section is-hidden" data-section="analisis-predictivo" aria-label="Analisis predictivo del delito">
+            <div id="observatorioPredictivo" class="obs-analysis"></div>
+            <div hidden>
             <div class="temporal-heading predictive-heading">
                 <div>
                     <p class="eyebrow">Prospectiva delictiva</p>
@@ -756,6 +762,7 @@
                     </div>
                     <div id="predictivoLectura" class="briefing-list"></div>
                 </article>
+            </div>
             </div>
         </section>
 
@@ -1040,7 +1047,8 @@
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="js/dashboard.js?v=20260917"></script>
-    <script src="js/app.js?v=20260917-dashboard"></script>
+    <script src="js/observatorio.js?v=20260918"></script>
+    <script src="js/app.js?v=20260918-analisis"></script>
 </body>
 </html>
 

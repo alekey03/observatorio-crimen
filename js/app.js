@@ -1826,6 +1826,10 @@ async function renderComparadorBianual(){
 }
 
 function renderAnaliticaTemporal(){
+    renderObservatory("temporal");
+}
+
+function renderAnaliticaTemporalLegacy(){
     const datos = obtenerDatosFiltrados();
     const datosModalidades = obtenerDatosFiltrados("", fuenteModalidadesFiltrable());
     const total = datos.reduce((suma, fila) => suma + obtenerCasos(fila), 0);
@@ -1855,22 +1859,7 @@ function renderAnaliticaTemporal(){
 }
 
 function cargarAnaliticaTemporal(){
-    if(analiticaTemporalCargada){
-        renderAnaliticaTemporal();
-        return;
-    }
-    Promise.all([
-        cargarJson("data/api/personas.json"),
-        cargarJson("data/api/incidencia_horaria.json")
-    ]).then(([personas, horarios]) => {
-        datosPersonasTemporal = personas;
-        datosIncidenciaHoraria = horarios.map(normalizarFilaDatos);
-        analiticaTemporalCargada = true;
-        renderAnaliticaTemporal();
-    }).catch((error) => {
-        renderEstadoVacio(incidenciaHoraria, "No se pudieron cargar los patrones temporales");
-        console.error(error);
-    });
+    return renderObservatory("temporal");
 }
 
 async function descargarComparadorCsv(){
@@ -2243,6 +2232,10 @@ function renderLecturaPredictiva(serie, proyeccion, variacion, riesgo){
 }
 
 function renderAnalisisPredictivo(){
+    renderObservatory("predictivo");
+}
+
+function renderAnalisisPredictivoLegacy(){
     const horizonte = Number(filtroHorizontePredictivo?.value || 6);
     const escenario = filtroEscenarioPredictivo?.value || "probable";
     const datos = datosPredictivosFiltrados();
@@ -2294,18 +2287,7 @@ function renderAnalisisPredictivo(){
 }
 
 async function cargarAnalisisPredictivo(){
-    if(filtros.delito.value && filtros.anio.value){
-        await cargarModalidadesMensuales(filtros.anio.value);
-    }
-    if(!datosIncidenciaHoraria.length){
-        try{
-            const horarios = await cargarJson("data/api/incidencia_horaria.json");
-            datosIncidenciaHoraria = horarios.map(normalizarFilaDatos);
-        }catch(error){
-            console.warn("No se pudieron cargar patrones horarios predictivos", error);
-        }
-    }
-    renderAnalisisPredictivo();
+    return renderObservatory("predictivo");
 }
 
 function actualizarTextoResumen(){
@@ -4078,8 +4060,9 @@ async function cargarProduccionPolicial(){
 function activarVista(vista){
     vistaActual = vista;
     document.body.classList.toggle("dashboard-view", vista === "dashboard");
+    document.body.classList.toggle("observatory-view", ["analisis-temporal", "analisis-predictivo"].includes(vista));
     const vistaPolicial = ["denuncias-comisaria", "hechos-jurisdiccion"].includes(vista);
-    const ocultarContextoSidpol = ["produccion-policial", "comparador-delitos"].includes(vista);
+    const ocultarContextoSidpol = ["produccion-policial", "comparador-delitos", "analisis-temporal", "analisis-predictivo"].includes(vista);
     sidpolContextSections.forEach((section) => section.classList.toggle("is-hidden", ocultarContextoSidpol));
     sidpolSummaryCards.forEach((section) => {
         section.classList.toggle("is-hidden", vista !== "inicio");
