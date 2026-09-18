@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/typography.css?v=20260918-1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<meta name="odc-public" content="true">
     <link rel="stylesheet" href="css/public.css?v=1">
 </head>
 <body>
@@ -61,6 +62,16 @@
             </div>
         </header>
 
+        <div class="source-strip" aria-label="Fuente de informacion">
+            <label for="selectorFuente">FUENTE DE DATOS</label>
+            <select id="selectorFuente">
+                <option value="sidpol">SIDPOL actual</option>
+                <option value="dgis-diaria">DGIS diaria</option>
+                <option value="dgis-mensual" disabled>DGIS mensual (pendiente)</option>
+            </select>
+            <small id="fuenteDetalle">Fecha de registro | Fuente independiente</small>
+        </div>
+        <div id="dgisWorkspace" hidden></div>
         <section class="hero sidpol-context">
             <div>
                 <p class="eyebrow">Sistema de información estratégica</p>
@@ -1047,9 +1058,11 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <link rel="stylesheet" href="css/fuentes.css?v=20260918">
+    <script src="js/fuentes.js?v=20260918"></script>
     <script src="js/dashboard.js?v=20260917"></script>
     <script src="js/observatorio.js?v=20260918"></script>
-    <script src="js/app.js?v=20260918-analisis"></script>
+    <script src="js/app.js?v=20260918-dgis-diaria-1"></script>
 </body>
 </html>
 

@@ -1,0 +1,59 @@
+.source-strip { display:grid; grid-template-columns:auto minmax(200px,270px) 1fr; align-items:center; gap:18px; margin:18px 0; padding:12px 16px; background:#111a21; border:1px solid #30434f; border-left:3px solid #39c8b8; border-radius:6px; }
+.source-strip label { color:#f4cf48; font-size:12px; font-weight:700; }
+.source-strip select { min-width:220px; max-width:100%; height:38px; padding:0 12px; background:#0a1218; color:#e8eef3; border:1px solid #435765; border-radius:4px; font:inherit; font-size:14px; }
+.source-strip small { color:#adc0cd; font-size:12px; }
+#dgisWorkspace { color:#e9f0f4; }
+#dgisWorkspace[hidden], #dgisWorkspace [hidden] { display:none !important; }
+.dgis-heading { margin:16px 0; padding:24px 28px; background:#111a21; border:1px solid #30434f; border-left:4px solid #f4cf48; border-radius:6px; }
+.dgis-heading>span { color:#f4cf48; font-size:12px; font-weight:700; }
+.dgis-heading h1 { font-family:inherit; font-size:32px; line-height:1.2; margin:12px 0; letter-spacing:0; }
+.dgis-heading p,.dgis-note { color:#abc0ce; font-size:13px; line-height:1.6; }
+.dgis-filters { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)) 38px; gap:12px; padding:16px; background:#111a21; border:1px solid #30434f; border-radius:6px; align-items:end; }
+.dgis-filters label,.dgis-compare-controls label { display:flex; flex-direction:column; gap:8px; color:#afc4d2; font-size:12px; font-weight:600; min-width:0; }
+.dgis-filters input,.dgis-filters select,.dgis-compare-controls select { box-sizing:border-box; width:100%; min-width:0; height:40px; padding:0 10px; color:#e8eef3; background:#0a1218; border:1px solid #435765; border-radius:4px; font:inherit; font-size:13px; color-scheme:dark; }
+.dgis-filters button,.dgis-compare-heading button { height:40px; color:#f4cf48; background:#0a1218; border:1px solid #435765; border-radius:4px; cursor:pointer; padding:8px; }
+.dgis-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(135px,1fr)); gap:12px; margin:18px 0; }
+.dgis-kpis article { padding:18px; background:#17232c; border:1px solid #30434f; border-bottom:3px solid var(--accent); border-radius:6px; min-width:0; }
+.dgis-kpis span { display:block; font-size:12px; min-height:32px; overflow-wrap:anywhere; }
+.dgis-kpis strong { display:block; font-size:26px; font-variant-numeric:tabular-nums; font-weight:700; color:var(--accent); margin-top:8px; }
+.dgis-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px; margin:24px 0; }
+.dgis-grid>section { min-width:0; }
+#dgisWorkspace h2 { font-family:inherit; font-size:20px; font-weight:700; line-height:1.3; margin:0 0 20px; }
+.dgis-band { padding:22px 0; border-bottom:1px solid #30434f; }
+#dgisResults section > svg { width:100%; height:auto; display:block; max-height:420px; }
+#dgisWorkspace svg text { fill:#b8cad6; font-family:inherit; font-size:13px; }
+.dgis-bar { margin:18px 0; }
+.dgis-bar>div:first-child { display:flex; gap:14px; justify-content:space-between; font-size:13px; margin-bottom:8px; }
+.dgis-bar span { overflow-wrap:anywhere; }
+.dgis-bar strong { flex-shrink:0; font-variant-numeric:tabular-nums; }
+.dgis-track { height:8px; background:#1b2e38; border-radius:2px; }
+.dgis-track i { display:block; height:100%; border-radius:2px; }
+.dgis-empty { padding:32px 16px; color:#abc0ce; }
+.dgis-compare-controls { display:flex; gap:18px; padding:18px 0; }
+.dgis-compare-controls label { min-width:160px; }
+.dgis-compare-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+#dgisWorkspace table { width:100%; min-width:0; table-layout:fixed; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums; }
+#dgisWorkspace th,#dgisWorkspace td { padding:12px; border-bottom:1px solid #30434f; text-align:right; }
+#dgisWorkspace th:first-child { text-align:left; }
+#dgisWorkspace thead { color:#f4cf48; background:#17232c; }
+.dgis-total { background:#17232c; font-weight:700; }
+.dgis-delta { text-align:center; font-size:28px; font-weight:700; }
+.dgis-delta small { font-size:16px; }
+#dgisMap { height:510px; background:#10202a; border:1px solid #30434f; border-radius:4px; }
+.dgis-map-grid { grid-template-columns:minmax(0,1.45fr) minmax(250px,1fr); }
+.dgis-map-grid #dgisMap { height:740px; background:#101b23; }
+.dgis-map-legend { display:flex; flex-wrap:wrap; gap:12px; margin-top:14px; color:#bcced9; font-size:11px; }
+.dgis-map-legend span { display:flex; align-items:center; gap:5px; }
+.dgis-map-legend i { width:12px; height:12px; display:inline-block; border-radius:2px; }
+.leaflet-tooltip.dgis-map-percent { background:none; border:0; box-shadow:none; color:#10232a; font:700 12px/1.2 Arial,sans-serif; padding:0; white-space:nowrap; text-shadow:0 1px 2px #ffffff8c; pointer-events:none; }
+.leaflet-tooltip.dgis-map-percent::before { display:none; }
+.leaflet-tooltip.dgis-map-callao { color:#e7f1f6; text-shadow:0 1px 2px #071015; }
+.dgis-map-callao small { display:block; font-size:9px; }
+.dgis-map-callao::after { content:''; position:absolute; left:100%; top:50%; width:26px; border-top:1px solid #adc5ce; }
+.leaflet-tooltip.dgis-map-zero { color:#edf5f6; text-shadow:none; }
+@media(max-width:900px) { .dgis-map-grid {grid-template-columns:1fr;} .dgis-map-grid #dgisMap {height:680px;} }
+@media(max-width:480px) { .leaflet-tooltip.dgis-map-percent {font-size:10px;} }
+@media(max-width:1100px) { .dgis-filters {grid-template-columns:repeat(3,minmax(0,1fr));} .dgis-kpis {grid-template-columns:repeat(3,minmax(0,1fr));} }
+@media(max-width:640px) { .source-strip {grid-template-columns:1fr;gap:8px;} .source-strip select {width:100%;} .dgis-heading {padding:20px;} .dgis-heading h1 {font-size:24px;} .dgis-filters {grid-template-columns:repeat(2,minmax(0,1fr));} .dgis-kpis {grid-template-columns:repeat(2,minmax(0,1fr));} .dgis-kpis strong {font-size:23px;} .dgis-grid {grid-template-columns:1fr;} .dgis-compare-controls label {min-width:0;flex:1;} #dgisWorkspace th,#dgisWorkspace td {padding:8px;} }
+@media print { body.dgis-active .sidebar,body.dgis-active .command-bar,body.dgis-active .source-strip,body.dgis-active .dgis-filters,body.dgis-active .dgis-compare-controls,body.dgis-active #dgisPrint {display:none!important;} body.dgis-active main {margin:0!important;padding:0!important;width:100%!important;} body.dgis-active #dgisWorkspace {color:#111;} body.dgis-active #dgisWorkspace svg text {fill:#111;} body.dgis-active .dgis-heading,body.dgis-active #dgisWorkspace thead,body.dgis-active .dgis-total {background:#fff;color:#111;} body.dgis-active .dgis-note {color:#333;} body.dgis-active #dgisWorkspace {break-inside:avoid;} }
+@media print { body.dgis-active #dgisWorkspace h1,body.dgis-active #dgisWorkspace h2,body.dgis-active #dgisWorkspace th,body.dgis-active #dgisWorkspace td {color:#111!important;background:#fff!important;} body.dgis-active #dgisWorkspace table {min-width:0!important;} body.dgis-active #dgisWorkspace .dgis-grid {grid-template-columns:1fr 1fr;gap:16px;} }

@@ -4058,6 +4058,7 @@ async function cargarProduccionPolicial(){
 }
 
 function activarVista(vista){
+    if(window.ObservatorioFuente?.active && ObservatorioFuente.setView(vista)) return;
     vistaActual = vista;
     document.body.classList.toggle("dashboard-view", vista === "dashboard");
     document.body.classList.toggle("observatory-view", ["analisis-temporal", "analisis-predictivo"].includes(vista));
@@ -4286,7 +4287,9 @@ if(btnToggleSidebar){
     });
 }
 
-Promise.all([
+if(window.ObservatorioFuente?.active){
+    ObservatorioFuente.start();
+}else Promise.all([
     fetch("mapas/peru_departamental_simple.geojson").then((response) => response.json()),
     fetch("mapas/peru_provincial_simple.geojson").then((response) => response.json()),
     fetch("mapas/peru_distrital_simple.geojson").then((response) => response.json()),
