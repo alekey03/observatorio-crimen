@@ -3988,7 +3988,7 @@ function renderDashboardVisualProduccion(){
 
     if(prodChartBrief){
         prodChartBrief.innerHTML = `
-            <p><b>Produccion policial:</b> tablero acumulado nacional extraido del PDF diario.</p>
+            <p><b>Produccion policial:</b> acumulado nacional del CSV diario de DGIS (Tableau), comparado al mismo dia de corte.</p>
             <p><b>Mayor impulso:</b> ${principalAvance ? principalAvance.indicador : "sin dato"} con ${principalAvance ? principalAvance.variacion_txt : "0"}.</p>
             <p><b>Punto critico:</b> ${principalBrecha ? principalBrecha.indicador : "sin dato"} con ${principalBrecha ? principalBrecha.variacion_txt : "0"}.</p>
             <p><b>Lectura:</b> priorizar seguimiento sobre indicadores que disminuyen y sostener los avances operativos.</p>
@@ -4042,7 +4042,7 @@ function renderLecturaProduccion(){
         </div>
         <div class="production-reading-note">
             <i class="fas fa-circle-info"></i>
-            <p>Esta pestaña mide <b>produccion policial</b>, no incidencia delictiva. El corte proviene del PDF diario y resume actividad operativa acumulada nacional.</p>
+            <p>Esta pestaña mide <b>produccion policial</b>, no incidencia delictiva. La fuente es el CSV de DGIS (Tableau). Incluye direcciones, regiones y frentes policiales; los indicadores ausentes no se completan con el antiguo PDF.</p>
         </div>
         <div class="production-reading-note compact">
             <i class="fas fa-arrow-trend-up"></i>
