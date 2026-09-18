@@ -67,7 +67,7 @@
             <select id="selectorFuente">
                 <option value="sidpol">SIDPOL actual</option>
                 <option value="dgis-diaria">DGIS diaria</option>
-                <option value="dgis-mensual" disabled>DGIS mensual (pendiente)</option>
+                <option value="dgis-mensual">DGIS mensual</option>
             </select>
             <small id="fuenteDetalle">Fecha de registro | Fuente independiente</small>
         </div>
@@ -418,14 +418,15 @@
                 <aside class="map-summary">
                     <h3 id="tituloResumen">Resumen nacional</h3>
                     <p id="textoResumen">Selecciona filtros o haz clic en el mapa para explorar el territorio.</p>
-                    <div class="legend" aria-label="Leyenda de intensidad">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
+                    <div class="dgis-map-legend" aria-label="Participacion de denuncias">
+                        <span><i style="background:#344953"></i>0%</span>
+                        <span><i style="background:#9cc9b0"></i>Menos de 1%</span>
+                        <span><i style="background:#c6d68b"></i>1 a menos de 5%</span>
+                        <span><i style="background:#f0d676"></i>5 a menos de 10%</span>
+                        <span><i style="background:#ef997f"></i>10% o mas</span>
                     </div>
-                    <small>Mayor intensidad indica mayor número de casos filtrados.</small>
+                    <p id="mapaPorcentajeBase" class="dgis-note"></p>
+                    <small>Participacion sobre los casos filtrados de SIDPOL. No representa una tasa de criminalidad.</small>
                 </aside>
             </div>
         </section>
@@ -1058,11 +1059,11 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <link rel="stylesheet" href="css/fuentes.css?v=20260918">
-    <script src="js/fuentes.js?v=20260918"></script>
+    <link rel="stylesheet" href="css/fuentes.css?v=20260918-fuentes-2">
+    <script src="js/fuentes.js?v=20260918-fuentes-2"></script>
     <script src="js/dashboard.js?v=20260917"></script>
     <script src="js/observatorio.js?v=20260918"></script>
-    <script src="js/app.js?v=20260918-dgis-diaria-1"></script>
+    <script src="js/app.js?v=20260918-fuentes-2"></script>
 </body>
 </html>
 

@@ -5,7 +5,9 @@ const vistaPeru = {
 
 const mapa = L.map("mapa", {
     zoomControl: true,
-    minZoom: 5
+    minZoom: 3,
+    zoomSnap: 0.1,
+    scrollWheelZoom: false
 }).setView(vistaPeru.centro, vistaPeru.zoom);
 
 const limitesPeru = L.latLngBounds(
@@ -15,9 +17,7 @@ const limitesPeru = L.latLngBounds(
 
 mapa.setMaxBounds(limitesPeru);
 
-L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
-    attribution: "Tiles &copy; Esri"
-}).addTo(mapa);
+// This thematic map uses the existing department geometry, without remote tiles.
 
 let datosSIDPOL = [];
 let datosSIDPOLMensual = [];
@@ -649,6 +649,47 @@ function enfocarBounds(bounds){
     }
 }
 
+function estiloParticipacion(casos, valores){
+    const total = valores.reduce((sum, value) => sum + value, 0);
+    const porcentaje = total ? casos / total * 100 : 0;
+    const fillColor = !casos ? '#344953' : porcentaje < 1 ? '#9cc9b0' : porcentaje < 5 ? '#c6d68b' : porcentaje < 10 ? '#f0d676' : '#ef997f';
+    return {color:'#d9e6df', weight:1, fillColor, fillOpacity:1};
+}
+
+function etiquetaParticipacion(layer, nombre, casos, valores, permanente){
+    const total = valores.reduce((sum, value) => sum + value, 0);
+    const porcentaje = total ? casos / total * 100 : 0;
+    const texto = !total ? 'Sin datos' : casos && porcentaje < .1 ? '<0.1%' : `${porcentaje.toFixed(1)}%`;
+    const callao = permanente && normalizar(nombre) === 'CALLAO';
+    const etiqueta = document.createElement('span');
+    etiqueta.textContent = permanente ? texto : `${nombre}: ${texto} (${formatear(casos)} casos)`;
+    etiqueta.title = `${nombre}: ${formatear(casos)} casos`;
+    if(callao){
+        const label = document.createElement('small');
+        label.textContent = 'CALLAO';
+        etiqueta.prepend(label);
+    }
+    layer.bindTooltip(etiqueta, {permanent:permanente, direction:'center', opacity:1,
+        className:permanente ? `dgis-map-percent${callao?' dgis-map-callao':''}${!casos?' dgis-map-zero':''}` : '',
+        offset:callao ? [-50,8] : [0,0]});
+    document.getElementById('mapaPorcentajeBase').textContent = `Base: ${formatear(total)} casos seleccionados. Los territorios sin ubicacion cartografica permanecen incluidos en el total.`;
+}
+
+function ajustarMapaParticipacion(){
+    const container = mapa.getContainer();
+    if(!container.clientWidth || !container.clientHeight) return;
+    mapa.invalidateSize();
+    if(capaActual && capaActual.getLayers().length && !filtros.departamento.value){
+        mapa.fitBounds(capaActual.getBounds(), {padding:[44,32], animate:false});
+    }
+}
+
+let mapaPorcentajeTimer;
+new ResizeObserver(() => {
+    clearTimeout(mapaPorcentajeTimer);
+    mapaPorcentajeTimer = setTimeout(ajustarMapaParticipacion, 260);
+}).observe(mapa.getContainer());
+
 function renderDepartamentos(){
     limpiarMapa();
     const resumen = resumirPor("DPTO_HECHO");
@@ -657,14 +698,14 @@ function renderDepartamentos(){
     capaActual = L.geoJSON(geoDepartamentos, {
         style: (feature) => {
             const casos = resumen[normalizar(feature.properties.NOMBDEP)] || 0;
-            return estiloBase(casos, valores, "#d6a93a");
+            return estiloParticipacion(casos, valores);
         },
         onEachFeature: (feature, layer) => {
             const nombre = feature.properties.NOMBDEP;
             const casos = resumen[normalizar(nombre)] || 0;
-            const estiloNormal = estiloBase(casos, valores, "#d6a93a");
+            const estiloNormal = estiloParticipacion(casos, valores);
 
-            layer.bindTooltip(`${nombre}<br>${formatear(casos)} casos`);
+            etiquetaParticipacion(layer, nombre, casos, valores, true);
             aplicarInteraccion(layer, estiloNormal);
 
             layer.on("click", () => {
@@ -677,6 +718,12 @@ function renderDepartamentos(){
         }
     }).addTo(mapa);
 
+    capaActual.eachLayer(layer => {
+        const nombre = normalizar(layer.feature.properties.NOMBDEP);
+        if(nombre === 'PUNO') layer.getTooltip().setLatLng([-15.15, -69.9]);
+        if(nombre === 'TUMBES') layer.getTooltip().setLatLng([-3.83, -80.57]);
+    });
+    ajustarMapaParticipacion();
     tituloResumen.textContent = "Resumen nacional";
     actualizarTextoResumen();
 }
@@ -694,14 +741,14 @@ function renderProvincias(departamento, bounds){
     capaActual = L.geoJSON(provincias, {
         style: (feature) => {
             const casos = resumen[normalizar(feature.properties.NOMBPROV)] || 0;
-            return estiloBase(casos, valores, "#25c19f");
+            return estiloParticipacion(casos, valores);
         },
         onEachFeature: (feature, layer) => {
             const nombre = feature.properties.NOMBPROV;
             const casos = resumen[normalizar(nombre)] || 0;
-            const estiloNormal = estiloBase(casos, valores, "#25c19f");
+            const estiloNormal = estiloParticipacion(casos, valores);
 
-            layer.bindTooltip(`${nombre}<br>${formatear(casos)} casos`);
+            etiquetaParticipacion(layer, nombre, casos, valores, provincias.features.length <= 20);
             aplicarInteraccion(layer, estiloNormal);
 
             layer.on("click", () => {
@@ -741,14 +788,14 @@ function renderDistritos(departamento, provincia, bounds){
     capaActual = L.geoJSON(distritos, {
         style: (feature) => {
             const casos = resumen[normalizar(feature.properties.NOMBDIST)] || 0;
-            return estiloBase(casos, valores, "#e65f5c");
+            return estiloParticipacion(casos, valores);
         },
         onEachFeature: (feature, layer) => {
             const nombre = feature.properties.NOMBDIST;
             const casos = resumen[normalizar(nombre)] || 0;
-            const estiloNormal = estiloBase(casos, valores, "#e65f5c");
+            const estiloNormal = estiloParticipacion(casos, valores);
 
-            layer.bindTooltip(`${nombre}<br>${formatear(casos)} casos`);
+            etiquetaParticipacion(layer, nombre, casos, valores, false);
             aplicarInteraccion(layer, estiloNormal);
 
             if(filtros.distrito.value && normalizar(nombre) === normalizar(filtros.distrito.value)){
@@ -4115,7 +4162,7 @@ function activarVista(vista){
     }else if(vista === "produccion-policial"){
         cargarProduccionPolicial();
     }else{
-        setTimeout(() => mapa.invalidateSize(), 80);
+        setTimeout(ajustarMapaParticipacion, 80);
     }
 }
 
@@ -4147,7 +4194,7 @@ function reiniciarVista(){
     filtroComisariaPolicial.value = "";
     if(policialCargado) llenarComisariasPoliciales();
     actualizarDashboard(true);
-    mapa.setView(vistaPeru.centro, vistaPeru.zoom);
+    ajustarMapaParticipacion();
     if(["denuncias-comisaria", "hechos-jurisdiccion"].includes(vistaActual) && policialCargado){
         renderMapaPolicial();
     }

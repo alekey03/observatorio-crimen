@@ -1,14 +1,22 @@
 (() => {
-    const active = new URLSearchParams(location.search).get('fuente') === 'dgis-diaria';
+    const selectedSource = new URLSearchParams(location.search).get('fuente');
+    const sources = {
+        'dgis-diaria': {label:'DGIS diaria', file:'dgis_diaria.json', folder:'fuente diaria dgis'},
+        'dgis-mensual': {label:'DGIS mensual', file:'dgis_mensual.json', folder:'fuente mensual dgis'}
+    };
+    const config = sources[selectedSource];
+    const active = Boolean(config);
     const source = document.getElementById('selectorFuente');
     const publicVersion=Boolean(document.querySelector('meta[name="odc-public"][content="true"]'));
     const localPreview=['127.0.0.1','localhost','[::1]'].includes(location.hostname);
     if(!localPreview && !publicVersion){
-        const option=source.querySelector('[value="dgis-diaria"]');
-        option.disabled=true;
-        option.textContent='DGIS diaria (en validacion local)';
+        Object.keys(sources).forEach(key=>{
+            const option=source.querySelector(`[value="${key}"]`);
+            option.disabled=true;
+            option.textContent=`${sources[key].label} (en validacion local)`;
+        });
     }
-    source.value = active ? 'dgis-diaria' : 'sidpol';
+    source.value = active ? selectedSource : 'sidpol';
     source.addEventListener('change', () => {
         const url = new URL(location.href);
         if (source.value === 'sidpol') url.searchParams.delete('fuente');
@@ -82,7 +90,9 @@
             const months=fillMonths(result.months,state.from,state.to);
             const territory=state.province ? 'Distritos' : state.department ? 'Provincias' : 'Departamentos';
             const intro=`<div class="dgis-kpis">${cards.map(([name,n],i)=>`<article style="--accent:${colors[i%colors.length]}"><span>${esc(name)}</span><strong>${fmt(n)}</strong></article>`).join('')}</div>`;
-            const note=`<p class="dgis-note">Fuente: DGIS diaria · Fecha de registro · Corte ${metadata.max_date}. ${state.to && state.to<metadata.max_date ? '' : 'Ultimo mes parcial.'} Conteo distinto de denuncias. Los subtotales pueden solaparse si una denuncia tiene varios delitos, fechas o territorios. ${metadata.public?'Version publica: distritos de grupos pequenos agrupados como OTROS DISTRITOS.':''}</p>`;
+            const cut = new Date(`${metadata.max_date}T12:00:00Z`);
+            const monthComplete = cut.getUTCDate()===new Date(Date.UTC(cut.getUTCFullYear(),cut.getUTCMonth()+1,0)).getUTCDate();
+            const note=`<p class="dgis-note">Fuente: ${config.label} · Fecha de registro · Corte ${metadata.max_date}. ${monthComplete ? 'Cierre mensual disponible.' : 'Ultimo mes parcial.'} Conteo distinto de denuncias. Los subtotales pueden solaparse si una denuncia tiene varios delitos, fechas o territorios. ${metadata.public?'Version publica: distritos de grupos pequenos agrupados como OTROS DISTRITOS.':''}</p>`;
             if(view==='comparador-delitos') { await comparator(state,mine); return; }
             if(view==='mapa-delito') {
                 output.innerHTML=intro+`<div class="dgis-grid dgis-map-grid"><section><h2>Participacion de denuncias por departamento</h2><div id="dgisMap"></div><div class="dgis-map-legend" aria-label="Participacion de denuncias"><span><i style="background:#344953"></i>0%</span><span><i style="background:#9cc9b0"></i>Menos de 1%</span><span><i style="background:#c6d68b"></i>1 a menos de 5%</span><span><i style="background:#f0d676"></i>5 a menos de 10%</span><span><i style="background:#ef997f"></i>10% o mas</span></div><p class="dgis-note" id="dgisMapBase"></p></section><section><h2>${territory}</h2>${bars(result.territories)}</section></div>`+note;
@@ -151,7 +161,7 @@
         const sign=n=>n>0?'+' : '', style=n=>n<0?'#39c8b8':n>0?'#f4777f':'#d4e1e9';
         const max=Math.max(a.result.total,b.result.total,1);
         const first=Number(start.slice(0,2)), last=Number(end.slice(0,2));
-        document.getElementById('dgisResults').innerHTML=`<div class="dgis-compare-heading"><h2>${esc(state.crime || 'Todas las denuncias')} · ${base} / ${target}</h2><button id="dgisPrint" title="Imprimir o guardar PDF"><i class="fas fa-print"></i> PDF</button></div><p>Periodo comparable: ${start.split('-').reverse().join('/')} al ${end.split('-').reverse().join('/')}, en ambos anos.</p><div class="dgis-grid"><section><table><thead><tr><th>Mes</th><th>${base}</th><th>${target}</th><th>Variacion</th></tr></thead><tbody>${Array.from({length:last-first+1},(_,i)=>first+i).map(month=>{const mm=String(month).padStart(2,'0'),n=a.result.months[`${base}-${mm}`]||0,m=b.result.months[`${target}-${mm}`]||0;return `<tr><th>${mm}</th><td>${fmt(n)}</td><td>${fmt(m)}</td><td style="color:${style(m-n)}">${sign(m-n)}${fmt(m-n)}</td></tr>`;}).join('')}<tr class="dgis-total"><th>Total unico</th><td>${fmt(a.result.total)}</td><td>${fmt(b.result.total)}</td><td style="color:${style(delta)}">${sign(delta)}${fmt(delta)}</td></tr></tbody></table></section><section><h2>Denuncias por ano</h2><svg viewBox="0 0 550 340" role="img" aria-label="Comparacion de denuncias"><line x1="40" x2="510" y1="280" y2="280" stroke="#46606c"/>${[a.result.total,b.result.total].map((n,i)=>`<rect x="${100+i*230}" y="${280-n/max*200}" width="110" height="${n/max*200}" fill="${colors[i]}" rx="3"/><text x="${155+i*230}" y="${268-n/max*200}" text-anchor="middle">${fmt(n)}</text><text x="${155+i*230}" y="308" text-anchor="middle">${i?target:base}</text>`).join('')}</svg><p class="dgis-delta" style="color:${style(delta)}">${sign(delta)}${fmt(delta)} <small>(${pct===null?'Sin base porcentual':`${sign(pct)}${pct.toFixed(1)}%`})</small></p></section></div><p class="dgis-note">Fuente: DGIS diaria · Fecha de registro · Corte ${metadata.max_date}. Conteo distinto; el total puede diferir de la suma mensual por denuncias con varias fechas.</p>`;
+        document.getElementById('dgisResults').innerHTML=`<div class="dgis-compare-heading"><h2>${esc(state.crime || 'Todas las denuncias')} · ${base} / ${target}</h2><button id="dgisPrint" title="Imprimir o guardar PDF"><i class="fas fa-print"></i> PDF</button></div><p>Periodo comparable: ${start.split('-').reverse().join('/')} al ${end.split('-').reverse().join('/')}, en ambos anos.</p><div class="dgis-grid"><section><table><thead><tr><th>Mes</th><th>${base}</th><th>${target}</th><th>Variacion</th></tr></thead><tbody>${Array.from({length:last-first+1},(_,i)=>first+i).map(month=>{const mm=String(month).padStart(2,'0'),n=a.result.months[`${base}-${mm}`]||0,m=b.result.months[`${target}-${mm}`]||0;return `<tr><th>${mm}</th><td>${fmt(n)}</td><td>${fmt(m)}</td><td style="color:${style(m-n)}">${sign(m-n)}${fmt(m-n)}</td></tr>`;}).join('')}<tr class="dgis-total"><th>Total unico</th><td>${fmt(a.result.total)}</td><td>${fmt(b.result.total)}</td><td style="color:${style(delta)}">${sign(delta)}${fmt(delta)}</td></tr></tbody></table></section><section><h2>Denuncias por ano</h2><svg viewBox="0 0 550 340" role="img" aria-label="Comparacion de denuncias"><line x1="40" x2="510" y1="280" y2="280" stroke="#46606c"/>${[a.result.total,b.result.total].map((n,i)=>`<rect x="${100+i*230}" y="${280-n/max*200}" width="110" height="${n/max*200}" fill="${colors[i]}" rx="3"/><text x="${155+i*230}" y="${268-n/max*200}" text-anchor="middle">${fmt(n)}</text><text x="${155+i*230}" y="308" text-anchor="middle">${i?target:base}</text>`).join('')}</svg><p class="dgis-delta" style="color:${style(delta)}">${sign(delta)}${fmt(delta)} <small>(${pct===null?'Sin base porcentual':`${sign(pct)}${pct.toFixed(1)}%`})</small></p></section></div><p class="dgis-note">Fuente: ${config.label} · Fecha de registro · Corte ${metadata.max_date}. Conteo distinto; el total puede diferir de la suma mensual por denuncias con varias fechas.</p>`;
         document.getElementById('dgisPrint').onclick=()=>window.print();
     }
     function setView(name) {
@@ -167,20 +177,21 @@
         document.getElementById('dgisCompare').hidden=name!=='comparador-delitos';
         document.getElementById('dgisTitle').textContent=({inicio:'Panorama ejecutivo del delito',dashboard:'Dashboard de denuncias', 'mapa-delito':'Distribucion territorial','analisis-temporal':'Evolucion de denuncias','comparador-delitos':'Comparador de denuncias'})[name] || 'Informacion no disponible';
         if(supported) render();
-        else document.getElementById('dgisResults').innerHTML='<p class="dgis-empty">Esta vista aun no esta integrada con DGIS diaria. No se sustituyen sus datos por los de SIDPOL.</p>';
+        else document.getElementById('dgisResults').innerHTML=`<p class="dgis-empty">Esta vista aun no esta integrada con ${config.label}. No se sustituyen sus datos por los de SIDPOL.</p>`;
         return true;
     }
     async function start() {
         document.body.classList.add('dgis-active');
         isolate();
-        root.innerHTML='<p class="dgis-empty" role="status">Cargando y validando DGIS diaria...</p>';
+        root.innerHTML=`<p class="dgis-empty" role="status">Cargando y validando ${config.label}...</p>`;
         worker=new Worker('js/dgis-worker.js');
         worker.onmessage=({data})=>{const pending=requests.get(data.id);if(!pending)return;requests.delete(data.id);data.error?pending.reject(new Error(data.error)):pending.resolve(data);};
-        worker.onerror=()=>{requests.forEach(pending=>pending.reject(new Error('No se pudo procesar DGIS diaria.')));requests.clear();};
+        worker.onerror=()=>{requests.forEach(pending=>pending.reject(new Error(`No se pudo procesar ${config.label}.`)));requests.clear();};
         try {
-            const loaded=await request({type:'load',url:new URL(publicVersion?'data/api/dgis_diaria.json':'fuente diaria dgis/procesado/snapshot.json',location.href).href});
+            const loaded=await request({type:'load',url:new URL(publicVersion?`data/api/${config.file}`:`${config.folder}/procesado/snapshot.json`,location.href).href});
             ({metadata,geography,crimes}=loaded);
-            root.innerHTML=`<header class="dgis-heading"><span>DGIS DIARIA · INFORMACION DEPURADA</span><h1 id="dgisTitle">Panorama ejecutivo del delito</h1><p>Fecha de registro · Corte ${metadata.max_date} · ${fmt(metadata.unique_complaints)} denuncias unicas en la fuente</p></header><form id="dgisFilters" class="dgis-filters"><label>DESDE<input id="dgisFrom" type="date" min="${metadata.min_date}" max="${metadata.max_date}" value="${metadata.max_date.slice(0,4)}-01-01"></label><label>HASTA<input id="dgisTo" type="date" min="${metadata.min_date}" max="${metadata.max_date}" value="${metadata.max_date}"></label><label>DEPARTAMENTO<select id="dgisDepartment"></select></label><label>PROVINCIA<select id="dgisProvince"></select></label><label>DISTRITO<select id="dgisDistrict"></select></label><label>DELITO<select id="dgisCrime"></select></label><button type="reset" title="Limpiar filtros"><i class="fas fa-filter-circle-xmark"></i></button></form><div id="dgisCompare" class="dgis-compare-controls" hidden><label>Ano base<select id="dgisBase"></select></label><label>Ano comparado<select id="dgisTarget"></select></label></div><div id="dgisResults" aria-live="polite"></div>`;
+            if(metadata.source!==config.label) throw new Error('La fuente recibida no coincide con la seleccionada.');
+            root.innerHTML=`<header class="dgis-heading"><span>${config.label.toUpperCase()} · INFORMACION DEPURADA</span><h1 id="dgisTitle">Panorama ejecutivo del delito</h1><p>Fecha de registro · Corte ${metadata.max_date} · ${fmt(metadata.unique_complaints)} denuncias unicas en la fuente</p></header><form id="dgisFilters" class="dgis-filters"><label>DESDE<input id="dgisFrom" type="date" min="${metadata.min_date}" max="${metadata.max_date}" value="${metadata.max_date.slice(0,4)}-01-01"></label><label>HASTA<input id="dgisTo" type="date" min="${metadata.min_date}" max="${metadata.max_date}" value="${metadata.max_date}"></label><label>DEPARTAMENTO<select id="dgisDepartment"></select></label><label>PROVINCIA<select id="dgisProvince"></select></label><label>DISTRITO<select id="dgisDistrict"></select></label><label>DELITO<select id="dgisCrime"></select></label><button type="reset" title="Limpiar filtros"><i class="fas fa-filter-circle-xmark"></i></button></form><div id="dgisCompare" class="dgis-compare-controls" hidden><label>Ano base<select id="dgisBase"></select></label><label>Ano comparado<select id="dgisTarget"></select></label></div><div id="dgisResults" aria-live="polite"></div>`;
             setOptions('dgisDepartment',geography.map(row=>row[0]),'Todos los departamentos');territoryOptions();
             const priority=['EXTORSION','SECUESTRO','ROBO','HURTO','ASALTO Y ROBO DE VEHICULOS'];
             const options=list=>list.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
@@ -192,7 +203,7 @@
             document.getElementById('dgisFilters').onchange=()=>{territoryOptions();render();};
             document.getElementById('dgisFilters').onreset=()=>setTimeout(()=>{territoryOptions();render();},0);
             setView(view);
-        } catch(error) {root.innerHTML=`<div class="dgis-heading"><h1>DGIS diaria no disponible</h1><p>${esc(error.message)}</p><p>No se cargaron cifras de otra fuente.</p></div>`;}
+        } catch(error) {root.innerHTML=`<div class="dgis-heading"><h1>${config.label} no disponible</h1><p>${esc(error.message)}</p><p>No se cargaron cifras de otra fuente.</p></div>`;}
     }
     window.ObservatorioFuente={active,start,setView};
 })();
