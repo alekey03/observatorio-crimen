@@ -41,6 +41,9 @@
 .dgis-delta small { font-size:16px; }
 #dgisMap { height:510px; background:#10202a; border:1px solid #30434f; border-radius:4px; }
 .dgis-map-grid { grid-template-columns:minmax(0,1.45fr) minmax(250px,1fr); }
+.dgis-map-nav { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:0 0 12px; font-size:13px; }
+.dgis-map-nav button { background:#17232c; color:#f4cf48; border:1px solid #435765; border-radius:4px; padding:8px 12px; cursor:pointer; font:inherit; }
+.dgis-map-nav span { color:#b8cad6; overflow-wrap:anywhere; }
 #mapa { height:740px; background:#101b23; }
 .dgis-map-grid #dgisMap { height:740px; background:#101b23; }
 .dgis-map-legend { display:flex; flex-wrap:wrap; gap:12px; margin-top:14px; color:#bcced9; font-size:11px; }

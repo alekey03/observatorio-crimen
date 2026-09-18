@@ -672,6 +672,7 @@ function etiquetaParticipacion(layer, nombre, casos, valores, permanente){
     layer.bindTooltip(etiqueta, {permanent:permanente, direction:'center', opacity:1,
         className:permanente ? `dgis-map-percent${callao?' dgis-map-callao':''}${!casos?' dgis-map-zero':''}` : '',
         offset:callao ? [-50,8] : [0,0]});
+    layer.on('add', () => layer.getElement()?.setAttribute('data-territory', normalizar(nombre)));
     document.getElementById('mapaPorcentajeBase').textContent = `Base: ${formatear(total)} casos seleccionados. Los territorios sin ubicacion cartografica permanecen incluidos en el total.`;
 }
 
@@ -682,7 +683,22 @@ function ajustarMapaParticipacion(){
     if(capaActual && capaActual.getLayers().length && !filtros.departamento.value){
         mapa.fitBounds(capaActual.getBounds(), {padding:[44,32], animate:false});
     }
+    distribuirEtiquetasParticipacion();
 }
+
+function distribuirEtiquetasParticipacion(){
+    if(!capaActual || !filtros.departamento.value) return;
+    const placed=[];
+    capaActual.eachLayer(polygon => {
+        const element=polygon.getTooltip()?.getElement();
+        if(!element) return;
+        const box=element.getBoundingClientRect();
+        const overlap=placed.some(other => box.left<other.right+5 && box.right>other.left-5 && box.top<other.bottom+4 && box.bottom>other.top-4);
+        element.style.visibility=overlap?'hidden':'visible';
+        if(!overlap) placed.push(box);
+    });
+}
+mapa.on('zoomend moveend', distribuirEtiquetasParticipacion);
 
 let mapaPorcentajeTimer;
 new ResizeObserver(() => {
@@ -692,6 +708,7 @@ new ResizeObserver(() => {
 
 function renderDepartamentos(){
     limpiarMapa();
+    mapa.getContainer().dataset.level='department';
     const resumen = resumirPor("DPTO_HECHO");
     const valores = Object.values(resumen);
 
@@ -730,6 +747,7 @@ function renderDepartamentos(){
 
 function renderProvincias(departamento, bounds){
     limpiarMapa();
+    mapa.getContainer().dataset.level='province';
     const departamentoNormalizado = normalizar(departamento);
     const resumen = resumirPor("PROV_HECHO");
     const valores = Object.values(resumen);
@@ -748,7 +766,7 @@ function renderProvincias(departamento, bounds){
             const casos = resumen[normalizar(nombre)] || 0;
             const estiloNormal = estiloParticipacion(casos, valores);
 
-            etiquetaParticipacion(layer, nombre, casos, valores, provincias.features.length <= 20);
+            etiquetaParticipacion(layer, nombre, casos, valores, true);
             aplicarInteraccion(layer, estiloNormal);
 
             layer.on("click", () => {
@@ -772,6 +790,7 @@ function renderProvincias(departamento, bounds){
 
 function renderDistritos(departamento, provincia, bounds){
     limpiarMapa();
+    mapa.getContainer().dataset.level='district';
     const departamentoNormalizado = normalizar(departamento);
     const provinciaNormalizada = normalizar(provincia);
     const resumen = resumirPor("DIST_HECHO");
@@ -795,7 +814,7 @@ function renderDistritos(departamento, provincia, bounds){
             const casos = resumen[normalizar(nombre)] || 0;
             const estiloNormal = estiloParticipacion(casos, valores);
 
-            etiquetaParticipacion(layer, nombre, casos, valores, false);
+            etiquetaParticipacion(layer, nombre, casos, valores, true);
             aplicarInteraccion(layer, estiloNormal);
 
             if(filtros.distrito.value && normalizar(nombre) === normalizar(filtros.distrito.value)){

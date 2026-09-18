@@ -3,7 +3,7 @@ let snapshot;
 function query(data, filters) {
     const dimensions = data.dimensions;
     const counts = {total:0, months:{}, days:{}, territories:{}, crimes:{}};
-    const territoryDimension = filters.mapDepartments ? 1 : filters.province ? 3 : filters.department ? 2 : 1;
+    const territoryDimension = filters.mapDepartments || filters.mapLevel==='department' ? 1 : filters.mapLevel==='province' ? 2 : filters.mapLevel==='district' ? 3 : filters.province ? 3 : filters.department ? 2 : 1;
     const mapName = value => {
         const name=value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
         if (name==='REGION LIMA' || name==='LIMA METROPOLITANA') return 'LIMA';
@@ -16,7 +16,7 @@ function query(data, filters) {
     data.facets.forEach((facet, i) => {
         const date = dimensions[0][facet[0]];
         accepted[i] = (!filters.from || date >= filters.from) && (!filters.to || date <= filters.to) &&
-            selected.every((value, k) => !value || facet[k + 1] === indexes[k]);
+            selected.every((value, k) => !value || (k===0 && value==='@LIMA' ? mapName(dimensions[1][facet[1]])==='LIMA' : facet[k + 1] === indexes[k]));
     });
     const increment = (object, key, count) => { object[key] = (object[key] || 0) + count; };
     data.groups.forEach(([members, count]) => {
@@ -28,7 +28,7 @@ function query(data, filters) {
             const facet = data.facets[index], date = dimensions[0][facet[0]];
             months.add(date.slice(0,7)); days.add(date);
             const territory=dimensions[territoryDimension][facet[territoryDimension]];
-            territories.add(filters.mapDepartments ? mapName(territory) : territory);
+            territories.add(filters.mapDepartments || filters.mapLevel ? mapName(territory) : territory);
             crimes.add(dimensions[4][facet[4]]);
         });
         months.forEach(key => increment(counts.months,key,count));
@@ -43,7 +43,7 @@ if (typeof self !== 'undefined') self.onmessage = async ({data:message}) => {
     try {
         if (message.type === 'load') {
             const response = await fetch(message.url, {cache:'no-store'});
-            if (!response.ok) throw new Error('No se encontro el archivo preparado de DGIS diaria.');
+            if (!response.ok) throw new Error('No se encontro el archivo preparado de la fuente DGIS seleccionada.');
             snapshot = await response.json();
             if (snapshot.schema !== 2 || !snapshot.groups.length) throw new Error('El archivo DGIS no es valido.');
             const geography = new Set(snapshot.facets.map(facet => JSON.stringify(facet.slice(1,4))));

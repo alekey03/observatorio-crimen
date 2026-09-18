@@ -4,7 +4,7 @@
         'dgis-diaria': {label:'DGIS diaria', file:'dgis_diaria.json', folder:'fuente diaria dgis'},
         'dgis-mensual': {label:'DGIS mensual', file:'dgis_mensual.json', folder:'fuente mensual dgis'}
     };
-    const config = sources[selectedSource];
+    const config = Object.hasOwn(sources,selectedSource) ? sources[selectedSource] : null;
     const active = Boolean(config);
     const source = document.getElementById('selectorFuente');
     const publicVersion=Boolean(document.querySelector('meta[name="odc-public"][content="true"]'));
@@ -29,6 +29,13 @@
     const fmt = n => Number(n).toLocaleString('es-PE');
     const esc = value => String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+    const mapName = value => {
+        const name=normalize(value);
+        if(['REGION LIMA','LIMA METROPOLITANA','@LIMA'].includes(name)) return 'LIMA';
+        return name.includes('CALLAO') ? 'CALLAO' : name;
+    };
+    const inDepartment = (name, selected) => selected==='@LIMA' ? mapName(name)==='LIMA' : name===selected;
+    const geoCache = new Map();
     const colors = ['#39c8b8','#61a5fa','#f4cf48','#f08c83','#c59cf5','#f5a344','#8aa9b7'];
     const request = data => new Promise((resolve,reject) => {
         const id = ++serial; requests.set(id,{resolve,reject}); worker.postMessage({...data,id});
@@ -47,9 +54,9 @@
         const department=document.getElementById('dgisDepartment').value;
         const province=document.getElementById('dgisProvince').value;
         const district=document.getElementById('dgisDistrict').value;
-        setOptions('dgisProvince',department ? geography.filter(row=>row[0]===department).map(row=>row[1]) : [],'Todas las provincias',province);
+        setOptions('dgisProvince',department ? geography.filter(row=>inDepartment(row[0],department)).map(row=>row[1]) : [],'Todas las provincias',province);
         const selectedProvince=document.getElementById('dgisProvince').value;
-        setOptions('dgisDistrict',selectedProvince ? geography.filter(row=>row[0]===department && row[1]===selectedProvince).map(row=>row[2]) : [],'Todos los distritos',district);
+        setOptions('dgisDistrict',selectedProvince ? geography.filter(row=>inDepartment(row[0],department) && row[1]===selectedProvince).map(row=>row[2]) : [],'Todos los distritos',district);
         document.getElementById('dgisProvince').disabled=!department;
         document.getElementById('dgisDistrict').disabled=!selectedProvince;
     }
@@ -77,6 +84,11 @@
         for(let date=new Date(`${first.slice(0,7)}-01T12:00:00Z`);date.toISOString().slice(0,7)<=last.slice(0,7);date.setUTCMonth(date.getUTCMonth()+1)) values[date.toISOString().slice(0,7)]=0;
         return {...values,...result};
     }
+    function disposeMap() {
+        mapResize?.disconnect();
+        clearTimeout(mapFitTimer);
+        if(map) { map.stop(); map.closePopup(); map.remove(); map=null; }
+    }
     async function render() {
         if(!metadata) return;
         const mine=++revision, state=filters(), output=document.getElementById('dgisResults');
@@ -85,6 +97,7 @@
         try {
             const {result}=await request({type:'query',filters:state});
             if(mine!==revision) return;
+            disposeMap();
             const totalLabel=state.crime || 'Denuncias unicas';
             const cards=state.crime ? [[totalLabel,result.total],['Territorios con denuncias',Object.keys(result.territories).length],['Meses con denuncias',Object.keys(result.months).length],['Dias con denuncias',Object.keys(result.days).length]] : [[totalLabel,result.total], ...['Extorsion','Secuestro','Robo','Hurto','Asalto y robo de Vehiculos'].map(name=>[name,Object.entries(result.crimes).find(([key])=>normalize(key)===normalize(name))?.[1] || 0]) ];
             const months=fillMonths(result.months,state.from,state.to);
@@ -95,7 +108,7 @@
             const note=`<p class="dgis-note">Fuente: ${config.label} · Fecha de registro · Corte ${metadata.max_date}. ${monthComplete ? 'Cierre mensual disponible.' : 'Ultimo mes parcial.'} Conteo distinto de denuncias. Los subtotales pueden solaparse si una denuncia tiene varios delitos, fechas o territorios. ${metadata.public?'Version publica: distritos de grupos pequenos agrupados como OTROS DISTRITOS.':''}</p>`;
             if(view==='comparador-delitos') { await comparator(state,mine); return; }
             if(view==='mapa-delito') {
-                output.innerHTML=intro+`<div class="dgis-grid dgis-map-grid"><section><h2>Participacion de denuncias por departamento</h2><div id="dgisMap"></div><div class="dgis-map-legend" aria-label="Participacion de denuncias"><span><i style="background:#344953"></i>0%</span><span><i style="background:#9cc9b0"></i>Menos de 1%</span><span><i style="background:#c6d68b"></i>1 a menos de 5%</span><span><i style="background:#f0d676"></i>5 a menos de 10%</span><span><i style="background:#ef997f"></i>10% o mas</span></div><p class="dgis-note" id="dgisMapBase"></p></section><section><h2>${territory}</h2>${bars(result.territories)}</section></div>`+note;
+                output.innerHTML=intro+`<div class="dgis-grid dgis-map-grid"><section><h2 id="dgisMapTitle">Participacion por departamento</h2><nav class="dgis-map-nav" aria-label="Navegacion territorial"><button id="dgisMapHome" title="Volver al Peru"><i class="fas fa-house"></i> Peru</button><button id="dgisMapBack" title="Subir un nivel" hidden><i class="fas fa-arrow-left"></i> Volver</button><span id="dgisMapScope"></span></nav><div id="dgisMap"></div><div class="dgis-map-legend" aria-label="Participacion de denuncias"><span><i style="background:#344953"></i>0%</span><span><i style="background:#9cc9b0"></i>Menos de 1%</span><span><i style="background:#c6d68b"></i>1 a menos de 5%</span><span><i style="background:#f0d676"></i>5 a menos de 10%</span><span><i style="background:#ef997f"></i>10% o mas</span></div><p class="dgis-note" id="dgisMapBase"></p></section><section><h2>${territory}</h2>${bars(result.territories)}</section></div>`+note;
                 await renderMap(state,mine);
             } else if(view==='analisis-temporal') {
                 output.innerHTML=intro+`<section class="dgis-band"><h2>Evolucion mensual</h2>${chart(months)}</section><section class="dgis-band"><h2>Registros diarios</h2>${chart(result.days,'#61a5fa',true)}</section>`+note;
@@ -108,43 +121,114 @@
         finally { if(mine===revision) output.removeAttribute('aria-busy'); }
     }
     async function renderMap(state,mine) {
-        const response=await fetch('mapas/peru_departamental_simple.geojson');
-        if(!response.ok) throw new Error('No se pudo cargar la cartografia.');
-        const geo=await response.json();
-        const {result}=await request({type:'query',filters:{...state,mapDepartments:true}});
+        const level=state.province ? 'district' : state.department ? 'province' : 'department';
+        const file={department:'departamental',province:'provincial',district:'distrital'}[level];
+        if(!geoCache.has(file)) {
+            const response=await fetch(`mapas/peru_${file}_simple.geojson`);
+            if(!response.ok) throw new Error('No se pudo cargar la cartografia.');
+            geoCache.set(file,await response.json());
+        }
+        const all=geoCache.get(file);
+        const features=all.features.filter(feature=>{
+            const p=feature.properties;
+            if(level==='department') return true;
+            if(mapName(p.FIRST_NOMB || p.NOMBDEP)!==mapName(state.department)) return false;
+            return level!=='district' || mapName(p.NOMBPROV)===mapName(state.province);
+        });
+        const {result}=await request({type:'query',filters:{...state,mapLevel:level}});
         if(mine!==revision || view!=='mapa-delito') return;
-        mapResize?.disconnect();
-        clearTimeout(mapFitTimer);
-        if(map) map.remove();
-        map=L.map('dgisMap',{zoomSnap:.1,scrollWheelZoom:false}).setView([-9.2,-75.1],5);
-        const values=new Map(Object.entries(result.territories).map(([key,value])=>[normalize(key),value]));
+        disposeMap();
+        map=L.map('dgisMap',{zoomSnap:.1,scrollWheelZoom:false,zoomAnimation:false}).setView([-9.2,-75.1],5);
+        map.getContainer().dataset.level=level;
+        const values=new Map(Object.entries(result.territories).map(([key,value])=>[mapName(key),value]));
         const percent=n=>result.total ? n/result.total*100 : null;
         const text=n=>!result.total ? 'Sin datos' : n>0 && percent(n)<.1 ? '<0.1%' : `${percent(n).toFixed(1)}%`;
         const color=n=>!n ? '#344953' : percent(n)<1 ? '#9cc9b0' : percent(n)<5 ? '#c6d68b' : percent(n)<10 ? '#f0d676' : '#ef997f';
-        layer=L.geoJSON(geo,{style:feature=>{const n=values.get(normalize(feature.properties.NOMBDEP)) || 0;return {color:'#d9e6df',weight:1,fillColor:color(n),fillOpacity:1};},onEachFeature:(feature,polygon)=>{
-            const name=feature.properties.NOMBDEP, n=values.get(normalize(name)) || 0;
-            const callao=normalize(name)==='CALLAO';
+        const featureName=feature=>feature.properties[{department:'NOMBDEP',province:'NOMBPROV',district:'NOMBDIST'}[level]];
+        const arrangeLabels=()=>{
+            if(level==='department' || !layer) return;
+            const placed=[];
+            const polygons=[...layer.getLayers()].sort((a,b)=>(values.get(mapName(featureName(b.feature)))||0)-(values.get(mapName(featureName(a.feature)))||0));
+            polygons.forEach(polygon=>{
+                const element=polygon.getTooltip()?.getElement();
+                if(!element) return;
+                const box=element.getBoundingClientRect();
+                const overlap=placed.some(other=>box.left<other.right+5 && box.right>other.left-5 && box.top<other.bottom+4 && box.bottom>other.top-4);
+                element.style.visibility=overlap?'hidden':'visible';
+                if(!overlap) placed.push(box);
+            });
+        };
+        const selectByName=(id,name)=>{
+            const select=document.getElementById(id);
+            const match=[...select.options].find(option=>option.value && mapName(option.value)===mapName(name));
+            if(!match) return false;
+            select.value=match.value;
+            return true;
+        };
+        layer=L.geoJSON({type:'FeatureCollection',features},{style:feature=>{
+            const n=values.get(mapName(featureName(feature))) || 0;
+            return {color:'#d9e6df',weight:1,fillColor:color(n),fillOpacity:1};
+        },onEachFeature:(feature,polygon)=>{
+            const name=featureName(feature), n=values.get(mapName(name)) || 0;
+            const callao=level==='department' && mapName(name)==='CALLAO';
             polygon.bindTooltip(`<span title="${esc(name)}: ${fmt(n)} denuncias">${callao ? '<small>CALLAO</small>' : ''}${esc(text(n))}</span>`,{permanent:true,direction:'center',className:`dgis-map-percent${callao?' dgis-map-callao':''}${!n?' dgis-map-zero':''}`,offset:callao?[-50,8]:[0,0],opacity:1});
             polygon.bindPopup(`<strong>${esc(name)}</strong><br>${fmt(n)} denuncias<br><strong>${esc(text(n))}</strong> de ${fmt(result.total)} denuncias seleccionadas`);
-            polygon.on({mouseover:()=>polygon.setStyle({weight:2,color:'#ffffff'}),mouseout:()=>layer.resetStyle(polygon)});
+            polygon.on({mouseover:()=>{polygon.setStyle({weight:2,color:'#ffffff'}); const el=polygon.getTooltip()?.getElement(); if(el) el.style.visibility='visible';},mouseout:()=>{layer.resetStyle(polygon);arrangeLabels();},click:()=>{
+                if(level==='department') {
+                    const department=document.getElementById('dgisDepartment');
+                    if(mapName(name)==='LIMA' && [...department.options].some(option=>option.value==='@LIMA')) department.value='@LIMA';
+                    else if(!selectByName('dgisDepartment',name)) return;
+                    document.getElementById('dgisProvince').value='';
+                    document.getElementById('dgisDistrict').value='';
+                } else if(level==='province') {
+                    if(!selectByName('dgisProvince',name)) return;
+                    document.getElementById('dgisDistrict').value='';
+                } else {
+                    map.flyToBounds(polygon.getBounds(),{padding:[48,40],maxZoom:12});
+                    return;
+                }
+                territoryOptions();
+                render();
+            }});
         }}).addTo(map);
         layer.eachLayer(polygon=>{
-            const name=normalize(polygon.feature.properties.NOMBDEP);
-            if(name==='PUNO') polygon.getTooltip().setLatLng([-15.15,-69.9]);
-            if(name==='TUMBES') polygon.getTooltip().setLatLng([-3.83,-80.57]);
+            const name=mapName(featureName(polygon.feature));
+            polygon.getElement()?.setAttribute('data-territory',name);
+            polygon.getElement()?.setAttribute('aria-label',name);
+            if(level==='department' && name==='PUNO') polygon.getTooltip().setLatLng([-15.15,-69.9]);
+            if(level==='department' && name==='TUMBES') polygon.getTooltip().setLatLng([-3.83,-80.57]);
         });
-        map.fitBounds(layer.getBounds(),{padding:[44,32]});
-        const currentMap=map, currentLayer=layer;
+        const target=state.district ? layer.getLayers().find(polygon=>mapName(featureName(polygon.feature))===mapName(state.district)) : null;
+        const bounds=target ? target.getBounds() : layer.getBounds();
+        map.on('zoomend moveend',arrangeLabels);
+        if(bounds.isValid()) map.fitBounds(bounds,{padding:[44,32],maxZoom:12,animate:false});
+        arrangeLabels();
+        const currentMap=map;
         mapResize=new ResizeObserver(()=>{
             clearTimeout(mapFitTimer);
             mapFitTimer=setTimeout(()=>{
                 if(map!==currentMap || !currentMap.getContainer().isConnected || view!=='mapa-delito') return;
                 currentMap.invalidateSize();
-                currentMap.fitBounds(currentLayer.getBounds(),{padding:[32,28],animate:false});
+                if(bounds.isValid()) currentMap.fitBounds(bounds,{padding:[32,28],maxZoom:12,animate:false});
             },260);
         });
         mapResize.observe(map.getContainer());
-        document.getElementById('dgisMapBase').textContent=`Base: ${fmt(result.total)} denuncias unicas con los filtros activos. Lima agrupa Lima Metropolitana y Region Lima. Los porcentajes no representan tasas de criminalidad; una denuncia con varios territorios puede participar en mas de uno.`;
+        const scope=state.province || (state.department==='@LIMA' ? 'LIMA (departamento completo)' : state.department) || 'Peru';
+        document.getElementById('dgisMapTitle').textContent=`Participacion por ${{department:'departamento',province:'provincia',district:'distrito'}[level]}`;
+        document.getElementById('dgisMapScope').textContent=scope;
+        document.getElementById('dgisMapBack').hidden=level==='department';
+        document.getElementById('dgisMapBack').onclick=()=>{
+            document.getElementById('dgisDistrict').value='';
+            if(state.province) document.getElementById('dgisProvince').value='';
+            else document.getElementById('dgisDepartment').value='';
+            territoryOptions(); render();
+        };
+        document.getElementById('dgisMapHome').onclick=()=>{
+            ['Department','Province','District'].forEach(id=>document.getElementById('dgis'+id).value='');
+            territoryOptions(); render();
+        };
+        const unmapped=Object.entries(result.territories).filter(([name])=>!features.some(feature=>mapName(featureName(feature))===mapName(name))).map(([name,n])=>`${name}: ${fmt(n)}`);
+        document.getElementById('dgisMapBase').textContent=`Base: ${fmt(result.total)} denuncias unicas en ${scope}, con los filtros activos. ${level==='department'?'Lima agrupa Lima Metropolitana y Region Lima. ':''}Los porcentajes no son tasas de criminalidad. Una denuncia puede participar en mas de un territorio.${unmapped.length ? ' Sin poligono asignado (incluidos en el total): '+unmapped.join('; ')+'.' : ''}`;
     }
     async function comparator(state,mine) {
         const years=document.querySelectorAll('#dgisCompare select');
@@ -184,7 +268,7 @@
         document.body.classList.add('dgis-active');
         isolate();
         root.innerHTML=`<p class="dgis-empty" role="status">Cargando y validando ${config.label}...</p>`;
-        worker=new Worker('js/dgis-worker.js');
+        worker=new Worker('js/dgis-worker.js?v=20260918-drilldown-3');
         worker.onmessage=({data})=>{const pending=requests.get(data.id);if(!pending)return;requests.delete(data.id);data.error?pending.reject(new Error(data.error)):pending.resolve(data);};
         worker.onerror=()=>{requests.forEach(pending=>pending.reject(new Error(`No se pudo procesar ${config.label}.`)));requests.clear();};
         try {
@@ -193,6 +277,9 @@
             if(metadata.source!==config.label) throw new Error('La fuente recibida no coincide con la seleccionada.');
             root.innerHTML=`<header class="dgis-heading"><span>${config.label.toUpperCase()} · INFORMACION DEPURADA</span><h1 id="dgisTitle">Panorama ejecutivo del delito</h1><p>Fecha de registro · Corte ${metadata.max_date} · ${fmt(metadata.unique_complaints)} denuncias unicas en la fuente</p></header><form id="dgisFilters" class="dgis-filters"><label>DESDE<input id="dgisFrom" type="date" min="${metadata.min_date}" max="${metadata.max_date}" value="${metadata.max_date.slice(0,4)}-01-01"></label><label>HASTA<input id="dgisTo" type="date" min="${metadata.min_date}" max="${metadata.max_date}" value="${metadata.max_date}"></label><label>DEPARTAMENTO<select id="dgisDepartment"></select></label><label>PROVINCIA<select id="dgisProvince"></select></label><label>DISTRITO<select id="dgisDistrict"></select></label><label>DELITO<select id="dgisCrime"></select></label><button type="reset" title="Limpiar filtros"><i class="fas fa-filter-circle-xmark"></i></button></form><div id="dgisCompare" class="dgis-compare-controls" hidden><label>Ano base<select id="dgisBase"></select></label><label>Ano comparado<select id="dgisTarget"></select></label></div><div id="dgisResults" aria-live="polite"></div>`;
             setOptions('dgisDepartment',geography.map(row=>row[0]),'Todos los departamentos');territoryOptions();
+            if(geography.some(row=>['LIMA METROPOLITANA','REGION LIMA'].includes(normalize(row[0])))) {
+                document.getElementById('dgisDepartment').add(new Option('LIMA (departamento completo)','@LIMA'),1);
+            }
             const priority=['EXTORSION','SECUESTRO','ROBO','HURTO','ASALTO Y ROBO DE VEHICULOS'];
             const options=list=>list.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
             const prioritized=priority.map(name=>crimes.find(crime=>normalize(crime)===name)).filter(Boolean);
