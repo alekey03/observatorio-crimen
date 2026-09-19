@@ -73,3 +73,4 @@ html[data-theme="light"] .portal-chart [stroke="#39c8b8"]{stroke:#087e70}
 html[data-theme="light"] .portal-chart circle[fill="#43c7b3"],
 html[data-theme="light"] .portal-chart circle[fill="#39c8b8"]{fill:#087e70}
 }
+@media screen{html[data-theme="light"] .public-data-notice{background:#e7f2ed;border-left-color:#18794e}html[data-theme="light"] .public-data-notice i{color:#18794e}}
