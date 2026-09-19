@@ -3,6 +3,34 @@ window.Portal = (() => {
   const esc = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt = n => Number(n).toLocaleString('es-PE',{maximumFractionDigits:2});
   const titles = {inicio:['Panorama del delito','Resumen ejecutivo'], 'mapa-delito':['Distribución territorial','Participación e intensidad'], 'mapa-calor':['Distribución territorial','Intensidad geográfica'], 'comparador-delitos':['Comparar delitos entre años','Mismo periodo, misma fuente'], 'analisis-temporal':['Cómo cambia el delito en el tiempo','Patrones y variaciones observadas'], 'analisis-predictivo':['Escenarios de corto plazo','Estimaciones sujetas a incertidumbre'], 'produccion-policial':['Resultados de la actividad policial','Producción por fecha y dependencia']};
+
+  const sourceCutoffs = new Map();
+  function longDate(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return '';
+    const date = new Date(value + 'T12:00:00Z');
+    if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0,10) !== value) return '';
+    return new Intl.DateTimeFormat('es-PE', {day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(date);
+  }
+  function refreshSourceDate() {
+    const element = document.getElementById('fuenteDetalle');
+    if (!element) return;
+    const source = document.body.dataset.portalView === 'produccion-policial'
+      ? 'produccion-policial' : document.getElementById('selectorFuente')?.value;
+    const labels = {'dgis-diaria':'DGIS diaria','dgis-mensual':'DGIS mensual','produccion-policial':'Producción DGIS'};
+    if (!labels[source]) {
+      element.textContent = 'Fecha de registro | Fuente independiente';
+      element.removeAttribute('title');
+      return;
+    }
+    const cutoff = longDate(sourceCutoffs.get(source));
+    element.textContent = cutoff ? 'Actualizado al ' + cutoff + ' · ' + labels[source] : labels[source] + ' · Fecha de datos pendiente';
+    element.title = 'Última fecha registrada en la fuente; no cambia al seleccionar otro periodo ni corresponde a la hora de publicación.';
+  }
+  function sourceUpdated(source, cutoff) {
+    if (longDate(cutoff)) sourceCutoffs.set(source, cutoff);
+    else sourceCutoffs.delete(source);
+    refreshSourceDate();
+  }
   function activate(view) {
     document.body.dataset.portalView=view;
     const [title, subtitle]=titles[view] || titles.inicio;
@@ -10,7 +38,7 @@ window.Portal = (() => {
     if(hero) hero.textContent=title;
     const sub=document.querySelector('.hero .subtitle');
     if(sub) sub.textContent=subtitle;
-    if(view==='produccion-policial') document.getElementById('fuenteDetalle').textContent='Producción DGIS · Tableau · Fuente independiente de denuncias';
+    refreshSourceDate();
     if(view==='mapa-delito' || view==='mapa-calor') {
       const head=document.querySelector('[data-section="mapa-delito"] .panel-header') || document.querySelector('[data-section="mapa-delito"] .section-header');
       if(head && !document.getElementById('portalMapModes')) {
@@ -104,5 +132,5 @@ window.Portal = (() => {
     };
     layer.on({mouseover:show,mousemove:show,mouseout:()=>tooltip.remove(),click:()=>tooltip.remove(),remove:()=>tooltip.remove()});
   }
-  return {activate,esc,fmt,line,temporal,bindTemporal,forecast,attachMapHover,selectionTotal,dates,formatDates,coverage,report};
+  return {activate,sourceUpdated,longDate,refreshSourceDate,esc,fmt,line,temporal,bindTemporal,forecast,attachMapHover,selectionTotal,dates,formatDates,coverage,report};
 })();

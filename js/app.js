@@ -1946,10 +1946,10 @@ async function descargarComparadorCsv(){
         `Delito;${delito}`,
         `Ambito;${contextoComparadorBianual()}`,
         `Periodo;${periodo.texto}`,
-        `Ano base;${base.anio}`,
-        `Total ano base;${Math.round(base.total)}`,
-        `Ano comparado;${comparado.anio}`,
-        `Total ano comparado;${Math.round(comparado.total)}`,
+        `Año base;${base.anio}`,
+        `Total año base;${Math.round(base.total)}`,
+        `Año comparado;${comparado.anio}`,
+        `Total año comparado;${Math.round(comparado.total)}`,
         `Diferencia;${Math.round(diferencia)}`,
         `Variacion %;${variacion.toFixed(1)}`
     ];

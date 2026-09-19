@@ -291,11 +291,11 @@
         Portal.activate(name);
         ++revision;
         view=name;
-        if(name==='produccion-policial') {root.hidden=true;document.getElementById('fuenteDetalle').textContent='Produccion DGIS · Tableau (fuente independiente)';return false;}
+        if(name==='produccion-policial') {root.hidden=true;Portal.refreshSourceDate();return false;}
         isolate();
         document.querySelectorAll('[data-view]').forEach(node=>node.classList.toggle('active',node.dataset.view===name));
         if(!metadata) return true;
-        document.getElementById('fuenteDetalle').textContent=`Fecha de registro | Corte: ${metadata.max_date} | ${metadata.public?'Version publica':'Vista local'}`;
+        Portal.sourceUpdated(selectedSource,metadata.max_date);
         const supported=['inicio','mapa-delito','analisis-temporal','comparador-delitos','analisis-predictivo'].includes(name);
         document.getElementById('dgisFilters').hidden=!supported;
         document.getElementById('dgisCompare').hidden=name!=='comparador-delitos';
@@ -315,12 +315,12 @@
             const loaded=await request({type:'load',url:new URL(publicVersion?`data/api/${config.file}`:`${config.folder}/procesado/snapshot.json`,location.href).href});
             ({metadata,geography,crimes}=loaded);
             if(metadata.source!==config.label) throw new Error('La fuente recibida no coincide con la seleccionada.');
-            root.innerHTML=`<header class="dgis-heading"><span>${config.label.toUpperCase()} · INFORMACION DEPURADA</span><h1 id="dgisTitle">Panorama ejecutivo del delito</h1><p>Fecha de registro · Corte ${metadata.max_date} · ${fmt(metadata.unique_complaints)} denuncias unicas en la fuente</p></header><form id="dgisFilters" class="dgis-filters"><label>DESDE<input id="dgisFrom" type="date" min="${metadata.min_date}" max="${metadata.max_date}" value="${metadata.max_date.slice(0,4)}-01-01"></label><label>HASTA<input id="dgisTo" type="date" min="${metadata.min_date}" max="${metadata.max_date}" value="${metadata.max_date}"></label><label>DEPARTAMENTO<select id="dgisDepartment"></select></label><label>PROVINCIA<select id="dgisProvince"></select></label><label>DISTRITO<select id="dgisDistrict"></select></label><label>DELITO<select id="dgisCrime"></select></label><button type="reset" title="Limpiar filtros"><i class="fas fa-filter-circle-xmark"></i></button></form><div id="dgisCompare" class="dgis-compare-controls" hidden><label>Ano base<select id="dgisBase"></select></label><label>Ano comparado<select id="dgisTarget"></select></label></div><div id="dgisResults" aria-live="polite"></div>`;
+            root.innerHTML=`<header class="dgis-heading"><span>${config.label.toUpperCase()} · INFORMACION DEPURADA</span><h1 id="dgisTitle">Panorama ejecutivo del delito</h1><p>Fecha de registro · Corte ${metadata.max_date} · ${fmt(metadata.unique_complaints)} denuncias unicas en la fuente</p></header><form id="dgisFilters" class="dgis-filters"><label>DESDE<input id="dgisFrom" type="date" min="${metadata.min_date}" max="${metadata.max_date}" value="${metadata.max_date.slice(0,4)}-01-01"></label><label>HASTA<input id="dgisTo" type="date" min="${metadata.min_date}" max="${metadata.max_date}" value="${metadata.max_date}"></label><label>DEPARTAMENTO<select id="dgisDepartment"></select></label><label>PROVINCIA<select id="dgisProvince"></select></label><label>DISTRITO<select id="dgisDistrict"></select></label><label>DELITO<select id="dgisCrime"></select></label><button type="reset" title="Limpiar filtros"><i class="fas fa-filter-circle-xmark"></i></button></form><div id="dgisCompare" class="dgis-compare-controls" hidden><label>Año base<select id="dgisBase"></select></label><label>Año comparado<select id="dgisTarget"></select></label></div><div id="dgisResults" aria-live="polite"></div>`;
             setOptions('dgisDepartment',geography.map(row=>row[0]),'Todos los departamentos');territoryOptions();
             if(geography.some(row=>['LIMA METROPOLITANA','REGION LIMA'].includes(normalize(row[0])))) {
                 document.getElementById('dgisDepartment').add(new Option('LIMA (departamento completo)','@LIMA'),1);
             }
-            root.querySelector('.dgis-heading p').textContent=`Fecha de registro · Actualizado al ${Portal.dates(metadata.max_date)} · ${Portal.coverage(metadata.max_date)}`;
+            root.querySelector('.dgis-heading p').textContent=`Fecha de registro · Actualizado al ${Portal.longDate(metadata.max_date)} · ${Portal.coverage(metadata.max_date)}`;
             const priority=['EXTORSION','SECUESTRO','ROBO','HURTO','ASALTO Y ROBO DE VEHICULOS'];
             const options=list=>list.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
             const prioritized=priority.map(name=>crimes.find(crime=>normalize(crime)===name)).filter(Boolean);

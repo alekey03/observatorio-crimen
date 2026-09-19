@@ -74,3 +74,20 @@ html[data-theme="light"] .portal-chart circle[fill="#43c7b3"],
 html[data-theme="light"] .portal-chart circle[fill="#39c8b8"]{fill:#087e70}
 }
 @media screen{html[data-theme="light"] .public-data-notice{background:#e7f2ed;border-left-color:#18794e}html[data-theme="light"] .public-data-notice i{color:#18794e}}
+
+/* Keep the white Observatory lettering readable on the light sidebar. */
+@media screen {
+ html[data-theme="light"] body .brand-logos img:first-child{
+  background:#17242d!important;border-radius:10px;padding:6px;box-sizing:border-box;
+ }
+}
+@media screen and (min-width:761px){
+ body:not(.sidebar-collapsed) .brand-logos{gap:16px;min-height:88px;margin-bottom:18px}
+ body:not(.sidebar-collapsed) .brand-logos img:first-child{width:88px;height:88px;max-height:88px!important;object-fit:contain}
+ body:not(.sidebar-collapsed) .brand-logos img:last-child{width:66px;height:80px;max-height:80px!important;object-fit:contain}
+}
+@media screen and (max-width:760px){
+ body .brand{grid-template-columns:44px minmax(0,1fr)}
+ body .brand-logos img,body.sidebar-collapsed .brand-logos img:first-child{width:42px!important;height:46px!important;max-height:46px!important}
+ html[data-theme="light"] body .brand-logos img:first-child{padding:3px;border-radius:5px}
+}
