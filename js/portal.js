@@ -62,5 +62,19 @@ window.Portal = (() => {
     const f=item.evaluation, history=data.months.slice(-18).map((m,i)=>[m,item.values[item.values.length-18+i]]),future=f.forecast.slice(0,3).map((n,i)=>{const d=new Date(data.months.at(-1)+'-01T12:00:00Z');d.setUTCMonth(d.getUTCMonth()+i+1);return [d.toISOString().slice(0,7),n];});
     return `<div class="portal-section-head"><h2>Histórico y escenario a tres meses</h2><span class="portal-tag">Estimaciones, no hechos confirmados</span></div>${line(history.concat(future),{future:3,bands:f.intervals['80'].slice(0,3)})}<p class="portal-note">Fuente ${esc(data.source)} · Meses completos hasta ${esc(data.months.at(-1))}. El periodo de entrenamiento usa todo el historial disponible, no el intervalo del filtro. Rango empírico nominal del 80%; no garantiza cobertura.</p><div class="portal-two"><section><h2>Validación del modelo</h2><p>${esc(f.model)} · MAE de prueba: <strong>${fmt(f.mae)} denuncias</strong>.</p><table><thead><tr><th>Modelo</th><th>MAE de selección</th></tr></thead><tbody>${f.models.map(m=>`<tr><th>${esc(m.name)}</th><td>${fmt(m.mae)}</td></tr>`).join('')}</tbody></table><p class="portal-note">Prueba final de 12 meses separada de la selección. Menor error es mejor. Cambios de cobertura pueden invalidar la proyección.</p></section><section><h2>Escenarios de seguimiento</h2><table><thead><tr><th>Mes</th><th>Inferior</th><th>Central</th><th>Superior</th></tr></thead><tbody>${future.map(([m,n],i)=>`<tr><th>${m}</th><td>${fmt(f.intervals['80'][i][0])}</td><td>${fmt(n)}</td><td>${fmt(f.intervals['80'][i][1])}</td></tr>`).join('')}</tbody></table><p class="portal-note">Volumen agregado de registros. No identifica personas ni determina actuaciones policiales individuales.</p></section></div>`;
   }
-  return {activate,esc,fmt,line,temporal,bindTemporal,forecast};
+  const mapHovers=new WeakMap();
+  function attachMapHover(map,layer,name,count,percentage) {
+    let tooltip=mapHovers.get(map);
+    if(!tooltip){
+      tooltip=L.tooltip({direction:'top',offset:[0,-14],opacity:1,interactive:false,className:'map-hover-detail'});
+      mapHovers.set(map,tooltip);
+      map.on('zoomstart movestart',()=>tooltip.remove());
+    }
+    const show=event=>{
+      tooltip.setContent(`<strong>${esc(name)}</strong><span>${fmt(count)} denuncias</span><small>${esc(percentage)} del total seleccionado</small>`).setLatLng(event.latlng || layer.getBounds().getCenter());
+      if(!map.hasLayer(tooltip))tooltip.addTo(map);
+    };
+    layer.on({mouseover:show,mousemove:show,mouseout:()=>tooltip.remove(),click:()=>tooltip.remove(),remove:()=>tooltip.remove()});
+  }
+  return {activate,esc,fmt,line,temporal,bindTemporal,forecast,attachMapHover};
 })();

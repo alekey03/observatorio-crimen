@@ -666,6 +666,7 @@ function etiquetaParticipacion(layer, nombre, casos, valores, permanente){
     const etiqueta = document.createElement('span');
     etiqueta.textContent = permanente ? texto : `${nombre}: ${texto} (${formatear(casos)} casos)`;
     etiqueta.title = `${nombre}: ${formatear(casos)} casos`;
+    Portal.attachMapHover(mapa,layer,nombre,casos,texto);
     if(permanente){
         const label = document.createElement('small');
         label.className = 'map-place-name';

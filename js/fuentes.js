@@ -186,6 +186,7 @@
             const callao=level==='department' && mapName(name)==='CALLAO';
             polygon.bindTooltip(`<span title="${esc(name)}: ${fmt(n)} denuncias"><small class="map-place-name">${esc(name)}</small>${esc(text(n))}</span>`,{permanent:true,direction:'center',className:`dgis-map-percent${callao?' dgis-map-callao':''}${!n?' dgis-map-zero':''}`,offset:callao?[-65,8]:[0,0],opacity:1});
             polygon.bindPopup(`<strong>${esc(name)}</strong><br>${fmt(n)} denuncias<br><strong>${esc(text(n))}</strong> de ${fmt(result.total)} denuncias seleccionadas`);
+            Portal.attachMapHover(map,polygon,name,n,text(n));
             polygon.on({mouseover:()=>{polygon.setStyle({weight:2,color:'#ffffff'}); const el=polygon.getTooltip()?.getElement(); if(el) el.style.visibility='visible';},mouseout:()=>{layer.resetStyle(polygon);arrangeLabels();},click:()=>{
                 if(level==='department') {
                     const department=document.getElementById('dgisDepartment');
