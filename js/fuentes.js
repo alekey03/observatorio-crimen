@@ -97,6 +97,7 @@
         try {
             const {result}=await request({type:'query',filters:state});
             if(mine!==revision) return;
+            const camera=map && view==='mapa-delito' ? {center:map.getCenter(),zoom:map.getZoom()} : null;
             disposeMap();
             const totalLabel=state.crime || 'Denuncias unicas';
             const cards=state.crime ? [[totalLabel,result.total],['Territorios con denuncias',Object.keys(result.territories).length],['Meses con denuncias',Object.keys(result.months).length],['Dias con denuncias',Object.keys(result.days).length]] : [[totalLabel,result.total], ...['Extorsion','Secuestro','Robo','Hurto','Asalto y robo de Vehiculos'].map(name=>[name,Object.entries(result.crimes).find(([key])=>normalize(key)===normalize(name))?.[1] || 0]) ];
@@ -114,7 +115,7 @@
             }
             if(view==='mapa-delito') {
                 output.innerHTML=intro+`<div class="dgis-grid dgis-map-grid"><section><h2 id="dgisMapTitle">Participacion por departamento</h2><nav class="dgis-map-nav" aria-label="Navegacion territorial"><button id="dgisMapHome" title="Volver al Peru"><i class="fas fa-house"></i> Peru</button><button id="dgisMapBack" title="Subir un nivel" hidden><i class="fas fa-arrow-left"></i> Volver</button><span id="dgisMapScope"></span></nav><div id="dgisMap"></div><div class="dgis-map-legend" aria-label="Participacion de denuncias"><span><i style="background:#344953"></i>0%</span><span><i style="background:#9cc9b0"></i>Menos de 1%</span><span><i style="background:#c6d68b"></i>1 a menos de 5%</span><span><i style="background:#f0d676"></i>5 a menos de 10%</span><span><i style="background:#ef997f"></i>10% o mas</span></div><p class="dgis-note" id="dgisMapBase"></p></section><section><h2>${territory}</h2>${bars(result.territories)}</section></div>`+note;
-                await renderMap(state,mine);
+                await renderMap(state,mine,camera);
             } else if(view==='analisis-temporal') {
                 output.innerHTML=Portal.temporal(result,months,state,metadata)+note;
                 Portal.bindTemporal(result,months);
@@ -127,7 +128,7 @@
         } catch(error) { if(mine===revision) output.innerHTML=`<p role="alert">${esc(error.message)}</p>`; }
         finally { if(mine===revision) output.removeAttribute('aria-busy'); }
     }
-    async function renderMap(state,mine) {
+    async function renderMap(state,mine,camera) {
         const level=state.province ? 'district' : state.department ? 'province' : 'department';
         const file={department:'departamental',province:'provincial',district:'distrital'}[level];
         if(!geoCache.has(file)) {
@@ -145,7 +146,7 @@
         const {result}=await request({type:'query',filters:{...state,mapLevel:level}});
         if(mine!==revision || view!=='mapa-delito') return;
         disposeMap();
-        map=L.map('dgisMap',{zoomSnap:.1,scrollWheelZoom:false,zoomAnimation:false}).setView([-9.2,-75.1],5);
+        map=L.map('dgisMap',{zoomSnap:.1,scrollWheelZoom:false,zoomAnimation:true}).setView(camera?.center || [-9.2,-75.1],camera?.zoom ?? 5);
         map.getContainer().dataset.level=level;
         const values=new Map(Object.entries(result.territories).map(([key,value])=>[mapName(key),value]));
         const maxValue=Math.max(1,...values.values());
@@ -158,7 +159,7 @@
         if(intensity)document.querySelector('.dgis-map-legend').textContent='Intensidad relativa al mayor volumen territorial seleccionado. Las etiquetas conservan el porcentaje del total; no es una tasa poblacional.';
         const featureName=feature=>feature.properties[{department:'NOMBDEP',province:'NOMBPROV',district:'NOMBDIST'}[level]];
         const arrangeLabels=()=>{
-            if(level==='department' || !layer) return;
+            if(!layer) return;
             const placed=[];
             const polygons=[...layer.getLayers()].sort((a,b)=>(values.get(mapName(featureName(b.feature)))||0)-(values.get(mapName(featureName(a.feature)))||0));
             polygons.forEach(polygon=>{
@@ -183,7 +184,7 @@
         },onEachFeature:(feature,polygon)=>{
             const name=featureName(feature), n=values.get(mapName(name)) || 0;
             const callao=level==='department' && mapName(name)==='CALLAO';
-            polygon.bindTooltip(`<span title="${esc(name)}: ${fmt(n)} denuncias">${callao ? '<small>CALLAO</small>' : ''}${esc(text(n))}</span>`,{permanent:true,direction:'center',className:`dgis-map-percent${callao?' dgis-map-callao':''}${!n?' dgis-map-zero':''}`,offset:callao?[-50,8]:[0,0],opacity:1});
+            polygon.bindTooltip(`<span title="${esc(name)}: ${fmt(n)} denuncias"><small class="map-place-name">${esc(name)}</small>${esc(text(n))}</span>`,{permanent:true,direction:'center',className:`dgis-map-percent${callao?' dgis-map-callao':''}${!n?' dgis-map-zero':''}`,offset:callao?[-65,8]:[0,0],opacity:1});
             polygon.bindPopup(`<strong>${esc(name)}</strong><br>${fmt(n)} denuncias<br><strong>${esc(text(n))}</strong> de ${fmt(result.total)} denuncias seleccionadas`);
             polygon.on({mouseover:()=>{polygon.setStyle({weight:2,color:'#ffffff'}); const el=polygon.getTooltip()?.getElement(); if(el) el.style.visibility='visible';},mouseout:()=>{layer.resetStyle(polygon);arrangeLabels();},click:()=>{
                 if(level==='department') {
@@ -196,7 +197,7 @@
                     if(!selectByName('dgisProvince',name)) return;
                     document.getElementById('dgisDistrict').value='';
                 } else {
-                    map.flyToBounds(polygon.getBounds(),{padding:[48,40],maxZoom:12});
+                    map.flyToBounds(polygon.getBounds(),{padding:[60,48],maxZoom:14,duration:1.1,animate:!matchMedia('(prefers-reduced-motion: reduce)').matches});
                     return;
                 }
                 territoryOptions();
@@ -213,10 +214,18 @@
         const target=state.district ? layer.getLayers().find(polygon=>mapName(featureName(polygon.feature))===mapName(state.district)) : null;
         const bounds=target ? target.getBounds() : layer.getBounds();
         map.on('zoomend moveend',arrangeLabels);
-        if(bounds.isValid()) map.fitBounds(bounds,{padding:[44,32],maxZoom:12,animate:false});
+        if(bounds.isValid()) {
+            const options={padding:[60,48],maxZoom:12,duration:1.1,animate:!matchMedia('(prefers-reduced-motion: reduce)').matches};
+            if(camera) map.flyToBounds(bounds,options);
+            else map.fitBounds(bounds,{...options,animate:false});
+        }
         arrangeLabels();
         const currentMap=map;
+        let mapWidth=map.getContainer().clientWidth,mapHeight=map.getContainer().clientHeight;
         mapResize=new ResizeObserver(()=>{
+            const container=currentMap.getContainer();
+            if(container.clientWidth===mapWidth && container.clientHeight===mapHeight) return;
+            mapWidth=container.clientWidth;mapHeight=container.clientHeight;
             clearTimeout(mapFitTimer);
             mapFitTimer=setTimeout(()=>{
                 if(map!==currentMap || !currentMap.getContainer().isConnected || view!=='mapa-delito') return;

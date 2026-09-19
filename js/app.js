@@ -643,8 +643,10 @@ function aplicarInteraccion(layer, estiloNormal){
 function enfocarBounds(bounds){
     if(bounds && bounds.isValid && bounds.isValid()){
         mapa.flyToBounds(bounds, {
-            padding: [26, 26],
-            maxZoom: 10
+            padding: [60, 48],
+            maxZoom: 14,
+            duration: 1.1,
+            animate: !matchMedia('(prefers-reduced-motion: reduce)').matches
         });
     }
 }
@@ -664,15 +666,18 @@ function etiquetaParticipacion(layer, nombre, casos, valores, permanente){
     const etiqueta = document.createElement('span');
     etiqueta.textContent = permanente ? texto : `${nombre}: ${texto} (${formatear(casos)} casos)`;
     etiqueta.title = `${nombre}: ${formatear(casos)} casos`;
-    if(callao){
+    if(permanente){
         const label = document.createElement('small');
-        label.textContent = 'CALLAO';
+        label.className = 'map-place-name';
+        label.textContent = nombre;
         etiqueta.prepend(label);
     }
     layer.bindTooltip(etiqueta, {permanent:permanente, direction:'center', opacity:1,
         className:permanente ? `dgis-map-percent${callao?' dgis-map-callao':''}${!casos?' dgis-map-zero':''}` : '',
-        offset:callao ? [-50,8] : [0,0]});
+        offset:callao ? [-65,8] : [0,0]});
     layer.on('add', () => layer.getElement()?.setAttribute('data-territory', normalizar(nombre)));
+    layer.on('mouseover', () => {const element=layer.getTooltip()?.getElement();if(element) element.style.visibility='visible';});
+    layer.on('mouseout', distribuirEtiquetasParticipacion);
     document.getElementById('mapaPorcentajeBase').textContent = `Base: ${formatear(total)} casos seleccionados. Los territorios sin ubicacion cartografica permanecen incluidos en el total.`;
 }
 
@@ -687,7 +692,7 @@ function ajustarMapaParticipacion(){
 }
 
 function distribuirEtiquetasParticipacion(){
-    if(!capaActual || !filtros.departamento.value) return;
+    if(!capaActual) return;
     const placed=[];
     capaActual.eachLayer(polygon => {
         const element=polygon.getTooltip()?.getElement();
