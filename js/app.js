@@ -4110,6 +4110,7 @@ function renderProduccionPolicial(){
 }
 
 async function cargarProduccionPolicial(){
+    if(window.ProduccionPortal) return ProduccionPortal.show();
     try{
         if(!produccionPolicialCargada){
             datosProduccionPolicial = await cargarJson(`data/api/produccion_policial.json?v=${Date.now()}`);
@@ -4124,6 +4125,8 @@ async function cargarProduccionPolicial(){
 }
 
 function activarVista(vista){
+    if(vista === "dashboard") vista = "inicio";
+    window.Portal?.activate(vista);
     if(window.ObservatorioFuente?.active && ObservatorioFuente.setView(vista)) return;
     vistaActual = vista;
     document.body.classList.toggle("dashboard-view", vista === "dashboard");
@@ -4140,9 +4143,9 @@ function activarVista(vista){
     }
     menuItems.forEach((item) => item.classList.toggle("active", item.dataset.view === vista));
 
-    const mostrarMapaDelito = ["inicio", "mapa-delito"].includes(vista);
+    const mostrarMapaDelito = vista === "mapa-delito";
     const mostrarAnalytics = vista === "inicio";
-    const mostrarDetalle = vista === "inicio";
+    const mostrarDetalle = false;
     const mostrarEjecutivo = vista === "inicio";
 
     viewSections.forEach((section) => {

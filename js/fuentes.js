@@ -23,7 +23,7 @@
         else url.searchParams.set('fuente', source.value);
         location.assign(url.href);
     });
-    let worker, metadata, geography, crimes, serial=0, revision=0, view='inicio', map, layer, mapResize, mapFitTimer;
+    let worker, metadata, geography, crimes, serial=0, revision=0, view='inicio', map, layer, mapResize, mapFitTimer, intensity=false;
     const requests = new Map();
     const root = document.getElementById('dgisWorkspace');
     const fmt = n => Number(n).toLocaleString('es-PE');
@@ -107,13 +107,20 @@
             const monthComplete = cut.getUTCDate()===new Date(Date.UTC(cut.getUTCFullYear(),cut.getUTCMonth()+1,0)).getUTCDate();
             const note=`<p class="dgis-note">Fuente: ${config.label} · Fecha de registro · Corte ${metadata.max_date}. ${monthComplete ? 'Cierre mensual disponible.' : 'Ultimo mes parcial.'} Conteo distinto de denuncias. Los subtotales pueden solaparse si una denuncia tiene varios delitos, fechas o territorios. ${metadata.public?'Version publica: distritos de grupos pequenos agrupados como OTROS DISTRITOS.':''}</p>`;
             if(view==='comparador-delitos') { await comparator(state,mine); return; }
+            if(view==='analisis-predictivo') {
+                const html=await Portal.forecast(selectedSource,state.crime,state);
+                if(mine===revision) output.innerHTML=html+note;
+                return;
+            }
             if(view==='mapa-delito') {
                 output.innerHTML=intro+`<div class="dgis-grid dgis-map-grid"><section><h2 id="dgisMapTitle">Participacion por departamento</h2><nav class="dgis-map-nav" aria-label="Navegacion territorial"><button id="dgisMapHome" title="Volver al Peru"><i class="fas fa-house"></i> Peru</button><button id="dgisMapBack" title="Subir un nivel" hidden><i class="fas fa-arrow-left"></i> Volver</button><span id="dgisMapScope"></span></nav><div id="dgisMap"></div><div class="dgis-map-legend" aria-label="Participacion de denuncias"><span><i style="background:#344953"></i>0%</span><span><i style="background:#9cc9b0"></i>Menos de 1%</span><span><i style="background:#c6d68b"></i>1 a menos de 5%</span><span><i style="background:#f0d676"></i>5 a menos de 10%</span><span><i style="background:#ef997f"></i>10% o mas</span></div><p class="dgis-note" id="dgisMapBase"></p></section><section><h2>${territory}</h2>${bars(result.territories)}</section></div>`+note;
                 await renderMap(state,mine);
             } else if(view==='analisis-temporal') {
-                output.innerHTML=intro+`<section class="dgis-band"><h2>Evolucion mensual</h2>${chart(months)}</section><section class="dgis-band"><h2>Registros diarios</h2>${chart(result.days,'#61a5fa',true)}</section>`+note;
+                output.innerHTML=Portal.temporal(result,months,state,metadata)+note;
+                Portal.bindTemporal(result,months);
             } else if(view==='inicio') {
-                output.innerHTML=intro+`<div class="dgis-grid"><section><h2>${territory} con mas denuncias</h2>${bars(result.territories)}</section><section><h2>Delitos registrados</h2>${bars(result.crimes)}</section></div>`+note;
+                const top=Object.entries(result.territories).sort((a,b)=>b[1]-a[1])[0];
+                output.innerHTML=intro+`<div class="dgis-grid"><section><h2>Delitos registrados</h2>${bars(result.crimes)}</section><section><h2>Lectura ejecutiva</h2><p class="portal-note">Periodo ${esc(state.from||metadata.min_date)} al ${esc(state.to||metadata.max_date)}.</p>${top?`<h3>${esc(top[0])}</h3><p><strong>${fmt(top[1])}</strong> denuncias: ${(top[1]/Math.max(result.total,1)*100).toFixed(1)}% del total seleccionado.</p>`:'<p>Sin registros para esta selección.</p>'}<p>Los registros muestran concentración territorial, no tasas por habitante ni riesgo individual.</p><h2>${territory} con más denuncias</h2>${bars(result.territories)}</section></div>`+note;
             } else {
                 output.innerHTML=intro+`<section class="dgis-band"><h2>Evolucion mensual de denuncias</h2>${chart(months)}</section><div class="dgis-grid"><section><h2>Distribucion por delito</h2>${bars(result.crimes)}</section><section><h2>Concentracion territorial</h2>${bars(result.territories)}</section></div>`+note;
             }
@@ -141,9 +148,14 @@
         map=L.map('dgisMap',{zoomSnap:.1,scrollWheelZoom:false,zoomAnimation:false}).setView([-9.2,-75.1],5);
         map.getContainer().dataset.level=level;
         const values=new Map(Object.entries(result.territories).map(([key,value])=>[mapName(key),value]));
+        const maxValue=Math.max(1,...values.values());
         const percent=n=>result.total ? n/result.total*100 : null;
         const text=n=>!result.total ? 'Sin datos' : n>0 && percent(n)<.1 ? '<0.1%' : `${percent(n).toFixed(1)}%`;
-        const color=n=>!n ? '#344953' : percent(n)<1 ? '#9cc9b0' : percent(n)<5 ? '#c6d68b' : percent(n)<10 ? '#f0d676' : '#ef997f';
+        const color=n=>!n ? '#344953' : (intensity?n/maxValue*100:percent(n))<1 ? '#9cc9b0' : (intensity?n/maxValue*100:percent(n))<5 ? '#c6d68b' : (intensity?n/maxValue*100:percent(n))<10 ? '#f0d676' : '#ef997f';
+        const modes=document.createElement('div');modes.className='portal-modes';modes.innerHTML=`<button data-mode="share" aria-pressed="${!intensity}">Participación</button><button data-mode="volume" aria-pressed="${intensity}">Intensidad</button>`;
+        document.getElementById('dgisMapTitle').after(modes);
+        modes.onclick=event=>{const button=event.target.closest('[data-mode]');if(button){intensity=button.dataset.mode==='volume';render();}};
+        if(intensity)document.querySelector('.dgis-map-legend').textContent='Intensidad relativa al mayor volumen territorial seleccionado. Las etiquetas conservan el porcentaje del total; no es una tasa poblacional.';
         const featureName=feature=>feature.properties[{department:'NOMBDEP',province:'NOMBPROV',district:'NOMBDIST'}[level]];
         const arrangeLabels=()=>{
             if(level==='department' || !layer) return;
@@ -247,19 +259,25 @@
         const first=Number(start.slice(0,2)), last=Number(end.slice(0,2));
         document.getElementById('dgisResults').innerHTML=`<div class="dgis-compare-heading"><h2>${esc(state.crime || 'Todas las denuncias')} · ${base} / ${target}</h2><button id="dgisPrint" title="Imprimir o guardar PDF"><i class="fas fa-print"></i> PDF</button></div><p>Periodo comparable: ${start.split('-').reverse().join('/')} al ${end.split('-').reverse().join('/')}, en ambos anos.</p><div class="dgis-grid"><section><table><thead><tr><th>Mes</th><th>${base}</th><th>${target}</th><th>Variacion</th></tr></thead><tbody>${Array.from({length:last-first+1},(_,i)=>first+i).map(month=>{const mm=String(month).padStart(2,'0'),n=a.result.months[`${base}-${mm}`]||0,m=b.result.months[`${target}-${mm}`]||0;return `<tr><th>${mm}</th><td>${fmt(n)}</td><td>${fmt(m)}</td><td style="color:${style(m-n)}">${sign(m-n)}${fmt(m-n)}</td></tr>`;}).join('')}<tr class="dgis-total"><th>Total unico</th><td>${fmt(a.result.total)}</td><td>${fmt(b.result.total)}</td><td style="color:${style(delta)}">${sign(delta)}${fmt(delta)}</td></tr></tbody></table></section><section><h2>Denuncias por ano</h2><svg viewBox="0 0 550 340" role="img" aria-label="Comparacion de denuncias"><line x1="40" x2="510" y1="280" y2="280" stroke="#46606c"/>${[a.result.total,b.result.total].map((n,i)=>`<rect x="${100+i*230}" y="${280-n/max*200}" width="110" height="${n/max*200}" fill="${colors[i]}" rx="3"/><text x="${155+i*230}" y="${268-n/max*200}" text-anchor="middle">${fmt(n)}</text><text x="${155+i*230}" y="308" text-anchor="middle">${i?target:base}</text>`).join('')}</svg><p class="dgis-delta" style="color:${style(delta)}">${sign(delta)}${fmt(delta)} <small>(${pct===null?'Sin base porcentual':`${sign(pct)}${pct.toFixed(1)}%`})</small></p></section></div><p class="dgis-note">Fuente: ${config.label} · Fecha de registro · Corte ${metadata.max_date}. Conteo distinto; el total puede diferir de la suma mensual por denuncias con varias fechas.</p>`;
         document.getElementById('dgisPrint').onclick=()=>window.print();
+        const table=document.querySelector('#dgisResults table');
+        table.querySelector('thead tr').insertAdjacentHTML('beforeend','<th>%</th>');
+        const bodyRows=table.querySelectorAll('tbody tr');
+        bodyRows.forEach((row,index)=>{const isTotal=index===bodyRows.length-1,mm=String(first+index).padStart(2,'0');const aa=isTotal?a.result.total:(a.result.months[`${base}-${mm}`]||0),bb=isTotal?b.result.total:(b.result.months[`${target}-${mm}`]||0);const relative=aa?(bb-aa)/aa*100:null;row.insertAdjacentHTML('beforeend',`<td style="color:${style(bb-aa)}">${relative===null?'—':sign(relative)+relative.toFixed(1)+'%'}</td>`);});
     }
     function setView(name) {
+        if(name==='dashboard') name='inicio';
+        Portal.activate(name);
         ++revision;
         view=name;
-        if(name==='produccion-policial') {root.hidden=true;document.getElementById('fuenteDetalle').textContent='Produccion: DIVCOP - COMOPPOL PNP (fuente independiente)';return false;}
+        if(name==='produccion-policial') {root.hidden=true;document.getElementById('fuenteDetalle').textContent='Produccion DGIS · Tableau (fuente independiente)';return false;}
         isolate();
         document.querySelectorAll('[data-view]').forEach(node=>node.classList.toggle('active',node.dataset.view===name));
         if(!metadata) return true;
         document.getElementById('fuenteDetalle').textContent=`Fecha de registro | Corte: ${metadata.max_date} | ${metadata.public?'Version publica':'Vista local'}`;
-        const supported=['inicio','dashboard','mapa-delito','analisis-temporal','comparador-delitos'].includes(name);
+        const supported=['inicio','mapa-delito','analisis-temporal','comparador-delitos','analisis-predictivo'].includes(name);
         document.getElementById('dgisFilters').hidden=!supported;
         document.getElementById('dgisCompare').hidden=name!=='comparador-delitos';
-        document.getElementById('dgisTitle').textContent=({inicio:'Panorama ejecutivo del delito',dashboard:'Dashboard de denuncias', 'mapa-delito':'Distribucion territorial','analisis-temporal':'Evolucion de denuncias','comparador-delitos':'Comparador de denuncias'})[name] || 'Informacion no disponible';
+        document.getElementById('dgisTitle').textContent=({inicio:'Panorama del delito', 'mapa-delito':'Distribución territorial','analisis-temporal':'Cómo cambia el delito en el tiempo','comparador-delitos':'Comparar delitos entre años','analisis-predictivo':'Escenarios de corto plazo'})[name] || 'Información no disponible';
         if(supported) render();
         else document.getElementById('dgisResults').innerHTML=`<p class="dgis-empty">Esta vista aun no esta integrada con ${config.label}. No se sustituyen sus datos por los de SIDPOL.</p>`;
         return true;
