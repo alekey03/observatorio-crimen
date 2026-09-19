@@ -1,9 +1,39 @@
-/* Shared heading scale; loaded after legacy view-specific styles. */
+/* One typography scale across SIDPOL, DGIS and production views. */
 :root{
     --odc-heading-font: "Segoe UI", Arial, sans-serif;
     --odc-title-size: 24px;
     --odc-section-size: 18px;
     --odc-heading-weight: 600;
+}
+/* Match the specificity of legacy source-specific rules without touching icons. */
+html body,
+body :is(.main-content, .sidebar, #dgisWorkspace, #productionPortal),
+body :is(.main-content, .sidebar, #dgisWorkspace, #productionPortal) :is(h1,h2,h3,h4,p,label,span,strong,b,small,a,select,option,input,button,th,td,li,svg text){
+    font-family: var(--odc-heading-font) !important;
+    letter-spacing: 0 !important;
+}
+body :is(.main-content, #dgisWorkspace, #productionPortal) h1{
+    font-size: var(--odc-title-size) !important;
+    font-weight: var(--odc-heading-weight) !important;
+    line-height: 1.35 !important;
+    text-transform: none !important;
+}
+body :is(.main-content, #dgisWorkspace, #productionPortal) h2,
+body :is(.main-content, #dgisWorkspace, #productionPortal) :is(.panel-header,.section-header,.oa-section-title,.odc-overview) h3{
+    font-size: var(--odc-section-size) !important;
+    font-weight: var(--odc-heading-weight) !important;
+    line-height: 1.35 !important;
+    text-transform: none !important;
+}
+body :is(.main-content, #dgisWorkspace, #productionPortal) :is(select,input,button){
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    line-height: 1.4 !important;
+}
+body :is(.main-content, #dgisWorkspace, #productionPortal) label{
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
 }
 .main-content h1,
 .main-content h2,
