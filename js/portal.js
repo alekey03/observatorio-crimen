@@ -63,7 +63,32 @@ window.Portal = (() => {
     return `<div class="portal-section-head"><h2>Histórico y escenario a tres meses</h2><span class="portal-tag">Estimaciones, no hechos confirmados</span></div>${line(history.concat(future),{future:3,bands:f.intervals['80'].slice(0,3)})}<p class="portal-note">Fuente ${esc(data.source)} · Meses completos hasta ${esc(data.months.at(-1))}. El periodo de entrenamiento usa todo el historial disponible, no el intervalo del filtro. Rango empírico nominal del 80%; no garantiza cobertura.</p><div class="portal-two"><section><h2>Validación del modelo</h2><p>${esc(f.model)} · MAE de prueba: <strong>${fmt(f.mae)} denuncias</strong>.</p><table><thead><tr><th>Modelo</th><th>MAE de selección</th></tr></thead><tbody>${f.models.map(m=>`<tr><th>${esc(m.name)}</th><td>${fmt(m.mae)}</td></tr>`).join('')}</tbody></table><p class="portal-note">Prueba final de 12 meses separada de la selección. Menor error es mejor. Cambios de cobertura pueden invalidar la proyección.</p></section><section><h2>Escenarios de seguimiento</h2><table><thead><tr><th>Mes</th><th>Inferior</th><th>Central</th><th>Superior</th></tr></thead><tbody>${future.map(([m,n],i)=>`<tr><th>${m}</th><td>${fmt(f.intervals['80'][i][0])}</td><td>${fmt(n)}</td><td>${fmt(f.intervals['80'][i][1])}</td></tr>`).join('')}</tbody></table><p class="portal-note">Volumen agregado de registros. No identifica personas ni determina actuaciones policiales individuales.</p></section></div>`;
   }
   function selectionTotal(label,value,context) {
-    return `<section class="selection-total" aria-label="Total de la selección"><div><span>${esc(label)}</span><p>${esc(context)}</p></div><strong>${value==null?'No disponible':esc(typeof value==='number'?fmt(value):value)}</strong></section>`;
+    return `<section class="selection-total" aria-label="Total de la selección"><div><span>${esc(label)}</span><p>${esc(dates(context))}</p></div><strong>${value==null?'No disponible':esc(typeof value==='number'?fmt(value):value)}</strong></section>`;
+  }
+  const dates=value=>String(value).replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g,'$3/$2/$1').replace(/\b(\d{4})-(\d{2})\b/g,'$2/$1');
+  function formatDates(root){
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];
+    while(walker.nextNode())if(!walker.currentNode.parentElement.closest('script,style,input,select,textarea'))nodes.push(walker.currentNode);
+    nodes.forEach(node=>{node.textContent=dates(node.textContent);});
+  }
+  function coverage(cut){
+    const [year,month,day]=cut.split('-').map(Number),last=new Date(Date.UTC(year,month,0)).getUTCDate();
+    return day<last?'Último mes parcial':'Mes completo disponible';
+  }
+  function report({title,source,cut,content,filters=[]}){
+    const win=window.open('','_blank');
+    if(!win){alert('Permite ventanas emergentes para abrir el informe PDF.');return;}
+    const clone=content.cloneNode(true);
+    clone.querySelectorAll('button,form,.oa-controls,.oa-header,.dgis-heading,.dgis-compare-heading,.portal-modes,[hidden]').forEach(el=>el.remove());
+    clone.querySelectorAll('details').forEach(el=>el.open=true);
+    clone.querySelectorAll('rect[fill="url(#yearChartBg)"]').forEach(el=>el.setAttribute('fill','#fff'));
+    formatDates(clone);
+    const sheet=new URL('css/report.css?v=20260918-finish-6',location.href).href;
+    const generated=new Date().toLocaleString('es-PE');
+    win.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title><link rel="stylesheet" href="${esc(sheet)}"></head><body><button class="print-action">Imprimir / Guardar PDF</button><header><small>OBSERVATORIO DEL CRIMEN · COMOPPOL PNP</small><h1>${esc(title)}</h1><p>Fuente: ${esc(source)} · Datos al ${esc(dates(cut))}</p><dl>${filters.map(([name,value])=>`<div><dt>${esc(name)}</dt><dd>${esc(dates(value))}</dd></div>`).join('')}</dl></header><main>${clone.innerHTML}</main><footer>Fuente: ${esc(source)} · Corte: ${esc(dates(cut))} · Informe generado: ${esc(generated)}. Los periodos parciales y los datos no disponibles se identifican en el contenido.</footer></body></html>`);
+    win.document.close();win.document.querySelector('.print-action').onclick=()=>win.print();
+    win.addEventListener('load',()=>{win.document.fonts.ready.then(()=>{win.__reportReady=true;win.print();});},{once:true});
+    return win;
   }
   const mapHovers=new WeakMap();
   function attachMapHover(map,layer,name,count,percentage) {
@@ -79,5 +104,5 @@ window.Portal = (() => {
     };
     layer.on({mouseover:show,mousemove:show,mouseout:()=>tooltip.remove(),click:()=>tooltip.remove(),remove:()=>tooltip.remove()});
   }
-  return {activate,esc,fmt,line,temporal,bindTemporal,forecast,attachMapHover,selectionTotal};
+  return {activate,esc,fmt,line,temporal,bindTemporal,forecast,attachMapHover,selectionTotal,dates,formatDates,coverage,report};
 })();

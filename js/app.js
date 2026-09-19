@@ -1973,6 +1973,11 @@ async function descargarComparadorPdf(){
     const svg = comparadorGrafico.querySelector("svg");
     if(!svg) return;
     const { base, comparado, delito, diferencia, variacion, periodo } = ultimaComparacionBianual;
+    if(window.Portal?.report){
+        const content=document.createElement('div');
+        content.append(comparadorResumen.cloneNode(true),document.querySelector('.compare-table-card').cloneNode(true),comparadorGrafico.cloneNode(true));
+        return Portal.report({title:'Comparativo de denuncias',source:'SIDPOL',cut:`${periodo.texto} de ${comparado.anio}`,content,filters:[['Delito',delito],['Territorio',contextoComparadorBianual()],['Año base',String(base.anio)],['Año comparado',String(comparado.anio)],['Periodo comparable',periodo.texto]]});
+    }
     const fecha = new Date().toLocaleString("es-PE");
     const svgTexto = new XMLSerializer().serializeToString(svg);
     const tablaHtml = document.querySelector(".compare-table-card")?.innerHTML || "";
@@ -4199,7 +4204,7 @@ function activarVista(vista){
 
 function pintarEstadoDatos(totalRegistros, metadata){
     if(metadata && metadata.estado === "ok" && metadata.ultima_actualizacion){
-        estadoDatos.textContent = `${formatear(totalRegistros)} registros cargados | Actualizado: ${metadata.ultima_actualizacion}`;
+        estadoDatos.textContent = `${formatear(totalRegistros)} registros cargados | Actualizado: ${Portal.dates(metadata.ultima_actualizacion)}`;
         return;
     }
 

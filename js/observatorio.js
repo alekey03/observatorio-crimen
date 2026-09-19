@@ -69,14 +69,9 @@ const renderObservatory = (() => {
     root.querySelector('.oa-controls').insertAdjacentHTML('afterend',Portal.selectionTotal(`${type==='temporal'?'Total del periodo':'Total histórico observado'} · ${d.crimes[s.crime]}`,sum(selectedMonths.map(m=>cell(d,s,m))),`${selectedMonths[0]} al ${selectedMonths.at(-1)} · ${d.departments[s.department]} · SIDPOL · Acumulado mensual${type==='temporal'?'':'; no es una proyección'}`));
     root.querySelectorAll('[data-field]').forEach(el=>el.addEventListener('change',()=>{const key=el.dataset.field,value=['department','crime','horizon','coverage'].includes(key)?Number(el.value):el.value;if((key==='from'&&value>s.to)||(key==='to'&&value<s.from)){el.value=s[key];root.querySelector('.oa-validation').textContent='El mes inicial debe ser anterior o igual al mes final.';return;}s[key]=value;paint(d,type);}));
     root.querySelector('.oa-export').addEventListener('click',()=>{
-      const sheet=[...document.styleSheets].find(s=>s.href?.includes('/observatorio.css'));
-      const printCss=sheet?[...sheet.cssRules].map(rule=>rule.cssText).join('\n'):'';
-      const win=window.open('','_blank');
-      if(!win){root.querySelector('.oa-validation').textContent='Permite ventanas emergentes para exportar el informe.';return;}
-      win.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${type==='temporal'?'Análisis temporal':'Análisis predictivo'} — Observatorio</title><style>${printCss}</style></head><body class="oa-print"><main class="obs-analysis">${root.innerHTML}</main></body></html>`);
-      win.document.close();
-      win.requestAnimationFrame(()=>win.print());
+      Portal.report({title:type==='temporal'?'Análisis temporal':'Proyecciones',source:'SIDPOL',cut:d.months.at(-1),content:root,filters:[['Delito',d.crimes[s.crime]],['Departamento',d.departments[s.department]],['Periodo observado',`${selectedMonths[0]} al ${selectedMonths.at(-1)}`],['Cobertura','Meses completos'],...(type==='temporal'?[]:[['Horizonte',`${s.horizon} meses`],['Intervalo',`${s.coverage}% nominal`]])]});
     });
+    Portal.formatDates(root);
   }
   return async function(type) {
     const root=document.getElementById(type==='temporal'?'observatorioTemporal':'observatorioPredictivo');if(!root)return;
