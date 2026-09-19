@@ -1,0 +1,94 @@
+.mobile-filter-toggle,.mobile-nav-label,.mobile-chart-value{display:none}
+@media screen and (max-width:760px){
+ html{scroll-padding-bottom:100px}
+ body{overflow-x:clip}
+ body .sidebar{padding:14px 16px!important;border:0!important;border-bottom:1px solid var(--portal-line)!important;z-index:2000}
+ body .brand{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:10px;align-items:center;border:0;margin:0!important}
+ body .brand-logos{display:block!important;grid-row:1/3;grid-column:1;min-height:0!important;margin:0!important;padding:0!important}
+ body .brand-logos img,body.sidebar-collapsed .brand-logos img:first-child{width:32px!important;height:38px!important;object-fit:contain}
+ body .brand-logos img+img{display:none}
+ body .brand h2{display:block!important;font-size:16px!important;line-height:1.3!important;margin:0!important}
+ body .brand-kicker{display:block!important;font-size:10px!important;line-height:1.4;margin:0 0 3px!important;grid-column:2;grid-row:1}
+ body .brand h2{grid-column:2;grid-row:2}
+ body .sidebar nav{position:fixed;inset:auto 0 0;z-index:1200;background:#101619;border-top:1px solid #46535a;padding:6px max(3px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom));box-shadow:0 -8px 24px #0003}
+ body .sidebar .menu{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;margin:0!important;padding:0!important}
+ body .sidebar .menu li{height:56px;min-height:48px;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:5px!important;padding:4px 0!important;border:0!important;border-radius:5px!important;line-height:1.2;position:relative}
+ body .sidebar .menu li>span:not(.mobile-nav-label){display:none!important}
+ body .sidebar .menu li .mobile-nav-label{display:block!important;font-size:10px!important;font-weight:500;white-space:nowrap}
+ body .sidebar .menu li i{font-size:18px;line-height:20px}
+ body .sidebar .menu li.active{color:#f6d876;background:#292a21!important}
+ body .sidebar .menu li.active:before{content:'';position:absolute;top:0;width:18px;height:2px;background:#edc859}
+ body .main-content,body.sidebar-collapsed .main-content{padding:0 16px calc(94px + env(safe-area-inset-bottom))!important;width:100%!important;margin:0!important}
+ body .command-bar{display:none!important}
+ body .source-strip{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px 12px;padding:16px 0;margin:0 0 8px}
+ .source-strip label{font-size:10px!important;max-width:75px;line-height:1.5}
+ .source-strip small{grid-column:1/-1;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+ body :is(.main-content,#dgisWorkspace,#productionPortal) :is(input,select){font-size:16px!important;min-height:46px;width:100%;box-sizing:border-box}
+ body :is(.main-content,#dgisWorkspace,#productionPortal) button{min-height:44px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+ .sidebar .menu li{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+ body :is(.hero,.dgis-heading){padding:18px 0!important}
+ .main-content h1{overflow-wrap:break-word;max-width:100%;margin:4px 0 10px!important}
+ .hero .subtitle,.dgis-heading p{font-size:13px!important;line-height:1.6!important;margin:8px 0!important}
+ .hero-status{display:flex;align-items:flex-start;gap:7px;line-height:1.5}
+ .hero-status .status-dot{flex-shrink:0;margin-top:5px}
+ .privacy-note,.public-data-notice{font-size:11px!important;line-height:1.6!important}
+ body :is(.filters-shell,.dgis-filters,.oa-controls,.compare-controls,#productionPortal .production-controls).mobile-filter-host{padding:12px!important;margin:8px 0 20px!important;border:1px solid #39474f!important;border-radius:6px!important;background:#1b2226!important;gap:14px!important}
+ .mobile-filter-toggle{display:flex!important;grid-column:1/-1;align-items:center;gap:10px;width:100%;border:0!important;background:transparent!important;color:#edc859!important;text-align:left;padding:0 2px!important;cursor:pointer}
+ .mobile-filter-toggle .mobile-filter-count{margin-left:auto;font-size:12px;color:#b8c7cf}
+ .mobile-filter-toggle .mobile-filter-chevron{font-size:12px;transition:transform .2s}
+ .mobile-filter-toggle[aria-expanded="true"] .mobile-filter-chevron{transform:rotate(180deg)}
+ .mobile-filter-host.mobile-filters-closed>:not(.mobile-filter-toggle){display:none!important}
+ .mobile-filter-host label{min-width:0!important;gap:7px!important;display:flex;flex-direction:column}
+ body .filters-panel,body .dgis-filters,body .oa-controls,body .compare-controls,body #productionPortal .production-controls{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}
+ .mobile-filter-host label:has(select){grid-column:1/-1}
+ .filters-heading{gap:8px;flex-wrap:wrap}
+ .filters-heading>div{display:none}
+ .filters-heading{justify-content:flex-end!important}
+ .dgis-compare-controls{gap:12px;flex-wrap:wrap}
+ .dgis-compare-controls label{flex:1;min-width:120px!important}
+ .year-compare-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+ .year-compare-toolbar label:has(select[id*="Delito"]){grid-column:1/-1}
+ .selection-total{padding:16px;margin:18px 0 24px;gap:9px}
+ .selection-total strong{font-size:30px!important;line-height:1.2}
+ .selection-total p{font-size:12px!important;line-height:1.6!important}
+ .selection-pair{gap:0}
+ .selection-pair .selection-total{margin:0 0 12px}
+ body .cards,body .dgis-kpis,body .oa-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;padding:0!important}
+ body :is(.card,.dgis-kpis article,.oa-kpis>div){padding:14px 10px!important;border-bottom:1px solid #354047!important}
+ body :is(.card h3,.dgis-kpis strong,.oa-kpis strong){font-size:23px!important;overflow-wrap:anywhere}
+ body :is(.dgis-grid,.portal-two,.oa-main,.oa-two,.year-compare-layout,.year-compare-grid){grid-template-columns:minmax(0,1fr)!important;gap:24px!important}
+ body .year-compare-summary{grid-template-columns:1fr!important}
+ body :is(.panel-header,.section-header,.dgis-compare-heading){gap:12px;flex-wrap:wrap}
+ .portal-section-head{margin:22px 0 14px;gap:12px}
+ body .analytics-panel,body .oa-main>section,body .oa-main>aside,body .oa-two>section,body .oa-full{padding:20px 0!important}
+ .oa-context,.oa-footer{padding:14px 0!important;line-height:1.6}
+ body .oa-bars .oa-bar{grid-template-columns:minmax(85px,1fr) minmax(50px,1fr) 64px;font-size:12px}
+ .portal-bar{grid-template-columns:minmax(95px,1fr) minmax(40px,1fr) auto;gap:10px;font-size:12px;margin:20px 0}
+ .portal-bar span{overflow-wrap:anywhere}
+ #productionPortal .production-numbers{gap:12px;margin:22px 0}
+ #productionPortal .production-numbers>div{padding:8px 10px}
+ #productionPortal .production-numbers strong{font-size:23px;overflow-wrap:anywhere}
+ .mobile-scroll,.oa-scroll,.portal-table-wrap,.table-wrap,.risk-table-wrap{display:block;max-width:100%;width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#70838d #1b2429;border-radius:3px}
+ .mobile-scroll{position:relative;padding-bottom:12px;margin:8px 0}
+ body .mobile-scroll>svg,body #dgisResults .mobile-scroll>svg{display:block;width:var(--mobile-chart-width,720px)!important;min-width:var(--mobile-chart-width,720px)!important;height:auto!important;max-height:none!important}
+ .mobile-scroll>table,body #dgisWorkspace .mobile-scroll>table{min-width:560px!important;table-layout:auto}
+ body #productionPortal table{min-width:650px}
+ .mobile-scroll:focus-visible,.oa-scroll:focus-visible{outline:2px solid #edc859;outline-offset:2px}
+ .mobile-chart-value:not([hidden]){display:block;position:sticky;left:0;max-width:calc(100% - 16px);width:max-content;margin:8px 0 0;padding:8px;color:#ecf0f1;background:#26343b;border-left:2px solid #edc859;font-size:12px}
+ .mobile-scroll>.portal-month-bars{width:660px;min-width:660px}
+ body .dgis-map-grid #dgisMap,body #mapa,body #mapaCalor{height:500px!important;max-height:70svh;min-height:360px}
+ .leaflet-control-zoom a{width:40px!important;height:40px!important;line-height:40px!important}
+ .leaflet-control-attribution{font-size:9px!important;max-width:95%;white-space:normal}
+ .dgis-map-nav{gap:8px}
+ .dgis-map-legend{line-height:1.4}
+ .portal-note,.portal-warning{font-size:12px;line-height:1.65;overflow-wrap:anywhere}
+}
+@media screen and (max-width:359px){
+ body .main-content,body.sidebar-collapsed .main-content{padding-left:12px!important;padding-right:12px!important}
+ body .sidebar{padding:12px!important}
+ body .sidebar .menu li .mobile-nav-label{font-size:9px!important}
+ body .mobile-filter-host label:has(input[type="date"]){grid-column:1/-1}
+ body .year-compare-toolbar{grid-template-columns:1fr!important}
+}
+@media(prefers-reduced-motion:reduce){.mobile-filter-chevron{transition:none!important}}
+@media print{.mobile-filter-toggle,.mobile-nav-label,.mobile-chart-value{display:none!important}.mobile-scroll{overflow:visible!important}.mobile-scroll>svg{min-width:0!important;width:100%!important}}
