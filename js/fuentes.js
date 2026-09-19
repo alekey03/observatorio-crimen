@@ -94,9 +94,12 @@
         const mine=++revision, state=filters(), output=document.getElementById('dgisResults');
         if(state.from && state.to && state.from>state.to) { output.innerHTML='<p role="alert">Desde no puede ser posterior a Hasta.</p>'; return; }
         output.setAttribute('aria-busy','true');
+        output.querySelectorAll('.selection-total').forEach(el=>el.remove());
+        let selectedTotal='';
         try {
             const {result}=await request({type:'query',filters:state});
             if(mine!==revision) return;
+            selectedTotal=Portal.selectionTotal(`Total de denuncias · ${state.crime || 'Todos los delitos'}`,result.total,`${state.from||metadata.min_date} al ${state.to||metadata.max_date} · ${[state.department==='@LIMA'?'LIMA (departamento completo)':state.department,state.province,state.district].filter(Boolean).join(' / ')||'Nacional'} · ${config.label}`);
             const camera=map && view==='mapa-delito' ? {center:map.getCenter(),zoom:map.getZoom()} : null;
             disposeMap();
             const totalLabel=state.crime || 'Denuncias unicas';
@@ -126,7 +129,7 @@
                 output.innerHTML=intro+`<section class="dgis-band"><h2>Evolucion mensual de denuncias</h2>${chart(months)}</section><div class="dgis-grid"><section><h2>Distribucion por delito</h2>${bars(result.crimes)}</section><section><h2>Concentracion territorial</h2>${bars(result.territories)}</section></div>`+note;
             }
         } catch(error) { if(mine===revision) output.innerHTML=`<p role="alert">${esc(error.message)}</p>`; }
-        finally { if(mine===revision) output.removeAttribute('aria-busy'); }
+        finally { if(mine===revision) {if(selectedTotal && view!=='comparador-delitos') output.insertAdjacentHTML('afterbegin',selectedTotal);output.removeAttribute('aria-busy');} }
     }
     async function renderMap(state,mine,camera) {
         const level=state.province ? 'district' : state.department ? 'province' : 'department';
@@ -269,6 +272,7 @@
         const first=Number(start.slice(0,2)), last=Number(end.slice(0,2));
         document.getElementById('dgisResults').innerHTML=`<div class="dgis-compare-heading"><h2>${esc(state.crime || 'Todas las denuncias')} · ${base} / ${target}</h2><button id="dgisPrint" title="Imprimir o guardar PDF"><i class="fas fa-print"></i> PDF</button></div><p>Periodo comparable: ${start.split('-').reverse().join('/')} al ${end.split('-').reverse().join('/')}, en ambos anos.</p><div class="dgis-grid"><section><table><thead><tr><th>Mes</th><th>${base}</th><th>${target}</th><th>Variacion</th></tr></thead><tbody>${Array.from({length:last-first+1},(_,i)=>first+i).map(month=>{const mm=String(month).padStart(2,'0'),n=a.result.months[`${base}-${mm}`]||0,m=b.result.months[`${target}-${mm}`]||0;return `<tr><th>${mm}</th><td>${fmt(n)}</td><td>${fmt(m)}</td><td style="color:${style(m-n)}">${sign(m-n)}${fmt(m-n)}</td></tr>`;}).join('')}<tr class="dgis-total"><th>Total unico</th><td>${fmt(a.result.total)}</td><td>${fmt(b.result.total)}</td><td style="color:${style(delta)}">${sign(delta)}${fmt(delta)}</td></tr></tbody></table></section><section><h2>Denuncias por ano</h2><svg viewBox="0 0 550 340" role="img" aria-label="Comparacion de denuncias"><line x1="40" x2="510" y1="280" y2="280" stroke="#46606c"/>${[a.result.total,b.result.total].map((n,i)=>`<rect x="${100+i*230}" y="${280-n/max*200}" width="110" height="${n/max*200}" fill="${colors[i]}" rx="3"/><text x="${155+i*230}" y="${268-n/max*200}" text-anchor="middle">${fmt(n)}</text><text x="${155+i*230}" y="308" text-anchor="middle">${i?target:base}</text>`).join('')}</svg><p class="dgis-delta" style="color:${style(delta)}">${sign(delta)}${fmt(delta)} <small>(${pct===null?'Sin base porcentual':`${sign(pct)}${pct.toFixed(1)}%`})</small></p></section></div><p class="dgis-note">Fuente: ${config.label} · Fecha de registro · Corte ${metadata.max_date}. Conteo distinto; el total puede diferir de la suma mensual por denuncias con varias fechas.</p>`;
         document.getElementById('dgisPrint').onclick=()=>window.print();
+        document.getElementById('dgisResults').insertAdjacentHTML('afterbegin',`<div class="selection-pair">${Portal.selectionTotal(`Total ${base} · ${state.crime||'Todos los delitos'}`,a.result.total,`${safeDate(base,start)} al ${safeDate(base,end)} · ${state.district||state.province||state.department||'Nacional'} · ${config.label}`)}${Portal.selectionTotal(`Total ${target} · ${state.crime||'Todos los delitos'}`,b.result.total,`${safeDate(target,start)} al ${safeDate(target,end)} · ${state.district||state.province||state.department||'Nacional'} · ${config.label}`)}</div>`);
         const table=document.querySelector('#dgisResults table');
         table.querySelector('thead tr').insertAdjacentHTML('beforeend','<th>%</th>');
         const bodyRows=table.querySelectorAll('tbody tr');
@@ -308,6 +312,7 @@
             if(geography.some(row=>['LIMA METROPOLITANA','REGION LIMA'].includes(normalize(row[0])))) {
                 document.getElementById('dgisDepartment').add(new Option('LIMA (departamento completo)','@LIMA'),1);
             }
+            root.querySelector('.dgis-heading p').textContent=`Fecha de registro · Corte ${metadata.max_date}`;
             const priority=['EXTORSION','SECUESTRO','ROBO','HURTO','ASALTO Y ROBO DE VEHICULOS'];
             const options=list=>list.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
             const prioritized=priority.map(name=>crimes.find(crime=>normalize(crime)===name)).filter(Boolean);

@@ -877,6 +877,9 @@ function actualizarIndicadores(){
     const robos = totalPorCoincidencia(datosModalidades, "ROBO");
 
     indicadores.total.textContent = formatear(total);
+    let selectedTotal=document.getElementById('sidpolSelectedTotal');
+    if(!selectedTotal){selectedTotal=document.createElement('div');selectedTotal.id='sidpolSelectedTotal';document.querySelector('.filters-shell').after(selectedTotal);}
+    selectedTotal.innerHTML=Portal.selectionTotal(`Total de denuncias · ${filtros.delito.value||'Todos los delitos'}`,total,`${filtros.fechaDesde?.value||'Inicio disponible'} al ${filtros.fechaHasta?.value||'Último corte'} · ${[filtros.departamento.value,filtros.provincia.value,filtros.distrito.value].filter(Boolean).join(' / ')||'Nacional'} · SIDPOL`);
     indicadores.extorsiones.textContent = formatear(extorsiones);
     indicadores.homicidios.textContent = formatear(homicidios);
     indicadores.robos.textContent = formatear(robos);
@@ -1825,7 +1828,7 @@ async function renderComparadorBianual(){
 
     comparadorResumen.innerHTML = `
         <div class="year-compare-card">
-            <span>${base.anio}</span>
+            <span>Total ${base.anio}</span>
             <strong>${formatear(base.total)}</strong>
             <small>${comparadorDelito.value} | ${periodo.texto}${periodoAjustado ? " | cierre disponible" : ""}</small>
         </div>
@@ -1835,7 +1838,7 @@ async function renderComparadorBianual(){
             <small>${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}% vs ${base.anio}</small>
         </div>
         <div class="year-compare-card">
-            <span>${comparado.anio}</span>
+            <span>Total ${comparado.anio}</span>
             <strong>${formatear(comparado.total)}</strong>
             <small>${contextoComparadorBianual()} | ${periodo.texto}${periodoAjustado ? " | cierre disponible" : ""}</small>
         </div>
