@@ -1,0 +1,75 @@
+/* Theme overrides are screen-only: exported reports retain their own styles. */
+.theme-toolbar{display:flex;justify-content:flex-end;padding:12px 0 0}
+.theme-switch{display:flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--portal-line,#354047);border-radius:8px;background:var(--panel,#182028)}
+.theme-label{font-size:12px;color:var(--portal-muted,#a7b3ba);padding:0 8px}
+.theme-switch button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 12px;border:1px solid transparent;border-radius:5px;background:transparent;color:var(--portal-muted,#a7b3ba);font:inherit;font-size:13px;cursor:pointer}
+.theme-switch button[aria-pressed="true"]{background:#edc859;color:#182028;font-weight:600}
+.theme-switch button:focus-visible{outline:2px solid var(--portal-gold,#edc859);outline-offset:2px}
+@media screen {
+html[data-theme="light"]{
+ --portal-bg:#f3f6f8;--portal-ink:#1b303b;--portal-muted:#506572;--portal-line:#cdd8df;--portal-gold:#825e08;--portal-teal:#087e70;
+ --bg:#f3f6f8;--panel:#fff;--panel-2:#eaf0f4;--line:#cdd8df;--text:#1b303b;--muted:#506572;--gold:#825e08;--blue:#1766af;--green:#087653;--red:#b52d40;--orange:#99530a;--shadow:0 8px 24px #2437460d;
+ color-scheme:light;
+}
+html[data-theme="light"] body{background:#f3f6f8!important;color:#1b303b!important}
+html[data-theme="light"] :is(.sidebar,.sidebar nav){background:#fff!important;border-color:#cdd8df!important;box-shadow:0 3px 16px #2437460a}
+html[data-theme="light"] :is(.menu li,.menu li i,.brand h2,.brand-kicker,.brand-unit,.sidebar-footer,.command-status){color:#415764!important}
+html[data-theme="light"] .menu li.active{background:#f5ecd1!important;color:#624908!important;border-left-color:#98741a!important}
+html[data-theme="light"] .menu li.active i{color:#825e08!important}
+html[data-theme="light"] .menu li:hover{background:#eaf0f4!important}
+html[data-theme="light"] :is(#dgisWorkspace,.obs-analysis,.production-dashboard,#productionPortal){color:#1b303b!important;background:transparent!important}
+html[data-theme="light"] :is(h1,h2,h3,h4,.card h3,.dgis-kpis strong,.oa-kpis strong,.selection-total strong,.production-numbers strong){color:#1b303b!important}
+html[data-theme="light"] :is(.subtitle,.hero-status,.privacy-note,.public-data-notice,.source-strip small,.dgis-heading p,.dgis-note,.dgis-empty,.obs-analysis p,.oa-note,.oa-context,.oa-context span,.oa-legend,.oa-kpis span,.oa-kpis small,.oa-footer,.portal-note,.selection-total p,.production-numbers small,.dgis-map-nav span,.dgis-map-legend,.mobile-filter-count){color:#506572!important}
+html[data-theme="light"] :is(.eyebrow,.command-label,.source-strip label,.dgis-heading>span,.selection-total>div>span,.portal-tag,.obs-analysis summary,.oa-header small,.oa-section-title small,.oa-main aside b){color:#825e08!important}
+html[data-theme="light"] body :is(.filters-shell,.dgis-filters,.oa-controls,.compare-controls,.mobile-filter-host,.selection-total){background:#fff!important;border-color:#cdd8df!important}
+html[data-theme="light"] body :is(input,select,textarea){background:#fff!important;color:#1b303b!important;border-color:#95a9b6!important;color-scheme:light}
+html[data-theme="light"] :is(.filters-panel label,.dgis-filters label,.dgis-compare-controls label,.oa-controls label,#productionPortal label,.filters-heading){color:#415764!important}
+html[data-theme="light"] body :is(.button-secondary,.portal-report-button,.portal-back,.portal-modes button,.obs-analysis button,.dgis-filters button,.dgis-compare-heading button,.dgis-map-nav button,#productionPortal button,.sidebar-toggle){background:#fff!important;color:#294654!important;border-color:#95a9b6!important}
+html[data-theme="light"] .portal-modes button[aria-pressed="true"]{background:#f5ecd1!important;color:#624908!important;border-color:#98741a!important}
+html[data-theme="light"] .mobile-filter-toggle{color:#825e08!important}
+html[data-theme="light"] :is(table,.obs-analysis table){background:transparent!important;color:#1b303b!important}
+html[data-theme="light"] :is(thead,thead th,.dgis-total){background:#e6edf2!important;color:#294654!important}
+html[data-theme="light"] :is(td,th,.obs-analysis td,.obs-analysis th){border-color:#cdd8df!important}
+html[data-theme="light"] :is(.obs-analysis td,.risk-table td){color:#294654}
+html[data-theme="light"] tbody tr:hover{background:#eaf0f4}
+html[data-theme="light"] :is(.portal-positive,.oa-good,.oa-selected){color:#087653!important}
+html[data-theme="light"] :is(.portal-negative,.oa-bad,.oa-validation){color:#b52d40!important}
+html[data-theme="light"] :is(.portal-warning,.source-coverage){color:#72520a!important}
+html[data-theme="light"] .portal-warning{background:#fff5d9;border-color:#98741a}
+html[data-theme="light"] :is(.production-updated,.production-updated time){color:#087653!important}
+html[data-theme="light"] :is(.main-content svg text){fill:#415764!important}
+html[data-theme="light"] .portal-grid{stroke:#cdd8df}
+html[data-theme="light"] .portal-chart [stroke="#f1ca58"]{stroke:#98741a}
+html[data-theme="light"] .portal-chart circle[fill="#f1ca58"]{fill:#98741a}
+html[data-theme="light"] :is(#mapa,#dgisMap){background:#e6edf2!important;border-color:#cdd8df!important}
+html[data-theme="light"] .map-hover-detail{background:#fff!important;color:#1b303b!important;border-color:#95a9b6!important}
+html[data-theme="light"] .map-hover-detail strong{color:#825e08!important}
+html[data-theme="light"] .map-hover-detail small{color:#506572!important}
+html[data-theme="light"] .theme-switch button[aria-pressed="true"]{background:#f5ecd1;color:#624908;border-color:#c8ac60}
+html[data-theme="light"] .theme-switch button:not([aria-pressed="true"]):hover{background:#eaf0f4}
+html[data-theme="light"] body :is(button,select,input,[role="button"]):focus-visible{outline-color:#1766af}
+}
+@media screen and (max-width:760px){
+ .theme-toolbar{padding:10px 0 0}
+ .theme-switch button{min-height:44px;padding:8px 12px}
+ .theme-label{font-size:11px}
+}
+@media print{.theme-toolbar{display:none!important}}
+
+@media screen {
+html[data-theme="light"] body :is(.filters-shell,.dgis-filters,.oa-controls,.compare-controls,#productionPortal .production-controls).mobile-filter-host{background:#fff!important;border-color:#cdd8df!important}
+html[data-theme="light"] body :is(#productionPortal,#dgisWorkspace,.obs-analysis) th{background:#e6edf2!important;color:#294654!important}
+html[data-theme="light"] :is(.dgis-track,.ov-track,.ov-share){background:#dce5eb}
+html[data-theme="light"] :is(.odc-overview,.compare-card,.comparison-card){background:transparent!important;color:#1b303b!important}
+html[data-theme="light"] :is(.ov-context,.ov-kpis span,.ov-kpis small,.ov-eyebrow,.ov-period,.ov-legend span,.ov-note,.ov-reading p,.ov-reading small,.ov-bars>div>span,.odc-overview td){color:#506572!important}
+}
+
+@media screen {
+html[data-theme="light"] #dgisWorkspace [style*="color:#39c8b8"]{color:#087653!important}
+html[data-theme="light"] #dgisWorkspace [style*="color:#f4777f"]{color:#b52d40!important}
+html[data-theme="light"] #dgisWorkspace [style*="color:#d4e1e9"]{color:#506572!important}
+html[data-theme="light"] .portal-chart [stroke="#43c7b3"],
+html[data-theme="light"] .portal-chart [stroke="#39c8b8"]{stroke:#087e70}
+html[data-theme="light"] .portal-chart circle[fill="#43c7b3"],
+html[data-theme="light"] .portal-chart circle[fill="#39c8b8"]{fill:#087e70}
+}
