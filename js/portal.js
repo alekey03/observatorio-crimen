@@ -2,7 +2,7 @@
 window.Portal = (() => {
   const esc = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt = n => Number(n).toLocaleString('es-PE',{maximumFractionDigits:2});
-  const titles = {inicio:['Panorama del delito','Resumen ejecutivo'], 'mapa-delito':['Distribución territorial','Participación e intensidad'], 'mapa-calor':['Distribución territorial','Intensidad geográfica'], 'comparador-delitos':['Comparar delitos entre años','Mismo periodo, misma fuente'], 'analisis-temporal':['Cómo cambia el delito en el tiempo','Patrones y variaciones observadas'], 'analisis-predictivo':['Escenarios de corto plazo','Estimaciones sujetas a incertidumbre'], 'produccion-policial':['Resultados de la actividad policial','Producción por fecha y dependencia']};
+  const titles = {inicio:['Panorama del delito','Resumen ejecutivo'], 'mapa-delito':['Distribución territorial','Participación e intensidad'], 'mapa-calor':['Distribución territorial','Intensidad geográfica'], 'comparador-delitos':['Comparativo anual','Cierre anual y periodos equivalentes'], 'analisis-temporal':['Cómo cambia el delito en el tiempo','Patrones y variaciones observadas'], 'analisis-predictivo':['Escenarios de corto plazo','Estimaciones sujetas a incertidumbre'], 'produccion-policial':['Resultados de la actividad policial','Producción por fecha y dependencia']};
 
   const sourceCutoffs = new Map();
   function longDate(value) {
@@ -113,7 +113,7 @@ window.Portal = (() => {
     formatDates(clone);
     const sheet=new URL('css/report.css?v=20260918-finish-6',location.href).href;
     const generated=new Date().toLocaleString('es-PE');
-    win.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title><link rel="stylesheet" href="${esc(sheet)}"></head><body><button class="print-action">Imprimir / Guardar PDF</button><header><small>OBSERVATORIO DEL CRIMEN · COMOPPOL PNP</small><h1>${esc(title)}</h1><p>Fuente: ${esc(source)} · Datos al ${esc(dates(cut))}</p><dl>${filters.map(([name,value])=>`<div><dt>${esc(name)}</dt><dd>${esc(dates(value))}</dd></div>`).join('')}</dl></header><main>${clone.innerHTML}</main><footer>Fuente: ${esc(source)} · Corte: ${esc(dates(cut))} · Informe generado: ${esc(generated)}. Los periodos parciales y los datos no disponibles se identifican en el contenido.</footer></body></html>`);
+    win.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(title)}</title><link rel="stylesheet" href="${esc(sheet)}"><link rel="stylesheet" href="${esc(new URL('css/annual.css?v=20260920-annual-2',location.href).href)}"></head><body><button class="print-action">Imprimir / Guardar PDF</button><header><small>OBSERVATORIO DEL CRIMEN · COMOPPOL PNP</small><h1>${esc(title)}</h1><p>Fuente: ${esc(source)} · Datos al ${esc(dates(cut))}</p><dl>${filters.map(([name,value])=>`<div><dt>${esc(name)}</dt><dd>${esc(dates(value))}</dd></div>`).join('')}</dl></header><main>${clone.innerHTML}</main><footer>Fuente: ${esc(source)} · Corte: ${esc(dates(cut))} · Informe generado: ${esc(generated)}. Los periodos parciales y los datos no disponibles se identifican en el contenido.</footer></body></html>`);
     win.document.close();win.document.querySelector('.print-action').onclick=()=>win.print();
     win.addEventListener('load',()=>{win.document.fonts.ready.then(()=>{win.__reportReady=true;win.print();});},{once:true});
     return win;

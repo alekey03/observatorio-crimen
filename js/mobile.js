@@ -3,7 +3,7 @@
  const media=matchMedia('(max-width:760px)');
  const main=document.querySelector('.main-content');
  if(!main)return;
- const labels=['Inicio','Mapa','Comparar','Temporal','Proyección','Producción'];
+ const labels=['Inicio','Mapa','Anual','Temporal','Proyección','Producción'];
  document.querySelectorAll('.menu li[data-view]').forEach((item,i)=>{
   item.setAttribute('aria-label',item.textContent.trim());
   const label=document.createElement('span');label.className='mobile-nav-label';label.textContent=labels[i];label.setAttribute('aria-hidden','true');item.append(label);

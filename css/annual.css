@@ -1,0 +1,70 @@
+
+.annual-comparison{--ac-current:#5ba8ff;--ac-base:#dfb961;--ac-full:#8e9eac;--ac-panel:var(--panel,#182028);--ac-line:var(--line,#32434b);--ac-muted:var(--muted,#a8bbc7);color:var(--text,#e9f1f5);min-width:0;margin:24px 0}
+.ac-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;border-top:1px solid var(--ac-line);padding:30px 0 22px}
+.ac-eyebrow{font-size:11px!important;letter-spacing:2px;font-weight:750;color:var(--ac-base);margin:0 0 10px}
+.ac-heading h2{font-size:clamp(24px,3vw,36px);letter-spacing:-1px;margin:0 0 10px}
+.ac-heading p:not(.ac-eyebrow),.ac-note{color:var(--ac-muted);font-size:13px;line-height:1.6;margin:8px 0}
+.ac-button{background:transparent;color:var(--text,#e9f1f5);border:1px solid var(--ac-line);border-radius:9px;padding:12px 16px;font:inherit;cursor:pointer;white-space:nowrap}
+.ac-button:hover{border-color:var(--ac-current)}
+.ac-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;padding:20px;background:var(--ac-panel);border:1px solid var(--ac-line);border-radius:14px}
+.ac-controls label{display:grid;gap:8px;font-size:12px;color:var(--ac-muted)}
+.ac-controls :is(select,input){min-width:0;width:100%;height:46px;border:1px solid var(--ac-line);border-radius:7px;padding:8px 12px;color:var(--text,#e9f1f5);background:var(--bg,#101619);font:inherit;font-size:14px;color-scheme:dark}
+.ac-context{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.ac-context span{padding:6px 10px;background:var(--ac-panel);border:1px solid var(--ac-line);border-radius:6px;font-size:12px}
+.ac-kpis{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:16px}
+.ac-kpi{position:relative;padding:25px;border:1px solid var(--ac-line);border-radius:14px;background:var(--ac-panel);display:flex;flex-direction:column;gap:12px}
+.ac-kpi-current{border-top:3px solid var(--ac-current);background:linear-gradient(125deg,#5ba8ff14,transparent),var(--ac-panel)}
+.ac-kpi span{font-size:13px;font-weight:650;color:var(--ac-muted)}
+.ac-kpi strong{font-size:clamp(28px,3.2vw,43px);letter-spacing:-1.5px;line-height:1.1;font-variant-numeric:tabular-nums}
+.ac-kpi small{font-size:11px;color:var(--ac-muted);line-height:1.5}
+.ac-insight{display:flex;align-items:center;gap:22px;margin:18px 0 28px;padding:19px 22px;border-left:3px solid var(--ac-current);background:#5ba8ff0b;border-radius:0 10px 10px 0}
+.ac-insight>strong{font-size:29px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ac-insight b{font-size:14px;font-weight:600}.ac-insight p{margin:6px 0 0;font-size:12px;color:var(--ac-muted)}
+.ac-chart-header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:28px 0 18px}
+.annual-comparison h3{font-size:18px;margin:0;font-weight:650}
+.ac-switch{display:flex;gap:4px;border:1px solid var(--ac-line);border-radius:9px;padding:4px;background:var(--ac-panel)}
+.ac-switch button{border:0;border-radius:6px;background:transparent;color:var(--ac-muted);font:inherit;font-size:13px;padding:10px 14px;cursor:pointer}
+.ac-switch button[aria-pressed=true]{background:#5ba8ff24;color:var(--ac-current);font-weight:700}
+.ac-panels{display:grid;grid-template-columns:1fr;gap:20px}
+.ac-panel{padding:24px;border:1px solid var(--ac-line);border-radius:14px;background:var(--ac-panel);min-width:0}
+.ac-panel svg{display:block;width:100%;max-height:330px;overflow:visible}
+.ac-panel svg text{fill:var(--ac-muted);font-family:inherit;font-size:12px}
+.ac-grid{stroke:var(--ac-line);stroke-width:1;stroke-dasharray:3 5}
+.ac-current{fill:var(--ac-current);stroke:var(--ac-current);background:var(--ac-current)}
+.ac-base{fill:var(--ac-base);stroke:var(--ac-base);background:var(--ac-base)}
+.ac-full{background:var(--ac-full)}
+.ac-legend{display:flex;flex-wrap:wrap;gap:18px;margin:14px 0;color:var(--ac-muted);font-size:12px}
+.ac-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px}
+.ac-table-wrap{overflow:auto;border:1px solid var(--ac-line);border-radius:12px;background:var(--ac-panel)}
+.annual-comparison table{width:100%;border-collapse:collapse;font-size:13px;text-align:right}
+.annual-comparison table caption{text-align:left;padding:15px;color:var(--ac-muted);font-size:12px}
+.annual-comparison :is(th,td){padding:14px 16px!important;border-bottom:1px solid var(--ac-line);font-variant-numeric:tabular-nums;white-space:nowrap}
+.annual-comparison thead th{background:#ffffff04;font-weight:650}
+.annual-comparison th:first-child{text-align:left;white-space:normal;min-width:150px}
+.annual-comparison th small{display:block;font-weight:400;font-size:11px;color:var(--ac-muted);margin-top:5px}
+.ac-total{font-weight:750;background:#5ba8ff0a}
+.ac-emphasis{font-weight:750;color:var(--ac-current)}
+.ac-change{font-variant-numeric:tabular-nums}.ac-down{color:#53c5ac}.ac-up{color:#f29796}
+.ac-notice{background:#dfb96112;border:1px solid #dfb96144;padding:16px;border-radius:9px;font-size:13px;line-height:1.6}
+.ac-footer{margin-top:20px;padding:16px 0;border-top:1px solid var(--ac-line);color:var(--ac-muted);font-size:11px;line-height:1.7}
+.ac-total-bars{display:grid;gap:22px;margin:24px 0}
+.ac-total-bars>div{display:grid;grid-template-columns:175px 1fr 90px;align-items:center;gap:18px;font-size:13px}
+.ac-total-bars strong{text-align:right;font-variant-numeric:tabular-nums}.ac-track{background:#8e9eac16;border-radius:4px;height:12px}
+.ac-track i{height:100%;display:block;border-radius:4px}
+.ac-loading{padding:50px;text-align:center;color:var(--ac-muted)}
+.ac-month-detail{margin-top:20px}.ac-month-detail summary{cursor:pointer;padding:12px 0;font-size:13px}
+.annual-comparison :is(button,input,select,rect,circle):focus-visible{outline:2px solid var(--ac-current);outline-offset:3px}
+html[data-theme=light] .annual-comparison{--ac-current:#216bbe;--ac-base:#946d15;--ac-full:#788a98}
+html[data-theme=light] .ac-down{color:#087653}html[data-theme=light] .ac-up{color:#b52d40}
+@media(min-width:1400px){.ac-panels:has(>section:nth-child(2)){grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.ac-heading,.ac-chart-header{align-items:flex-start;flex-direction:column;gap:12px}.ac-controls{grid-template-columns:1fr 1fr;padding:14px}.ac-kpis{grid-template-columns:1fr}.ac-kpi{padding:20px}.ac-kpi strong{font-size:36px}.ac-insight{align-items:flex-start;gap:12px;flex-direction:column}.ac-panel{padding:16px 10px}.ac-switch{width:100%}.ac-switch button{flex:1;font-size:12px}.ac-total-bars>div{grid-template-columns:1fr 80px;gap:8px}.ac-total-bars>div>span{grid-column:1/-1}.ac-heading h2{font-size:26px}.ac-panel svg{min-width:560px}.ac-panel{overflow:auto}.annual-comparison th:first-child{min-width:130px}.ac-loading{padding:30px 10px}}
+@media print{.ac-current{fill:#216bbe;stroke:#216bbe}.ac-base{fill:#946d15;stroke:#946d15}.ac-grid{stroke:#ccc}.ac-kpis{display:flex}.ac-kpi{flex:1}.ac-kpi strong{font-size:25px}.ac-panel svg{width:100%}.ac-controls,.ac-switch,.ac-button{display:none}}
+
+.ac-panel svg polyline{fill:none}
+
+.annual-comparison .ac-heading h2{font-size:clamp(24px,3vw,34px)!important;line-height:1.2!important}
+body[data-portal-view="comparador-delitos"] :is(.dgis-filters,.filters-panel) label:has(:is(#dgisFrom,#dgisTo,#filtroFechaDesde,#filtroFechaHasta)){display:none}
+body[data-portal-view="comparador-delitos"] .dgis-filters{grid-template-columns:repeat(4,minmax(0,1fr)) auto}
+@media(max-width:760px){body[data-portal-view="comparador-delitos"] .dgis-filters{grid-template-columns:1fr 1fr}}
+
+#dgisWorkspace .ac-heading h2,#annualSidpol .ac-heading h2,#annualHomeSidpol .ac-heading h2{font-size:clamp(24px,3vw,34px)!important}

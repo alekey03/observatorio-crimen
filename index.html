@@ -36,7 +36,7 @@
             <ul class="menu">
                 <li class="active" data-view="inicio"><i class="fas fa-house"></i><span>Inicio</span></li>
                 <li data-view="mapa-delito"><i class="fas fa-map"></i><span>Mapa del delito</span></li>
-                <li data-view="comparador-delitos"><i class="fas fa-scale-balanced"></i><span>Comparador</span></li>
+                <li data-view="comparador-delitos"><i class="fas fa-scale-balanced"></i><span>Comparativo anual</span></li>
                 <li data-view="analisis-temporal"><i class="fas fa-clock-rotate-left"></i><span>Analisis temporal</span></li>
                 <li data-view="analisis-predictivo"><i class="fas fa-arrow-trend-up"></i><span>Proyecciones</span></li>
                 <li data-view="produccion-policial"><i class="fas fa-chart-simple"></i><span>Produccion policial</span></li>
@@ -145,6 +145,7 @@
             </div>
         </section>
 
+        <section data-section="executive" class="view-section" id="annualHomeSidpol"></section>
         <section class="cards sidpol-context sidpol-summary-cards" aria-label="Indicadores principales">
             <article class="card">
                 <div class="card-icon"><i class="fas fa-file-signature"></i></div>
@@ -647,42 +648,7 @@
             </div>
         </section>
 
-        <section class="compare-dashboard view-section is-hidden" data-section="comparador-delitos" aria-label="Comparador anual de delitos">
-            <div class="compare-report" id="comparadorReporte">
-                <div class="compare-report-header">
-                    <div>
-                        <p class="eyebrow">Informe comparativo</p>
-                        <h2>Comparador anual de delitos</h2>
-                        <p>Seleccione delito, anos y periodo para generar un cuadro ejecutivo exportable.</p>
-                    </div>
-                    <div class="year-compare-actions">
-                        <button id="btnDescargarComparadorPdf" class="button-secondary" type="button"><i class="fas fa-file-pdf"></i><span>PDF</span></button>
-                        <button id="btnDescargarComparadorCsv" class="button-secondary" type="button"><i class="fas fa-file-csv"></i><span>CSV</span></button>
-                        <button id="btnDescargarComparadorPng" class="button-secondary" type="button"><i class="fas fa-image"></i><span>Imagen</span></button>
-                    </div>
-                </div>
-
-                <article class="analytics-panel year-compare-panel">
-                    <div class="year-compare-toolbar">
-                        <label><span>Año base</span><select id="comparadorAnioBase"></select></label>
-                        <label><span>Año comparado</span><select id="comparadorAnioComparado"></select></label>
-                        <label><span>Mes inicio</span><select id="comparadorMesInicio"></select></label>
-                        <label><span>Mes fin</span><select id="comparadorMesFin"></select></label>
-                        <label class="wide"><span>Delito</span><select id="comparadorDelito"></select></label>
-                    </div>
-                    <div id="comparadorResumen" class="year-compare-summary"></div>
-                    <div class="compare-output-grid">
-                        <div class="compare-table-card">
-                            <table>
-                                <thead id="comparadorTablaHead"></thead>
-                                <tbody id="comparadorTablaBody"></tbody>
-                            </table>
-                        </div>
-                        <div id="comparadorGrafico" class="year-compare-chart"></div>
-                    </div>
-                </article>
-            </div>
-        </section>
+        <section class="compare-dashboard view-section is-hidden" data-section="comparador-delitos" aria-label="Comparativo anual"><div id="annualSidpol"></div></section>
 
         <section class="predictive-dashboard view-section is-hidden" data-section="analisis-predictivo" aria-label="Analisis predictivo del delito">
             <div id="observatorioPredictivo" class="obs-analysis"></div>
@@ -1059,15 +1025,18 @@
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <link rel="stylesheet" href="css/fuentes.css?v=20260918-drilldown-3">
-    <script src="js/fuentes.js?v=20260919-source-date-2"></script>
+    <link rel="stylesheet" href="css/annual.css?v=20260920-annual-2">
+    <script src="js/annual.js?v=20260920-annual-2"></script>
+    <script src="js/annual-sidpol.js?v=20260920-annual-2"></script>
+    <script src="js/fuentes.js?v=20260920-annual-2"></script>
     <script src="js/dashboard.js?v=20260917"></script>
     <script src="js/observatorio.js?v=20260918-finish-6"></script>
     <link rel="stylesheet" href="css/portal.css?v=20260918-finish-6">
-    <script src="js/portal.js?v=20260919-source-date-1"></script>
+    <script src="js/portal.js?v=20260920-annual-2"></script>
     <script src="js/produccion.js?v=20260919-source-date-1"></script>
-    <script src="js/app.js?v=20260919-labels-1"></script>
+    <script src="js/app.js?v=20260920-annual-2"></script>
     <link rel="stylesheet" href="css/mobile.css?v=20260918-mobile-1">
-    <script src="js/mobile.js?v=20260918-mobile-1"></script>
+    <script src="js/mobile.js?v=20260920-annual-2"></script>
     <link rel="stylesheet" href="css/theme.css?v=20260919-logos-1">
 </body>
 </html>
