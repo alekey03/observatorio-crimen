@@ -2,7 +2,29 @@
 window.Portal = (() => {
   const esc = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt = n => Number(n).toLocaleString('es-PE',{maximumFractionDigits:2});
-  const titles = {inicio:['Panorama del delito','Resumen ejecutivo'], 'mapa-delito':['Distribución territorial','Participación e intensidad'], 'mapa-calor':['Distribución territorial','Intensidad geográfica'], 'comparador-delitos':['Comparativo anual','Cierre anual y periodos equivalentes'], 'analisis-temporal':['Cómo cambia el delito en el tiempo','Patrones y variaciones observadas'], 'analisis-predictivo':['Escenarios de corto plazo','Estimaciones sujetas a incertidumbre'], 'produccion-policial':['Resultados de la actividad policial','Producción por fecha y dependencia']};
+  const titles = {inicio:['Pulso del delito','Una lectura ejecutiva del periodo seleccionado'], 'mapa-delito':['Distribución territorial','Participación e intensidad'], 'mapa-calor':['Distribución territorial','Intensidad geográfica'], 'comparador-delitos':['Comparativo anual','Cierre anual y periodos equivalentes'], 'analisis-temporal':['Cómo cambia el delito en el tiempo','Patrones y variaciones observadas'], 'analisis-predictivo':['Escenarios de corto plazo','Estimaciones sujetas a incertidumbre'], 'produccion-policial':['Resultados de la actividad policial','Producción por fecha y dependencia']};
+
+
+  const journeys = [
+    ['mapa-delito','01','fa-map-location-dot','Dónde se concentra','Explora departamentos, provincias y distritos.'],
+    ['comparador-delitos','02','fa-scale-balanced','Cómo vamos frente a 2025','Contrasta el mismo periodo y el año completo.'],
+    ['analisis-temporal','03','fa-clock','Cuándo se registra','Lee la evolución y los patrones del calendario.'],
+    ['analisis-predictivo','04','fa-chart-line','Qué se puede anticipar','Consulta escenarios y márgenes de incertidumbre.'],
+    ['produccion-policial','05','fa-chart-column','Qué actividad se reporta','Revisa los indicadores de producción policial.']
+  ];
+  function executive({total,territories={},crimes={},source,range,place,crime,territoryLabel='Territorios'}) {
+    const ordered=obj=>Object.entries(obj).filter(([,n])=>Number.isFinite(n)&&n>0).sort((a,b)=>b[1]-a[1]);
+    const ts=ordered(territories),cs=ordered(crimes),top=ts[0],lead=cs[0];
+    const pct=n=>total>0?(n/total*100).toFixed(1)+'%':'—';
+    const ranking=(rows,kind)=>rows.slice(0,5).map(([name,n],i)=>`<li><span class="ex-rank">${String(i+1).padStart(2,'0')}</span><div><span>${esc(name)}</span><div class="ex-track"><i style="width:${n/rows[0][1]*100}%"></i></div></div><strong>${fmt(n)}<small>${kind==='territory'?pct(n):'registros'}</small></strong></li>`).join('')||'<li class="ex-empty">Sin registros para esta selección.</li>';
+    return `<section class="ex-home" aria-label="Resumen ejecutivo del periodo"><header class="ex-heading"><div><span class="ex-kicker">LECTURA EJECUTIVA</span><h2>El periodo, en una mirada</h2><p>${esc(range)} · ${esc(place)} · ${esc(source)}</p></div><span class="ex-source"><i class="fas fa-filter" aria-hidden="true"></i> ${esc(crime||'Todos los delitos')}</span></header>
+    <div class="ex-lead-grid"><article class="ex-focus"><span class="ex-kicker">MAYOR VOLUMEN TERRITORIAL</span><h3>${esc(top?.[0]||'Sin registros')}</h3><div class="ex-focus-number">${top?pct(top[1]):'—'}<span>del total seleccionado</span></div><p>${top?fmt(top[1])+' denuncias en este territorio.':'Prueba otro periodo o territorio.'}</p><button type="button" data-ex-view="mapa-delito">Explorar el mapa <span aria-hidden="true">↗</span></button></article>
+    <div class="ex-signals"><article><span class="ex-kicker">${crime?'DELITO SELECCIONADO':'CATEGORÍA CON MÁS REGISTROS'}</span><h3>${esc(crime||lead?.[0]||'Sin registros')}</h3><p>${crime?fmt(total):lead?fmt(lead[1]):'0'} denuncias en el periodo.</p><small>Volumen registrado; no es una tasa de riesgo.</small></article><article><span class="ex-kicker">ALCANCE DE LA SELECCIÓN</span><strong>${fmt(ts.length)}</strong><p>${esc(territoryLabel.toLowerCase())} con registros</p><small>Según la agrupación territorial publicada.</small></article></div></div>
+    <div class="ex-rankings"><section><header><span class="ex-kicker">DISTRIBUCIÓN</span><h3>${crime?'Modalidad seleccionada':'Las categorías con mayor volumen'}</h3></header><ol>${ranking(cs,'crime')}</ol></section><section><header><span class="ex-kicker">TERRITORIO DEL HECHO</span><h3>${esc(territoryLabel)} con más denuncias</h3></header><ol>${ranking(ts,'territory')}</ol></section></div>
+    <p class="ex-footnote">Lectura descriptiva de la selección actual. Los conteos por categoría o territorio pueden solaparse; no se suman para recalcular el total. La concentración no representa una tasa por habitante.</p>
+    <header class="ex-heading ex-next"><div><span class="ex-kicker">PROFUNDIZA LA LECTURA</span><h3>Una pregunta, una vista</h3></div></header><nav class="ex-journeys" aria-label="Explorar el observatorio">${journeys.map(([view,num,icon,title,copy])=>`<button type="button" data-ex-view="${view}"><span class="ex-route"><i class="fas ${icon}" aria-hidden="true"></i><small>${num}</small></span><strong>${esc(title)}</strong><span>${esc(copy)}</span><b aria-hidden="true">↗</b></button>`).join('')}</nav></section>`;
+  }
+  document.addEventListener('click',event=>{const button=event.target.closest('[data-ex-view]');if(button)activarVista(button.dataset.exView);});
 
   const sourceCutoffs = new Map();
   function longDate(value) {
@@ -132,5 +154,5 @@ window.Portal = (() => {
     };
     layer.on({mouseover:show,mousemove:show,mouseout:()=>tooltip.remove(),click:()=>tooltip.remove(),remove:()=>tooltip.remove()});
   }
-  return {activate,sourceUpdated,longDate,refreshSourceDate,esc,fmt,line,temporal,bindTemporal,forecast,attachMapHover,selectionTotal,dates,formatDates,coverage,report};
+  return {executive,activate,sourceUpdated,longDate,refreshSourceDate,esc,fmt,line,temporal,bindTemporal,forecast,attachMapHover,selectionTotal,dates,formatDates,coverage,report};
 })();

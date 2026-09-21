@@ -124,11 +124,7 @@
                 output.innerHTML=Portal.temporal(result,months,state,metadata)+note;
                 Portal.bindTemporal(result,months);
             } else if(view==='inicio') {
-                const top=Object.entries(result.territories).sort((a,b)=>b[1]-a[1])[0];
-                output.innerHTML=intro+`<div class="dgis-grid"><section><h2>Delitos registrados</h2>${bars(result.crimes)}</section><section><h2>Lectura ejecutiva</h2><p class="portal-note">Periodo ${esc(state.from||metadata.min_date)} al ${esc(state.to||metadata.max_date)}.</p>${top?`<h3>${esc(top[0])}</h3><p><strong>${fmt(top[1])}</strong> denuncias: ${(top[1]/Math.max(result.total,1)*100).toFixed(1)}% del total seleccionado.</p>`:'<p>Sin registros para esta selección.</p>'}<p>Los registros muestran concentración territorial, no tasas por habitante ni riesgo individual.</p><h2>${territory} con más denuncias</h2>${bars(result.territories)}</section></div>`+note;
-                const annualHome=document.createElement('div');
-                output.insertBefore(annualHome,output.querySelector('.dgis-grid'));
-                await Annual.mount(annualHome,annualConfig(state),true);
+                output.innerHTML=Portal.executive({total:result.total,territories:result.territories,crimes:result.crimes,source:config.label,range:Portal.dates(`${state.from||metadata.min_date} — ${state.to||metadata.max_date}`),place:[state.department==='@LIMA'?'LIMA':state.department,state.province,state.district].filter(Boolean).join(' / ')||'Nacional',crime:state.crime,territoryLabel:territory})+note;
             } else {
                 output.innerHTML=intro+`<section class="dgis-band"><h2>Evolucion mensual de denuncias</h2>${chart(months)}</section><div class="dgis-grid"><section><h2>Distribucion por delito</h2>${bars(result.crimes)}</section><section><h2>Concentracion territorial</h2>${bars(result.territories)}</section></div>`+note;
             }
@@ -287,7 +283,7 @@
         const supported=['inicio','mapa-delito','analisis-temporal','comparador-delitos','analisis-predictivo'].includes(name);
         document.getElementById('dgisFilters').hidden=!supported;
         document.getElementById('dgisCompare').hidden=true;
-        document.getElementById('dgisTitle').textContent=({inicio:'Panorama del delito', 'mapa-delito':'Distribución territorial','analisis-temporal':'Cómo cambia el delito en el tiempo','comparador-delitos':'Comparativo anual','analisis-predictivo':'Escenarios de corto plazo'})[name] || 'Información no disponible';
+        document.getElementById('dgisTitle').textContent=({inicio:'Pulso del delito', 'mapa-delito':'Distribución territorial','analisis-temporal':'Cómo cambia el delito en el tiempo','comparador-delitos':'Comparativo anual','analisis-predictivo':'Escenarios de corto plazo'})[name] || 'Información no disponible';
         if(supported) render();
         else document.getElementById('dgisResults').innerHTML=`<p class="dgis-empty">Esta vista aun no esta integrada con ${config.label}. No se sustituyen sus datos por los de SIDPOL.</p>`;
         return true;

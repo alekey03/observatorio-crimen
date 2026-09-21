@@ -2209,6 +2209,13 @@ function actualizarTextoResumen(){
     textoResumen.textContent = `${territorio}: ${formatear(total)} casos para ${delito}, ${periodo}.`;
 }
 
+function renderExecutiveHome(){
+    const root=document.getElementById('annualHomeSidpol');
+    if(!root || window.ObservatorioFuente?.active) return;
+    const rows=obtenerDatosFiltrados(), details=obtenerDatosFiltrados('',fuenteModalidadesFiltrable());
+    root.innerHTML=Portal.executive({total:rows.reduce((n,row)=>n+obtenerCasos(row),0),territories:agrupar(rows,row=>row[campoRankingTerritorial()]),crimes:agrupar(details,row=>row.MODALIDAD),source:'SIDPOL',range:Portal.dates(`${filtros.fechaDesde.value||'Inicio disponible'} — ${filtros.fechaHasta.value||'Último corte'}`),place:[filtros.departamento.value,filtros.provincia.value,filtros.distrito.value].filter(Boolean).join(' / ')||'Nacional',crime:filtros.delito.value,territoryLabel:filtros.provincia.value?'Distritos':filtros.departamento.value?'Provincias':'Departamentos'});
+}
+
 function actualizarDashboard(debeRenderMapa = true){
     if(vistaActual === "comparador-delitos"){
         actualizarOpciones();
@@ -2219,7 +2226,7 @@ function actualizarDashboard(debeRenderMapa = true){
     actualizarIndicadores();
     actualizarTextoResumen();
     actualizarAnalitica();
-    if(vistaActual === "inicio" || vistaActual === "comparador-delitos") AnnualSidpol.render(vistaActual === "inicio");
+    if(vistaActual === "inicio") renderExecutiveHome();
 
     if(debeRenderMapa){
         renderMapaDesdeFiltros();
@@ -2433,9 +2440,7 @@ function inicializarMapaCalor(){
     mapaCalor.createPane("limitesCalorPane");
     mapaCalor.getPane("limitesCalorPane").style.zIndex = 450;
 
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
-        attribution: "Tiles &copy; Esri"
-    }).addTo(mapaCalor);
+    OdcTheme.addBaseMap(mapaCalor);
 }
 
 function limpiarLimitesMapaCalor(){
@@ -2715,9 +2720,7 @@ function inicializarMapaAlertas(){
     }).setView(vistaPeru.centro, vistaPeru.zoom);
 
     mapaAlertas.setMaxBounds(limitesPeru);
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
-        attribution: "Tiles &copy; Esri"
-    }).addTo(mapaAlertas);
+    OdcTheme.addBaseMap(mapaAlertas);
 }
 
 function limpiarMapaAlertas(){
@@ -3005,9 +3008,7 @@ function inicializarMapaPolicial(){
         minZoom: 5
     }).setView(vistaPeru.centro, vistaPeru.zoom);
     mapaPolicial.setMaxBounds(limitesPeru);
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
-        attribution: "Tiles &copy; Esri"
-    }).addTo(mapaPolicial);
+    OdcTheme.addBaseMap(mapaPolicial);
 }
 
 function limpiarCapasPoliciales(){
@@ -3971,7 +3972,7 @@ function activarVista(vista){
     window.Portal?.activate(vista);
     if(window.ObservatorioFuente?.active && ObservatorioFuente.setView(vista)) return;
     vistaActual = vista;
-    if(vista === "inicio") AnnualSidpol.render(true);
+    if(vista === "inicio") renderExecutiveHome();
     document.body.classList.toggle("dashboard-view", vista === "dashboard");
     document.body.classList.toggle("observatory-view", ["analisis-temporal", "analisis-predictivo"].includes(vista));
     const vistaPolicial = ["denuncias-comisaria", "hechos-jurisdiccion"].includes(vista);

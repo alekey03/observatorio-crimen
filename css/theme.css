@@ -91,3 +91,24 @@ html[data-theme="light"] .portal-chart circle[fill="#39c8b8"]{fill:#087e70}
  body .brand-logos img,body.sidebar-collapsed .brand-logos img:first-child{width:42px!important;height:46px!important;max-height:46px!important}
  html[data-theme="light"] body .brand-logos img:first-child{padding:3px;border-radius:5px}
 }
+
+/* Light surfaces shared by desktop and mobile, including row headings and maps. */
+@media screen {
+ html[data-theme="light"] body .annual-comparison :is(tbody,tfoot) th{background:#eaf0f4!important;color:#294654!important}
+ html[data-theme="light"] body .annual-comparison :is(tbody,tfoot) tr:hover th{background:#dce7ee!important}
+ html[data-theme="light"] body :is(#mapa,#dgisMap,#mapaCalor,#mapaAlertas,#mapaPolicial,.leaflet-container){background:#e6edf2!important;border-color:#cdd8df!important}
+ html[data-theme="light"] .mobile-chart-value:not([hidden]){background:#eaf0f4;color:#1b303b;border-left-color:#825e08}
+ html[data-theme="light"] :is(.leaflet-popup-content-wrapper,.leaflet-popup-tip,.leaflet-control-layers){background:#fff;color:#1b303b}
+ html[data-theme="light"] .leaflet-bar a{background:#fff;color:#294654;border-color:#cdd8df}
+ html[data-theme="light"] .leaflet-bar a:hover{background:#eaf0f4}
+ html[data-theme="light"] .leaflet-bar a.leaflet-disabled{background:#eaf0f4;color:#71818b}
+ html[data-theme="light"] .leaflet-control-attribution{background:#ffffffdd;color:#506572}
+ html[data-theme="light"] .leaflet-control-attribution a{color:#1766af}
+ html[data-theme="light"] .leaflet-popup-content-wrapper :is(strong,b){color:#294654}
+}
+
+@media screen {
+ html[data-theme="light"] body :is(.map-section,.map-summary,.heat-metrics>div){background:#fff!important;color:#1b303b;border-color:#cdd8df}
+ html[data-theme="light"] :is(.map-summary p,.map-summary small,.heat-metrics span){color:#506572}
+ html[data-theme="light"] .heat-metrics strong{color:#1766af}
+}

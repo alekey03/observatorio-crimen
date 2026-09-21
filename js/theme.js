@@ -5,6 +5,7 @@
   const root = document.documentElement;
   function apply(value) {
     const theme = value === 'light' ? 'light' : 'dark';
+    const changed = root.dataset.theme !== theme;
     root.dataset.theme = theme;
     root.style.colorScheme = theme;
     const meta = document.querySelector('meta[name="theme-color"]');
@@ -12,7 +13,20 @@
     document.querySelectorAll('[data-theme-choice]').forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset.themeChoice === theme));
     });
+    if (changed) window.dispatchEvent(new CustomEvent('odc-theme-change', { detail: { theme } }));
   }
+  window.OdcTheme = {
+    addBaseMap(map) {
+      const url = () => 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/' +
+        (root.dataset.theme === 'light' ? 'World_Light_Gray_Base' : 'World_Dark_Gray_Base') +
+        '/MapServer/tile/{z}/{y}/{x}';
+      const layer = L.tileLayer(url(), { attribution: 'Tiles &copy; Esri' }).addTo(map);
+      const update = () => layer.setUrl(url());
+      window.addEventListener('odc-theme-change', update);
+      map.once('unload', () => window.removeEventListener('odc-theme-change', update));
+      return layer;
+    }
+  };
   let saved = 'dark';
   try { saved = localStorage.getItem(key) || 'dark'; } catch (_) {}
   apply(saved);

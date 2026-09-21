@@ -39,3 +39,59 @@ body[data-portal-view="mapa-delito"] .dgis-kpis,body[data-portal-view="analisis-
 @media(max-width:1100px){.dgis-map-grid{grid-template-columns:1fr}.source-strip{grid-template-columns:auto minmax(180px,260px)}.source-strip small{grid-column:1/-1}}
 @media(max-width:760px){.sidebar{position:relative!important;width:100%!important;min-height:0!important;height:auto!important;padding:14px!important}.brand{padding:0!important}.brand-logos,.brand-unit,.brand-kicker,.nav-label,.sidebar-footer{display:none!important}.sidebar-toggle{display:none!important}.menu{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.menu li{margin:0!important;padding:10px 6px!important;font-size:11px!important;display:flex!important;gap:7px!important;min-width:0}.menu li span{display:inline!important;overflow-wrap:anywhere}.main-content,body.sidebar-collapsed .main-content{margin-left:0!important;width:100%!important;padding:0 16px 24px!important}.hero{display:block!important}.hero-status{margin-top:10px}.command-bar strong{display:none}.portal-two,.analytics-grid,.executive-grid{grid-template-columns:1fr!important}.source-strip{grid-template-columns:1fr}.source-strip select{min-width:0;width:100%}.source-strip small{grid-column:auto}.dgis-filters,.filters-panel{grid-template-columns:repeat(2,minmax(0,1fr))!important}.production-controls{grid-template-columns:repeat(2,minmax(0,1fr))!important}.production-numbers strong{font-size:20px}.production-numbers>div{padding:8px}.cards,.dgis-kpis,body[data-portal-view="inicio"] .cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}.command-status{font-size:10px}.portal-chart{min-height:180px}body h1,.dgis-heading h1{font-size:25px!important}}
 @media print{body{background:white!important;color:#111!important}.sidebar,.command-bar,.source-strip,.production-controls{display:none!important}.main-content{margin:0!important;width:100%!important;padding:0!important}.portal-chart text{fill:#111}#productionPortal{color:#111}#productionPortal table td,#productionPortal table th{color:#111!important}.portal-note{color:#444}.portal-two{break-inside:avoid}.portal-positive,.portal-negative{color:#111!important}}
+
+/* A distinct reading path for each view; shared light/dark surface tokens. */
+body{--view-accent:#43bfae;--view-soft:#43bfae12}
+body[data-portal-view="mapa-delito"],body[data-portal-view="mapa-calor"]{--view-accent:#58a5eb;--view-soft:#58a5eb12}
+body[data-portal-view="comparador-delitos"]{--view-accent:#aa93e8;--view-soft:#aa93e812}
+body[data-portal-view="analisis-temporal"]{--view-accent:#43bfae;--view-soft:#43bfae12}
+body[data-portal-view="analisis-predictivo"]{--view-accent:#dcab55;--view-soft:#dcab5512}
+body[data-portal-view="produccion-policial"]{--view-accent:#7299ee;--view-soft:#7299ee12}
+html[data-theme="light"] body{--view-accent:#087e70}
+html[data-theme="light"] body:is([data-portal-view="mapa-delito"],[data-portal-view="mapa-calor"]){--view-accent:#216bbe}
+html[data-theme="light"] body[data-portal-view="comparador-delitos"]{--view-accent:#7151b8}
+html[data-theme="light"] body[data-portal-view="analisis-predictivo"]{--view-accent:#946d15}
+html[data-theme="light"] body[data-portal-view="produccion-policial"]{--view-accent:#345fb3}
+body .hero,body .dgis-heading{border:0!important;border-left:3px solid var(--view-accent)!important;padding:20px 24px!important;background:linear-gradient(110deg,var(--view-soft),transparent)!important;border-radius:0 14px 14px 0!important;margin:24px 0!important}
+body .hero h1,body .dgis-heading h1{letter-spacing:-.035em!important}
+body[data-portal-view="inicio"] :is(.cards,.executive-grid,.analytics-grid){display:none!important}
+.ex-home{color:var(--text);margin:24px 0 40px;min-width:0}
+.ex-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:24px}
+.ex-heading h2{font-size:clamp(23px,2.7vw,35px)!important;letter-spacing:-.035em;margin:8px 0!important;line-height:1.15}
+.ex-heading p,.ex-footnote{color:var(--muted);font-size:13px;line-height:1.65}
+.ex-kicker{color:var(--view-accent);font-size:11px;font-weight:750;letter-spacing:.11em}
+.ex-source{border:1px solid var(--line);border-radius:30px;padding:10px 16px;color:var(--muted);font-size:12px;max-width:100%;overflow-wrap:anywhere}
+.ex-lead-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:22px}
+.ex-focus,.ex-signals article,.ex-rankings>section{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:28px;min-width:0}
+.ex-focus{background:linear-gradient(135deg,var(--view-soft),transparent),var(--panel);border-top:3px solid var(--view-accent);display:flex;flex-direction:column;align-items:flex-start}
+.ex-focus h3{font-size:clamp(24px,3vw,38px)!important;line-height:1.1;overflow-wrap:anywhere;margin:20px 0}
+.ex-focus-number{font-size:clamp(38px,5vw,64px);font-weight:750;letter-spacing:-.05em;line-height:1.1}
+.ex-focus-number span{display:block;font-size:13px;letter-spacing:0;color:var(--muted);font-weight:400;margin-top:12px}
+.ex-focus p{font-size:14px;color:var(--muted);line-height:1.6}
+.ex-focus button{margin-top:auto;border:0;border-bottom:1px solid var(--view-accent);padding:12px 0;background:transparent;color:var(--view-accent);font:inherit;cursor:pointer;min-height:44px}
+.ex-focus button span{margin-left:24px}
+.ex-signals{display:grid;gap:18px;grid-template-columns:1.35fr 1fr}
+.ex-signals h3{font-size:20px!important;line-height:1.4;overflow-wrap:anywhere;margin:24px 0 16px}
+.ex-signals p{font-size:14px;line-height:1.6}.ex-signals small{font-size:12px;color:var(--muted);line-height:1.6;display:block}
+.ex-signals strong{display:block;font-size:48px;line-height:1.2;margin:24px 0 16px;color:var(--view-accent)}
+.ex-rankings{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:22px}
+.ex-rankings h3{font-size:20px!important;margin:10px 0 18px}.ex-rankings ol{list-style:none;padding:0;margin:0}
+.ex-rankings li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:12px;padding:18px 0;border-top:1px solid var(--line);font-size:12px}
+.ex-rank{color:var(--muted);font-variant-numeric:tabular-nums}.ex-rankings li>div>span{display:block;line-height:1.5;overflow-wrap:anywhere}
+.ex-rankings li strong{text-align:right;font-size:15px;font-variant-numeric:tabular-nums}.ex-rankings li small{display:block;color:var(--muted);font-size:10px;font-weight:400;margin-top:6px}
+.ex-track{height:5px;background:var(--line);border-radius:8px;margin-top:12px;overflow:hidden}.ex-track i{display:block;height:100%;background:var(--view-accent);border-radius:8px}
+.ex-rankings section:first-child .ex-track i{opacity:.7}.ex-footnote{margin:16px 0 32px}
+.ex-next h3{font-size:24px!important;margin:8px 0}
+.ex-journeys{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.ex-journeys button{display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding:22px 18px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:transform .18s,border-color .18s;min-width:0}
+.ex-journeys button:hover{transform:translateY(-3px);border-color:var(--view-accent)}.ex-journeys button:focus-visible{outline:2px solid var(--view-accent);outline-offset:3px}
+.ex-route{display:flex;align-items:center;justify-content:space-between;width:100%;color:var(--view-accent)}.ex-route i{font-size:20px}.ex-route small{font-size:11px;color:var(--muted)}
+.ex-journeys strong{font-size:15px;line-height:1.4}.ex-journeys button>span:not(.ex-route){font-size:12px;color:var(--muted);line-height:1.65}.ex-journeys b{margin-top:auto;color:var(--view-accent)}
+body[data-portal-view="comparador-delitos"] .ac-kpi-current{border-top-color:var(--view-accent)}
+body:is([data-portal-view="analisis-temporal"],[data-portal-view="analisis-predictivo"]) .portal-two>section{background:var(--panel);padding:24px;border:1px solid var(--line);border-radius:14px}
+body[data-portal-view="mapa-delito"] .dgis-map-grid>section{background:var(--panel);padding:20px;border:1px solid var(--line);border-radius:14px}
+body[data-portal-view="produccion-policial"] #productionPortal .production-numbers{gap:18px}
+body[data-portal-view="produccion-policial"] #productionPortal .production-numbers>div{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--view-accent);border-radius:12px;padding:24px}
+@media(max-width:1100px){.ex-lead-grid{grid-template-columns:1fr}.ex-journeys{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.ex-heading{align-items:flex-start;flex-direction:column;gap:8px}.ex-lead-grid,.ex-rankings,.ex-signals{grid-template-columns:1fr}.ex-focus,.ex-signals article,.ex-rankings>section{padding:22px}.ex-journeys{grid-template-columns:1fr 1fr}.ex-journeys button:last-child{grid-column:1/-1}.ex-rankings li{gap:8px;grid-template-columns:22px minmax(0,1fr) auto}.ex-focus-number{font-size:48px}.ex-signals h3{margin:12px 0}.ex-signals strong{margin:12px 0}.ex-source{border-radius:8px}.ex-home{margin-top:20px}}
+@media(prefers-reduced-motion:reduce){.ex-journeys button{transition:none;transform:none!important}}
