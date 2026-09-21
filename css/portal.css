@@ -130,3 +130,5 @@ body[data-portal-view="produccion-policial"] #productionPortal .production-numbe
 @media print{#productionPortal .prod-categories,#productionPortal .prod-exports{display:none}.prod-ranking{max-height:none!important;overflow:visible!important}.prod-detail>*{display:block!important}}
 
 html[data-theme="light"] body #productionPortal .prod-categories button[aria-pressed="true"]{background:#876923!important;color:#fff!important;border-color:#876923!important}
+
+#productionPortal #prodMultiple{grid-column:1/-1;border:1px solid var(--line);border-radius:10px;padding:16px}#productionPortal #prodMultiple[hidden]{display:none}#productionPortal #prodChoices{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}#productionPortal #prodChoices label{display:flex;flex-direction:row;align-items:center;flex-wrap:wrap}#productionPortal #prodChoices input{width:20px;height:20px;flex-shrink:0}
