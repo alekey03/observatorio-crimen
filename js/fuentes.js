@@ -71,8 +71,8 @@
         const stride=Math.max(1,Math.ceil(entries.length/10));
         return `<svg viewBox="0 0 910 320" role="img" aria-label="Denuncias por ${daily?'dia':'mes'}"><g>${[0,1,2,3,4].map(i=>`<line x1="70" x2="870" y1="${y(cap*i/4)}" y2="${y(cap*i/4)}" stroke="#30414a"/><text x="58" y="${y(cap*i/4)+4}" text-anchor="end">${fmt(Math.round(cap*i/4))}</text>`).join('')}</g><polyline points="${entries.map(([,n],i)=>`${x(i)},${y(n)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="3"/>${entries.map(([key,n],i)=>`<circle cx="${x(i)}" cy="${y(n)}" r="${daily?2:4}" fill="${color}"><title>${esc(key)}: ${fmt(n)}</title></circle>${i%stride===0?`<text x="${x(i)}" y="295" text-anchor="middle">${esc(key)}</text>`:''}`).join('')}</svg>`;
     }
-    function bars(values) {
-        const entries=Object.entries(values).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    function bars(values, limit=10) {
+        const entries=Object.entries(values).sort((a,b)=>b[1]-a[1]).slice(0,limit);
         const max=Math.max(1,...entries.map(([,n])=>n));
         return entries.map(([name,n],i)=>`<div class="dgis-bar"><div><span>${esc(name)}</span><strong>${fmt(n)}</strong></div><div class="dgis-track"><i style="width:${n/max*100}%;background:${colors[i%colors.length]}"></i></div></div>`).join('') || '<p class="dgis-empty">Sin registros</p>';
     }
@@ -110,7 +110,7 @@
             const intro=`<div class="dgis-kpis">${cards.map(([name,n],i)=>`<article style="--accent:${colors[i%colors.length]}"><span>${esc(name)}</span><strong>${fmt(n)}</strong></article>`).join('')}</div>`;
             const cut = new Date(`${metadata.max_date}T12:00:00Z`);
             const monthComplete = cut.getUTCDate()===new Date(Date.UTC(cut.getUTCFullYear(),cut.getUTCMonth()+1,0)).getUTCDate();
-            const note=`<p class="dgis-note">Fuente: ${config.label} · Fecha de registro · Corte ${metadata.max_date}. ${monthComplete ? 'Cierre mensual disponible.' : 'Ultimo mes parcial.'} Conteo distinto de denuncias. Los subtotales pueden solaparse si una denuncia tiene varios delitos, fechas o territorios. ${metadata.public?'Version publica: distritos de grupos pequenos agrupados como OTROS DISTRITOS.':''}</p>`;
+            const note=`<p class="dgis-note">Fuente: ${config.label} · Fecha de registro · Corte ${metadata.max_date}. ${monthComplete ? 'Cierre mensual disponible.' : 'Ultimo mes parcial.'} Conteo distinto de denuncias. Los subtotales pueden solaparse si una denuncia tiene varios delitos, fechas o territorios. ${metadata.public?'Version publica: estadisticas por distrito, sin identificadores personales ni coordenadas exactas.':''}</p>`;
             if(view==='comparador-delitos') { await comparator(state,mine); return; }
             if(view==='analisis-predictivo') {
                 const html=await Portal.forecast(selectedSource,state.crime,state);
@@ -118,7 +118,7 @@
                 return;
             }
             if(view==='mapa-delito') {
-                output.innerHTML=intro+`<div class="dgis-grid dgis-map-grid"><section><h2 id="dgisMapTitle">Participacion por departamento</h2><nav class="dgis-map-nav" aria-label="Navegacion territorial"><button id="dgisMapHome" title="Volver al Peru"><i class="fas fa-house"></i> Peru</button><button id="dgisMapBack" title="Subir un nivel" hidden><i class="fas fa-arrow-left"></i> Volver</button><span id="dgisMapScope"></span></nav><div id="dgisMap"></div><div class="dgis-map-legend" aria-label="Participacion de denuncias"><span><i style="background:#344953"></i>0%</span><span><i style="background:#9cc9b0"></i>Menos de 1%</span><span><i style="background:#c6d68b"></i>1 a menos de 5%</span><span><i style="background:#f0d676"></i>5 a menos de 10%</span><span><i style="background:#ef997f"></i>10% o mas</span></div><p class="dgis-note" id="dgisMapBase"></p></section><section><h2>${territory}</h2>${bars(result.territories)}</section></div>`+note;
+                output.innerHTML=intro+`<div class="dgis-grid dgis-map-grid"><section><h2 id="dgisMapTitle">Participacion por departamento</h2><nav class="dgis-map-nav" aria-label="Navegacion territorial"><button id="dgisMapHome" title="Volver al Peru"><i class="fas fa-house"></i> Peru</button><button id="dgisMapBack" title="Subir un nivel" hidden><i class="fas fa-arrow-left"></i> Volver</button><span id="dgisMapScope"></span></nav><div id="dgisMap"></div><div class="dgis-map-legend" aria-label="Participacion de denuncias"><span><i style="background:#344953"></i>0%</span><span><i style="background:#9cc9b0"></i>Menos de 1%</span><span><i style="background:#c6d68b"></i>1 a menos de 5%</span><span><i style="background:#f0d676"></i>5 a menos de 10%</span><span><i style="background:#ef997f"></i>10% o mas</span></div><p class="dgis-note" id="dgisMapBase"></p></section><section><h2>${territory}</h2>${bars(result.territories,Infinity)}</section></div>`+note;
                 await renderMap(state,mine,camera);
             } else if(view==='analisis-temporal') {
                 output.innerHTML=Portal.temporal(result,months,state,metadata)+note;
@@ -126,7 +126,7 @@
             } else if(view==='inicio') {
                 output.innerHTML=Portal.executive({total:result.total,territories:result.territories,crimes:result.crimes,source:config.label,range:Portal.dates(`${state.from||metadata.min_date} — ${state.to||metadata.max_date}`),place:[state.department==='@LIMA'?'LIMA':state.department,state.province,state.district].filter(Boolean).join(' / ')||'Nacional',crime:state.crime,territoryLabel:territory})+note;
             } else {
-                output.innerHTML=intro+`<section class="dgis-band"><h2>Evolucion mensual de denuncias</h2>${chart(months)}</section><div class="dgis-grid"><section><h2>Distribucion por delito</h2>${bars(result.crimes)}</section><section><h2>Concentracion territorial</h2>${bars(result.territories)}</section></div>`+note;
+                output.innerHTML=intro+`<section class="dgis-band"><h2>Evolucion mensual de denuncias</h2>${chart(months)}</section><div class="dgis-grid"><section><h2>Distribucion por delito</h2>${bars(result.crimes)}</section><section><h2>Concentracion territorial</h2>${bars(result.territories,Infinity)}</section></div>`+note;
             }
         } catch(error) { if(mine===revision) output.innerHTML=`<p role="alert">${esc(error.message)}</p>`; }
         finally { if(mine===revision) {
