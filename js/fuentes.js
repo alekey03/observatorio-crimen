@@ -131,7 +131,8 @@
                 output.innerHTML=Portal.temporal(result,months,state,metadata)+note;
                 Portal.bindTemporal(result,months);
             } else if(view==='inicio') {
-                output.innerHTML=(selectedSource==='dgis-diaria'?DgisOverview.render:Portal.executive)({total:result.total,territories:result.territories,crimes:result.crimes,source:config.label,range:Portal.dates(`${state.from||metadata.min_date} — ${state.to||metadata.max_date}`),place:[state.department==='@LIMA'?'LIMA':state.department,state.province,state.district].filter(Boolean).join(' / ')||'Nacional',crime:state.crime,territoryLabel:territory})+note;
+                const executiveState={total:result.total,territories:result.territories,crimes:result.crimes,source:config.label,range:Portal.dates(`${state.from||metadata.min_date} — ${state.to||metadata.max_date}`),place:[state.department==='@LIMA'?'LIMA':state.department,state.province,state.district].filter(Boolean).join(' / ')||'Nacional',crime:state.crime,territoryLabel:territory};
+                output.innerHTML=(selectedSource==='dgis-diaria'?DgisOverview.render(executiveState):'')+Portal.executive(executiveState)+note;
                 output.querySelectorAll('[data-overview-crime]').forEach(button=>button.onclick=()=>{const input=document.getElementById('dgisCrime');input.value=input.value===button.dataset.overviewCrime?'':button.dataset.overviewCrime;render();});
             } else {
                 output.innerHTML=intro+`<section class="dgis-band"><h2>Evolucion mensual de denuncias</h2>${chart(months)}</section><div class="dgis-grid"><section><h2>Distribucion por delito</h2>${bars(result.crimes)}</section><section><h2>Concentracion territorial</h2>${bars(result.territories,Infinity)}</section></div>`+note;
