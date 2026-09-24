@@ -131,13 +131,14 @@
                 output.innerHTML=Portal.temporal(result,months,state,metadata)+note;
                 Portal.bindTemporal(result,months);
             } else if(view==='inicio') {
-                output.innerHTML=Portal.executive({total:result.total,territories:result.territories,crimes:result.crimes,source:config.label,range:Portal.dates(`${state.from||metadata.min_date} — ${state.to||metadata.max_date}`),place:[state.department==='@LIMA'?'LIMA':state.department,state.province,state.district].filter(Boolean).join(' / ')||'Nacional',crime:state.crime,territoryLabel:territory})+note;
+                output.innerHTML=(selectedSource==='dgis-diaria'?DgisOverview.render:Portal.executive)({total:result.total,territories:result.territories,crimes:result.crimes,source:config.label,range:Portal.dates(`${state.from||metadata.min_date} — ${state.to||metadata.max_date}`),place:[state.department==='@LIMA'?'LIMA':state.department,state.province,state.district].filter(Boolean).join(' / ')||'Nacional',crime:state.crime,territoryLabel:territory})+note;
+                output.querySelectorAll('[data-overview-crime]').forEach(button=>button.onclick=()=>{const input=document.getElementById('dgisCrime');input.value=input.value===button.dataset.overviewCrime?'':button.dataset.overviewCrime;render();});
             } else {
                 output.innerHTML=intro+`<section class="dgis-band"><h2>Evolucion mensual de denuncias</h2>${chart(months)}</section><div class="dgis-grid"><section><h2>Distribucion por delito</h2>${bars(result.crimes)}</section><section><h2>Concentracion territorial</h2>${bars(result.territories,Infinity)}</section></div>`+note;
             }
         } catch(error) { if(mine===revision) output.innerHTML=`<p role="alert">${esc(error.message)}</p>`; }
         finally { if(mine===revision) {
-            if(selectedTotal && view!=='comparador-delitos') output.insertAdjacentHTML('afterbegin',selectedTotal);
+            if(selectedTotal && view!=='comparador-delitos' && !(view==='inicio' && selectedSource==='dgis-diaria')) output.insertAdjacentHTML('afterbegin',selectedTotal);
             if(selectedTotal && ['analisis-temporal','analisis-predictivo'].includes(view)){
                 const button=document.createElement('button');button.className='portal-report-button';button.innerHTML='<i class="fas fa-file-pdf"></i> PDF';button.title='Imprimir o guardar informe PDF';
                 button.onclick=()=>Portal.report({title:document.getElementById('dgisTitle').textContent,source:config.label,cut:metadata.max_date,content:output,filters:[['Delito',state.crime||'Todos los delitos'],['Desde',state.from||metadata.min_date],['Hasta',state.to||metadata.max_date],['Territorio',[state.department==='@LIMA'?'LIMA':state.department,state.province,state.district].filter(Boolean).join(' / ')||'Nacional'],['Cobertura de la fuente',Portal.coverage(metadata.max_date)]]});
@@ -320,7 +321,7 @@
                 document.getElementById('dgisDepartment').add(new Option('LIMA (departamento completo)','@LIMA'),1);
             }
             root.querySelector('.dgis-heading p').textContent=`Fecha de registro · Actualizado al ${Portal.longDate(metadata.max_date)} · ${Portal.coverage(metadata.max_date)}`;
-            const priority=['EXTORSION','SECUESTRO','ROBO','HURTO','ASALTO Y ROBO DE VEHICULOS'];
+            const priority=['HOMICIDIO','EXTORSION','SECUESTRO','ROBO','HURTO','ASALTO Y ROBO DE VEHICULOS'];
             const options=list=>list.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
             const prioritized=priority.map(name=>crimes.find(crime=>normalize(crime)===name)).filter(Boolean);
             document.getElementById('dgisCrime').innerHTML='<option value="">Todos los delitos</option><optgroup label="Delitos prioritarios">'+options(prioritized)+'</optgroup><optgroup label="Otros delitos">'+options(crimes.filter(name=>!prioritized.includes(name)))+'</optgroup>';
