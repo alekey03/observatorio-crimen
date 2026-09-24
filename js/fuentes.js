@@ -92,6 +92,13 @@
     async function render() {
         if(!metadata) return;
         const mine=++revision, state=filters(), output=document.getElementById('dgisResults');
+        if(view==='analisis-predictivo' && selectedSource==='dgis-diaria') {
+            disposeMap();output.classList.remove('annual-comparison');output.setAttribute('aria-busy','true');
+            try { await DgisAnalysis.mount(output,state,filters=>Portal.forecast(selectedSource,filters.crime,filters),()=>mine===revision); }
+            catch(error) { if(mine===revision) output.innerHTML=`<p role="alert">${esc(error.message)}</p>`; }
+            finally { if(mine===revision) output.removeAttribute('aria-busy'); }
+            return;
+        }
         if(state.from && state.to && state.from>state.to) { output.innerHTML='<p role="alert">Desde no puede ser posterior a Hasta.</p>'; return; }
         if(view!=='comparador-delitos')output.classList.remove('annual-comparison');
         output.setAttribute('aria-busy','true');
@@ -282,8 +289,16 @@
         Portal.sourceUpdated(selectedSource,metadata.max_date);
         const supported=['inicio','mapa-delito','analisis-temporal','comparador-delitos','analisis-predictivo'].includes(name);
         document.getElementById('dgisFilters').hidden=!supported;
+        if(selectedSource==='dgis-diaria' && name==='analisis-predictivo') document.getElementById('dgisFilters').hidden=true;
         document.getElementById('dgisCompare').hidden=true;
         document.getElementById('dgisTitle').textContent=({inicio:'Pulso del delito', 'mapa-delito':'Distribución territorial','analisis-temporal':'Cómo cambia el delito en el tiempo','comparador-delitos':'Comparativo anual','analisis-predictivo':'Escenarios de corto plazo'})[name] || 'Información no disponible';
+        if(selectedSource==='dgis-diaria') {
+            document.querySelectorAll('[data-view="analisis-predictivo"]').forEach(node=>{
+                node.dataset.label='Análisis del delito';node.setAttribute('aria-label','Análisis del delito');
+                node.querySelectorAll('span').forEach(span=>span.textContent=span.classList.contains('mobile-nav-label')?'Análisis':'Análisis del delito');
+            });
+            if(name==='analisis-predictivo') document.getElementById('dgisTitle').textContent='Análisis del delito';
+        }
         if(supported) render();
         else document.getElementById('dgisResults').innerHTML=`<p class="dgis-empty">Esta vista aun no esta integrada con ${config.label}. No se sustituyen sus datos por los de SIDPOL.</p>`;
         return true;

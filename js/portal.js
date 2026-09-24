@@ -9,7 +9,7 @@ window.Portal = (() => {
     ['mapa-delito','01','fa-map-location-dot','Dónde se concentra','Explora departamentos, provincias y distritos.'],
     ['comparador-delitos','02','fa-scale-balanced','Cómo vamos frente a 2025','Contrasta el mismo periodo y el año completo.'],
     ['analisis-temporal','03','fa-clock','Cuándo se registra','Lee la evolución y los patrones del calendario.'],
-    ['analisis-predictivo','04','fa-chart-line','Qué se puede anticipar','Consulta escenarios y márgenes de incertidumbre.'],
+    ['analisis-predictivo','04','fa-chart-line',new URLSearchParams(location.search).get('fuente')==='dgis-diaria'?'Cómo se caracteriza el delito':'Qué se puede anticipar',new URLSearchParams(location.search).get('fuente')==='dgis-diaria'?'Explora medios, móviles, horarios y calidad del registro.':'Consulta escenarios y márgenes de incertidumbre.'],
     ['produccion-policial','05','fa-chart-column','Qué actividad se reporta','Revisa los indicadores de producción policial.']
   ];
   function executive({total,territories={},crimes={},source,range,place,crime,territoryLabel='Territorios'}) {
